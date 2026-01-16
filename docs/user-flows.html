@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0a0e1a">
+  <title>User Flows - PAA Solutions Design System</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../styles/design-system.css">
+  <link rel="stylesheet" href="../styles/animations.css">
+  <link rel="stylesheet" href="../styles/components.css">
+
+  <style>
+    .docs-page { min-height: 100vh; padding-bottom: var(--space-16); }
+    .docs-header { position: sticky; top: 0; z-index: var(--z-sticky); padding: var(--space-4) var(--space-6); background: rgba(13, 17, 23, 0.9); backdrop-filter: blur(24px); border-bottom: 1px solid var(--card-border); }
+    .docs-header-content { max-width: var(--max-width-6xl); margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+    .docs-nav { display: flex; align-items: center; gap: var(--space-2); }
+    .docs-nav-link { padding: var(--space-2) var(--space-3); font-size: var(--font-size-sm); color: var(--muted); text-decoration: none; border-radius: var(--radius-md); transition: all var(--transition-normal) var(--ease-default); }
+    .docs-nav-link:hover { color: var(--foreground); background: rgba(255, 255, 255, 0.05); }
+    .docs-nav-link.active { color: var(--primary); background: rgba(74, 144, 245, 0.1); }
+    .docs-content { max-width: var(--max-width-6xl); margin: 0 auto; padding: var(--space-8) var(--space-6); }
+    .docs-title { font-size: var(--font-size-3xl); font-weight: var(--font-weight-bold); color: var(--foreground); margin-bottom: var(--space-2); }
+    .docs-subtitle { font-size: var(--font-size-lg); color: var(--muted); margin-bottom: var(--space-10); }
+    .docs-section { margin-bottom: var(--space-12); }
+    .section-title { font-size: var(--font-size-xl); font-weight: var(--font-weight-bold); color: var(--foreground); margin-bottom: var(--space-2); padding-bottom: var(--space-2); border-bottom: 1px solid var(--card-border); }
+    .section-description { font-size: var(--font-size-sm); color: var(--muted); margin-bottom: var(--space-6); }
+
+    .flow-diagram { background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius-xl); padding: var(--space-6); overflow-x: auto; }
+    .flow-container { display: flex; flex-direction: column; gap: var(--space-4); min-width: 600px; }
+    .flow-row { display: flex; align-items: center; gap: var(--space-3); }
+    .flow-node { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); background: var(--card-hover); border: 1px solid var(--card-border); border-radius: var(--radius-lg); font-size: var(--font-size-sm); color: var(--foreground); white-space: nowrap; }
+    .flow-node.start { background: rgba(16, 185, 129, 0.1); border-color: var(--success); color: var(--success); }
+    .flow-node.action { background: rgba(74, 144, 245, 0.1); border-color: var(--primary); color: var(--primary); }
+    .flow-node.decision { background: rgba(245, 158, 11, 0.1); border-color: var(--warning); color: var(--warning); border-radius: 0; transform: rotate(0deg); }
+    .flow-node.end { background: rgba(239, 68, 68, 0.1); border-color: var(--error); color: var(--error); }
+    .flow-arrow { color: var(--muted); font-size: var(--font-size-lg); }
+    .flow-label { font-size: var(--font-size-xs); color: var(--muted); margin-left: var(--space-1); }
+    .flow-branch { display: flex; flex-direction: column; gap: var(--space-2); margin-left: var(--space-8); padding-left: var(--space-4); border-left: 2px solid var(--card-border); }
+
+    .route-table { width: 100%; border-collapse: collapse; font-size: var(--font-size-sm); }
+    .route-table th, .route-table td { padding: var(--space-3); text-align: left; border-bottom: 1px solid var(--card-border); }
+    .route-table th { font-weight: var(--font-weight-semibold); color: var(--foreground); background: var(--card); }
+    .route-table td { color: var(--foreground-secondary); }
+    .route-table code { background: rgba(255, 255, 255, 0.05); padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm); font-family: monospace; font-size: var(--font-size-xs); }
+
+    .interaction-list { display: flex; flex-direction: column; gap: var(--space-3); }
+    .interaction-item { display: flex; align-items: flex-start; gap: var(--space-4); padding: var(--space-4); background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius-lg); }
+    .interaction-icon { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: rgba(74, 144, 245, 0.1); border-radius: var(--radius-md); color: var(--primary); flex-shrink: 0; }
+    .interaction-content { flex: 1; }
+    .interaction-title { font-size: var(--font-size-base); font-weight: var(--font-weight-semibold); color: var(--foreground); margin-bottom: var(--space-1); }
+    .interaction-description { font-size: var(--font-size-sm); color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="background-container">
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+  </div>
+
+  <div class="docs-page">
+    <header class="docs-header">
+      <div class="docs-header-content">
+        <a href="../index.html" style="display: flex; align-items: center; gap: var(--space-3); text-decoration: none; color: var(--foreground);">
+          <img src="../assets/logo-placeholder.svg" alt="PAA Solutions" style="height: 36px;">
+          <span style="font-weight: var(--font-weight-semibold);">Design System</span>
+        </a>
+        <nav class="docs-nav">
+          <a href="style-guide.html" class="docs-nav-link">Style Guide</a>
+          <a href="components.html" class="docs-nav-link">Components</a>
+          <a href="animations.html" class="docs-nav-link">Animations</a>
+          <a href="user-flows.html" class="docs-nav-link active">User Flows</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="docs-content">
+      <h1 class="docs-title">User Flows & Navigation</h1>
+      <p class="docs-subtitle">Navigation patterns, user journeys, and interaction flows throughout the application.</p>
+
+      <section class="docs-section">
+        <h2 class="section-title">Main User Flow</h2>
+        <p class="section-description">Primary navigation path from authentication to chat interaction.</p>
+        <div class="flow-diagram">
+          <div class="flow-container">
+            <div class="flow-row">
+              <div class="flow-node start">Start</div>
+              <span class="flow-arrow">→</span>
+              <div class="flow-node decision">Authenticated?</div>
+            </div>
+            <div class="flow-branch">
+              <div class="flow-row">
+                <span class="flow-label">No</span>
+                <span class="flow-arrow">→</span>
+                <div class="flow-node action">Login Page</div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-node action">Enter Credentials</div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-node decision">Valid?</div>
+              </div>
+              <div class="flow-branch">
+                <div class="flow-row">
+                  <span class="flow-label">No</span>
+                  <span class="flow-arrow">→</span>
+                  <div class="flow-node" style="background: var(--error-bg); border-color: var(--error); color: var(--error);">Show Error</div>
+                  <span class="flow-arrow">→</span>
+                  <span class="flow-label">Retry</span>
+                </div>
+              </div>
+            </div>
+            <div class="flow-row" style="margin-top: var(--space-4);">
+              <span class="flow-label">Yes</span>
+              <span class="flow-arrow">→</span>
+              <div class="flow-node action">Modules Dashboard</div>
+              <span class="flow-arrow">→</span>
+              <div class="flow-node decision">Select Module</div>
+            </div>
+            <div class="flow-branch">
+              <div class="flow-row">
+                <span class="flow-label">Chat Module</span>
+                <span class="flow-arrow">→</span>
+                <div class="flow-node action">Chat Interface</div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-node action">Send/Receive Messages</div>
+              </div>
+              <div class="flow-row">
+                <span class="flow-label">Admin Panel</span>
+                <span class="flow-arrow">→</span>
+                <div class="flow-node action">Admin Page</div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-node action">Manage Users</div>
+              </div>
+            </div>
+            <div class="flow-row" style="margin-top: var(--space-4);">
+              <div class="flow-node action">Logout</div>
+              <span class="flow-arrow">→</span>
+              <div class="flow-node end">End Session</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="docs-section">
+        <h2 class="section-title">Route Structure</h2>
+        <p class="section-description">Application routes and their access requirements.</p>
+        <table class="route-table">
+          <thead>
+            <tr>
+              <th>Page</th>
+              <th>Path</th>
+              <th>Auth Required</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Login</td>
+              <td><code>/login</code></td>
+              <td>No</td>
+              <td>Authentication page with username/password form</td>
+            </tr>
+            <tr>
+              <td>Modules</td>
+              <td><code>/modules</code></td>
+              <td>Yes</td>
+              <td>Module selection dashboard with grid layout</td>
+            </tr>
+            <tr>
+              <td>Chat</td>
+              <td><code>/chat/[module]</code></td>
+              <td>Yes</td>
+              <td>Chat interface for specific module</td>
+            </tr>
+            <tr>
+              <td>Admin</td>
+              <td><code>/admin</code></td>
+              <td>Yes (Admin)</td>
+              <td>User management panel for administrators</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="docs-section">
+        <h2 class="section-title">Key Interactions</h2>
+        <p class="section-description">Primary user interactions and their expected behaviors.</p>
+        <div class="interaction-list">
+          <div class="interaction-item">
+            <div class="interaction-icon">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                <polyline points="10 17 15 12 10 7"></polyline>
+                <line x1="15" y1="12" x2="3" y2="12"></line>
+              </svg>
+            </div>
+            <div class="interaction-content">
+              <h3 class="interaction-title">Login</h3>
+              <p class="interaction-description">User enters credentials → Validates with shake animation on error → Redirects to modules on success</p>
+            </div>
+          </div>
+          <div class="interaction-item">
+            <div class="interaction-icon">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+              </svg>
+            </div>
+            <div class="interaction-content">
+              <h3 class="interaction-title">Module Selection</h3>
+              <p class="interaction-description">Click module card → Card hover effect with arrow reveal → Navigate to chat interface with module context</p>
+            </div>
+          </div>
+          <div class="interaction-item">
+            <div class="interaction-icon">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+            </div>
+            <div class="interaction-content">
+              <h3 class="interaction-title">Send Message</h3>
+              <p class="interaction-description">Type in input → Enter or click send → Message appears with slide animation → Typing indicator shows → Bot responds</p>
+            </div>
+          </div>
+          <div class="interaction-item">
+            <div class="interaction-icon">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+              </svg>
+            </div>
+            <div class="interaction-content">
+              <h3 class="interaction-title">File Upload</h3>
+              <p class="interaction-description">Click attachment button → Select files → Preview with progress bar → Send with message</p>
+            </div>
+          </div>
+          <div class="interaction-item">
+            <div class="interaction-icon">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+            </div>
+            <div class="interaction-content">
+              <h3 class="interaction-title">User Management</h3>
+              <p class="interaction-description">Click user row → Expand with slide animation → Toggle permissions → Delete with confirmation</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="docs-section">
+        <h2 class="section-title">Available Modules</h2>
+        <p class="section-description">The application provides access to 5 specialized chat modules.</p>
+        <table class="route-table">
+          <thead>
+            <tr>
+              <th>Icon</th>
+              <th>Module</th>
+              <th>ID</th>
+              <th>Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-size: 1.5rem;">🧾</td>
+              <td>Invoice Processing</td>
+              <td><code>invoice</code></td>
+              <td>General invoice chat and processing</td>
+            </tr>
+            <tr>
+              <td style="font-size: 1.5rem;">📈</td>
+              <td>KDR Report Generator</td>
+              <td><code>kdr</code></td>
+              <td>KDR report creation and analysis</td>
+            </tr>
+            <tr>
+              <td style="font-size: 1.5rem;">📊</td>
+              <td>GA Processing</td>
+              <td><code>ga</code></td>
+              <td>Analytics and reporting automation</td>
+            </tr>
+            <tr>
+              <td style="font-size: 1.5rem;">📋</td>
+              <td>KDRs Invoice Processing</td>
+              <td><code>kdr_inv</code></td>
+              <td>Specialized KDR invoice handling</td>
+            </tr>
+            <tr>
+              <td style="font-size: 1.5rem;">💰</td>
+              <td>KDRs Sellout Processing</td>
+              <td><code>kdr_sellout</code></td>
+              <td>KDR sales data processing</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="docs-section">
+        <h2 class="section-title">Navigation Elements</h2>
+        <p class="section-description">UI elements used for navigation throughout the application.</p>
+        <div class="interaction-list">
+          <div class="interaction-item">
+            <div class="interaction-icon">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12,19 5,12 12,5"></polyline>
+              </svg>
+            </div>
+            <div class="interaction-content">
+              <h3 class="interaction-title">Back Button</h3>
+              <p class="interaction-description">Returns to the previous screen (Chat → Modules, Admin → Modules)</p>
+            </div>
+          </div>
+          <div class="interaction-item">
+            <div class="interaction-icon">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16,17 21,12 16,7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+            </div>
+            <div class="interaction-content">
+              <h3 class="interaction-title">Logout Button</h3>
+              <p class="interaction-description">Clears session and redirects to login page</p>
+            </div>
+          </div>
+          <div class="interaction-item">
+            <div class="interaction-icon">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="1"></circle>
+                <circle cx="12" cy="5" r="1"></circle>
+                <circle cx="12" cy="19" r="1"></circle>
+              </svg>
+            </div>
+            <div class="interaction-content">
+              <h3 class="interaction-title">More Options Menu</h3>
+              <p class="interaction-description">Dropdown menu with additional actions (Clear chat, Settings, Logout)</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="brand-footer">
+    <a href="https://www.paa-solutions.com" target="_blank" rel="noopener">PAA Solutions</a>
+  </div>
+</body>
+</html>

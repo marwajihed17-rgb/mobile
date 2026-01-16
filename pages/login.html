@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0a0e1a">
+  <title>Login - PAA Solutions</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="../styles/design-system.css">
+  <link rel="stylesheet" href="../styles/animations.css">
+  <link rel="stylesheet" href="../styles/components.css">
+
+  <style>
+    /* Login Page Specific Styles */
+    .login-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-4);
+    }
+
+    .login-container {
+      width: 100%;
+      max-width: 420px;
+      animation: fadeInUp 0.5s var(--ease-out);
+    }
+
+    .login-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-2xl);
+      padding: var(--space-8);
+      box-shadow: var(--shadow-2xl);
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: var(--space-8);
+    }
+
+    .login-logo {
+      height: 64px;
+      width: auto;
+      margin-bottom: var(--space-4);
+    }
+
+    .login-title {
+      font-size: var(--font-size-2xl);
+      font-weight: var(--font-weight-semibold);
+      color: var(--foreground);
+      margin-bottom: var(--space-2);
+    }
+
+    .login-subtitle {
+      font-size: var(--font-size-sm);
+      color: var(--muted);
+    }
+
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-5);
+    }
+
+    .login-form .form-group {
+      gap: var(--space-2);
+    }
+
+    .login-form .form-label {
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-medium);
+      color: var(--foreground-secondary);
+    }
+
+    .login-form .form-input {
+      padding: var(--space-3) var(--space-4);
+      font-size: var(--font-size-base);
+    }
+
+    .login-btn {
+      margin-top: var(--space-2);
+      padding: var(--space-4);
+      font-size: var(--font-size-base);
+      font-weight: var(--font-weight-semibold);
+    }
+
+    .login-btn .spinner {
+      display: none;
+    }
+
+    .login-btn.loading .spinner {
+      display: block;
+    }
+
+    .login-btn.loading .btn-text {
+      opacity: 0;
+    }
+
+    .login-footer {
+      margin-top: var(--space-6);
+      text-align: center;
+    }
+
+    .login-footer-text {
+      font-size: var(--font-size-xs);
+      color: var(--muted);
+    }
+
+    .login-footer-link {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .login-footer-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Error state */
+    .login-card.shake {
+      animation: shake 0.5s var(--ease-in-out);
+    }
+
+    .login-error {
+      display: none;
+      margin-bottom: var(--space-4);
+    }
+
+    .login-error.show {
+      display: flex;
+      animation: fadeInUp 0.3s var(--ease-out);
+    }
+
+    /* Password visibility toggle */
+    .password-wrapper {
+      position: relative;
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: var(--space-3);
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      padding: var(--space-1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .password-toggle:hover {
+      color: var(--foreground);
+    }
+
+    .password-toggle .icon-hide {
+      display: none;
+    }
+
+    .password-toggle.visible .icon-show {
+      display: none;
+    }
+
+    .password-toggle.visible .icon-hide {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <!-- Animated Background -->
+  <div class="background-container">
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+  </div>
+
+  <!-- Login Page -->
+  <div class="login-page">
+    <div class="login-container">
+      <div class="login-card" id="loginCard">
+        <!-- Header -->
+        <div class="login-header">
+          <img
+            src="../assets/logo-placeholder.svg"
+            alt="PAA Solutions"
+            class="login-logo"
+          >
+          <h1 class="login-title">Welcome Back</h1>
+          <p class="login-subtitle">Sign in to continue to your dashboard</p>
+        </div>
+
+        <!-- Error Alert -->
+        <div class="alert alert-error login-error" id="loginError">
+          <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <div class="alert-content">
+            <p class="alert-description" id="errorMessage">Invalid username or password</p>
+          </div>
+        </div>
+
+        <!-- Login Form -->
+        <form class="login-form" id="loginForm">
+          <div class="form-group">
+            <label class="form-label" for="username">Username</label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              class="form-input focus-ring"
+              placeholder="Enter your username"
+              autocomplete="username"
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="password">Password</label>
+            <div class="password-wrapper">
+              <input
+                type="password"
+                id="password"
+                name="password"
+                class="form-input focus-ring"
+                placeholder="Enter your password"
+                autocomplete="current-password"
+                style="padding-right: 44px;"
+                required
+              >
+              <button type="button" class="password-toggle" id="passwordToggle" aria-label="Toggle password visibility">
+                <svg class="icon icon-show" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <svg class="icon icon-hide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-full login-btn" id="loginBtn">
+            <span class="btn-text">Sign In</span>
+            <div class="spinner spinner-sm"></div>
+          </button>
+        </form>
+
+        <!-- Footer -->
+        <div class="login-footer">
+          <p class="login-footer-text">
+            Need help? Contact <a href="mailto:support@paa-solutions.com" class="login-footer-link">support@paa-solutions.com</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Brand Footer -->
+  <div class="brand-footer">
+    <a href="https://www.paa-solutions.com" target="_blank" rel="noopener">PAA Solutions</a>
+  </div>
+
+  <script>
+    // Password visibility toggle
+    const passwordToggle = document.getElementById('passwordToggle');
+    const passwordInput = document.getElementById('password');
+
+    passwordToggle.addEventListener('click', () => {
+      const isPassword = passwordInput.type === 'password';
+      passwordInput.type = isPassword ? 'text' : 'password';
+      passwordToggle.classList.toggle('visible', isPassword);
+    });
+
+    // Form submission simulation
+    const loginForm = document.getElementById('loginForm');
+    const loginBtn = document.getElementById('loginBtn');
+    const loginCard = document.getElementById('loginCard');
+    const loginError = document.getElementById('loginError');
+    const errorMessage = document.getElementById('errorMessage');
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // Reset error state
+      loginError.classList.remove('show');
+      loginCard.classList.remove('shake');
+
+      // Show loading state
+      loginBtn.classList.add('loading');
+      loginBtn.disabled = true;
+
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+
+      // Demo: successful login with specific credentials
+      if (username === 'demo' && password === 'demo123') {
+        // Navigate to modules page
+        window.location.href = 'modules.html';
+      } else {
+        // Show error
+        loginBtn.classList.remove('loading');
+        loginBtn.disabled = false;
+
+        errorMessage.textContent = 'Invalid username or password. Try demo/demo123';
+        loginError.classList.add('show');
+        loginCard.classList.add('shake');
+
+        // Remove shake class after animation
+        setTimeout(() => {
+          loginCard.classList.remove('shake');
+        }, 500);
+      }
+    });
+
+    // Remove error on input
+    document.querySelectorAll('.form-input').forEach(input => {
+      input.addEventListener('input', () => {
+        loginError.classList.remove('show');
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0a0e1a">
+  <title>Style Guide - PAA Solutions Design System</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="../styles/design-system.css">
+  <link rel="stylesheet" href="../styles/animations.css">
+  <link rel="stylesheet" href="../styles/components.css">
+
+  <style>
+    /* Documentation Specific Styles */
+    .docs-page {
+      min-height: 100vh;
+      padding-bottom: var(--space-16);
+    }
+
+    .docs-header {
+      position: sticky;
+      top: 0;
+      z-index: var(--z-sticky);
+      padding: var(--space-4) var(--space-6);
+      background: rgba(13, 17, 23, 0.9);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .docs-header-content {
+      max-width: var(--max-width-6xl);
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .docs-nav {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .docs-nav-link {
+      padding: var(--space-2) var(--space-3);
+      font-size: var(--font-size-sm);
+      color: var(--muted);
+      text-decoration: none;
+      border-radius: var(--radius-md);
+      transition: all var(--transition-normal) var(--ease-default);
+    }
+
+    .docs-nav-link:hover {
+      color: var(--foreground);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .docs-nav-link.active {
+      color: var(--primary);
+      background: rgba(74, 144, 245, 0.1);
+    }
+
+    .docs-content {
+      max-width: var(--max-width-6xl);
+      margin: 0 auto;
+      padding: var(--space-8) var(--space-6);
+    }
+
+    .docs-title {
+      font-size: var(--font-size-3xl);
+      font-weight: var(--font-weight-bold);
+      color: var(--foreground);
+      margin-bottom: var(--space-2);
+    }
+
+    .docs-subtitle {
+      font-size: var(--font-size-lg);
+      color: var(--muted);
+      margin-bottom: var(--space-10);
+    }
+
+    /* Section */
+    .docs-section {
+      margin-bottom: var(--space-12);
+    }
+
+    .section-title {
+      font-size: var(--font-size-xl);
+      font-weight: var(--font-weight-bold);
+      color: var(--foreground);
+      margin-bottom: var(--space-2);
+      padding-bottom: var(--space-2);
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .section-description {
+      font-size: var(--font-size-sm);
+      color: var(--muted);
+      margin-bottom: var(--space-6);
+    }
+
+    /* Color Palette */
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: var(--space-4);
+    }
+
+    .color-card {
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+    }
+
+    .color-swatch {
+      height: 80px;
+      display: flex;
+      align-items: flex-end;
+      padding: var(--space-2);
+    }
+
+    .color-info {
+      padding: var(--space-3);
+    }
+
+    .color-name {
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-semibold);
+      color: var(--foreground);
+      margin-bottom: var(--space-1);
+    }
+
+    .color-value {
+      font-size: var(--font-size-xs);
+      color: var(--muted);
+      font-family: monospace;
+    }
+
+    /* Gradient Display */
+    .gradient-row {
+      display: flex;
+      gap: var(--space-4);
+      margin-bottom: var(--space-4);
+      flex-wrap: wrap;
+    }
+
+    .gradient-card {
+      flex: 1;
+      min-width: 200px;
+      height: 100px;
+      border-radius: var(--radius-xl);
+      display: flex;
+      align-items: flex-end;
+      padding: var(--space-3);
+    }
+
+    .gradient-label {
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-medium);
+      color: white;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Typography Display */
+    .typography-row {
+      padding: var(--space-4);
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-xl);
+      margin-bottom: var(--space-3);
+    }
+
+    .typography-sample {
+      margin-bottom: var(--space-2);
+    }
+
+    .typography-meta {
+      display: flex;
+      gap: var(--space-4);
+      font-size: var(--font-size-xs);
+      color: var(--muted);
+    }
+
+    .typography-meta code {
+      background: rgba(255, 255, 255, 0.05);
+      padding: var(--space-1) var(--space-2);
+      border-radius: var(--radius-sm);
+      font-family: monospace;
+    }
+
+    /* Spacing Display */
+    .spacing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: var(--space-4);
+    }
+
+    .spacing-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: var(--space-4);
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-lg);
+    }
+
+    .spacing-visual {
+      width: 100%;
+      background: var(--primary);
+      border-radius: var(--radius-sm);
+      margin-bottom: var(--space-2);
+    }
+
+    .spacing-label {
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-semibold);
+      color: var(--foreground);
+    }
+
+    .spacing-value {
+      font-size: var(--font-size-xs);
+      color: var(--muted);
+      font-family: monospace;
+    }
+
+    /* Border Radius Display */
+    .radius-grid {
+      display: flex;
+      gap: var(--space-4);
+      flex-wrap: wrap;
+    }
+
+    .radius-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .radius-visual {
+      width: 60px;
+      height: 60px;
+      background: var(--gradient-primary);
+    }
+
+    .radius-label {
+      font-size: var(--font-size-xs);
+      color: var(--muted);
+      font-family: monospace;
+    }
+
+    /* Shadow Display */
+    .shadow-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: var(--space-6);
+    }
+
+    .shadow-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .shadow-visual {
+      width: 120px;
+      height: 80px;
+      background: var(--card);
+      border-radius: var(--radius-xl);
+    }
+
+    .shadow-label {
+      font-size: var(--font-size-sm);
+      color: var(--muted);
+    }
+
+    /* Code Block */
+    .code-block {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-4);
+      overflow-x: auto;
+      font-family: monospace;
+      font-size: var(--font-size-sm);
+      color: var(--foreground-secondary);
+    }
+
+    .code-block code {
+      white-space: pre;
+    }
+
+    /* Table */
+    .docs-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--font-size-sm);
+    }
+
+    .docs-table th,
+    .docs-table td {
+      padding: var(--space-3);
+      text-align: left;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .docs-table th {
+      font-weight: var(--font-weight-semibold);
+      color: var(--foreground);
+      background: var(--card);
+    }
+
+    .docs-table td {
+      color: var(--foreground-secondary);
+    }
+
+    .docs-table code {
+      background: rgba(255, 255, 255, 0.05);
+      padding: var(--space-1) var(--space-2);
+      border-radius: var(--radius-sm);
+      font-family: monospace;
+      font-size: var(--font-size-xs);
+    }
+  </style>
+</head>
+<body>
+  <!-- Animated Background -->
+  <div class="background-container">
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+  </div>
+
+  <!-- Documentation Page -->
+  <div class="docs-page">
+    <!-- Header -->
+    <header class="docs-header">
+      <div class="docs-header-content">
+        <a href="../index.html" style="display: flex; align-items: center; gap: var(--space-3); text-decoration: none; color: var(--foreground);">
+          <img src="../assets/logo-placeholder.svg" alt="PAA Solutions" style="height: 36px;">
+          <span style="font-weight: var(--font-weight-semibold);">Design System</span>
+        </a>
+        <nav class="docs-nav">
+          <a href="style-guide.html" class="docs-nav-link active">Style Guide</a>
+          <a href="components.html" class="docs-nav-link">Components</a>
+          <a href="animations.html" class="docs-nav-link">Animations</a>
+          <a href="user-flows.html" class="docs-nav-link">User Flows</a>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <main class="docs-content">
+      <h1 class="docs-title">Style Guide</h1>
+      <p class="docs-subtitle">
+        Complete visual guidelines for the PAA Solutions Chat Application design system.
+        Use these specifications to maintain consistency across all interfaces.
+      </p>
+
+      <!-- Colors Section -->
+      <section class="docs-section">
+        <h2 class="section-title">Color Palette</h2>
+        <p class="section-description">
+          The color system is built on a dark theme foundation with vibrant accent colors
+          for interactive elements and status indicators.
+        </p>
+
+        <h3 style="font-size: var(--font-size-base); font-weight: var(--font-weight-semibold); margin: var(--space-6) 0 var(--space-4);">Primary Colors</h3>
+        <div class="color-grid">
+          <div class="color-card">
+            <div class="color-swatch" style="background: #4A90F5;"></div>
+            <div class="color-info">
+              <div class="color-name">Primary</div>
+              <div class="color-value">#4A90F5</div>
+            </div>
+          </div>
+          <div class="color-card">
+            <div class="color-swatch" style="background: #C74AFF;"></div>
+            <div class="color-info">
+              <div class="color-name">Secondary</div>
+              <div class="color-value">#C74AFF</div>
+            </div>
+          </div>
+        </div>
+
+        <h3 style="font-size: var(--font-size-base); font-weight: var(--font-weight-semibold); margin: var(--space-6) 0 var(--space-4);">Background Colors</h3>
+        <div class="color-grid">
+          <div class="color-card">
+            <div class="color-swatch" style="background: #0a0e1a;"></div>
+            <div class="color-info">
+              <div class="color-name">Background</div>
+              <div class="color-value">#0a0e1a</div>
+            </div>
+          </div>
+          <div class="color-card">
+            <div class="color-swatch" style="background: #1a1f2e;"></div>
+            <div class="color-info">
+              <div class="color-name">Card</div>
+              <div class="color-value">#1a1f2e</div>
+            </div>
+          </div>
+          <div class="color-card">
+            <div class="color-swatch" style="background: #242938;"></div>
+            <div class="color-info">
+              <div class="color-name">Card Hover</div>
+              <div class="color-value">#242938</div>
+            </div>
+          </div>
+          <div class="color-card">
+            <div class="color-swatch" style="background: #2a3144;"></div>
+            <div class="color-info">
+              <div class="color-name">Border</div>
+              <div class="color-value">#2a3144</div>
+            </div>
+          </div>
+        </div>
+
+        <h3 style="font-size: var(--font-size-base); font-weight: var(--font-weight-semibold); margin: var(--space-6) 0 var(--space-4);">Text Colors</h3>
+        <div class="color-grid">
+          <div class="color-card">
+            <div class="color-swatch" style="background: #fafafa;"></div>
+            <div class="color-info">
+              <div class="color-name">Foreground</div>
+              <div class="color-value">#fafafa</div>
+            </div>
+          </div>
+          <div class="color-card">
+            <div class="color-swatch" style="background: #e5e7eb;"></div>
+            <div class="color-info">
+              <div class="color-name">Secondary</div>
+              <div class="color-value">#e5e7eb</div>
+            </div>
+          </div>
+          <div class="color-card">
+            <div class="color-swatch" style="background: #71717a;"></div>
+            <div class="color-info">
+              <div class="color-name">Muted</div>
+              <div class="color-value">#71717a</div>
+            </div>
+          </div>
+        </div>
+
+        <h3 style="font-size: var(--font-size-base); font-weight: var(--font-weight-semibold); margin: var(--space-6) 0 var(--space-4);">Status Colors</h3>
+        <div class="color-grid">
+          <div class="color-card">
+            <div class="color-swatch" style="background: #10b981;"></div>
+            <div class="color-info">
+              <div class="color-name">Success</div>
+              <div class="color-value">#10b981</div>
+            </div>
+          </div>
+          <div class="color-card">
+            <div class="color-swatch" style="background: #ef4444;"></div>
+            <div class="color-info">
+              <div class="color-name">Error</div>
+              <div class="color-value">#ef4444</div>
+            </div>
+          </div>
+          <div class="color-card">
+            <div class="color-swatch" style="background: #f59e0b;"></div>
+            <div class="color-info">
+              <div class="color-name">Warning</div>
+              <div class="color-value">#f59e0b</div>
+            </div>
+          </div>
+          <div class="color-card">
+            <div class="color-swatch" style="background: #3b82f6;"></div>
+            <div class="color-info">
+              <div class="color-name">Info</div>
+              <div class="color-value">#3b82f6</div>
+            </div>
+          </div>
+        </div>
+
+        <h3 style="font-size: var(--font-size-base); font-weight: var(--font-weight-semibold); margin: var(--space-6) 0 var(--space-4);">Gradients</h3>
+        <div class="gradient-row">
+          <div class="gradient-card" style="background: linear-gradient(135deg, #4A90F5 0%, #C74AFF 100%);">
+            <span class="gradient-label">Primary Gradient</span>
+          </div>
+          <div class="gradient-card" style="background: linear-gradient(135deg, #0a0e1a 0%, #1a1233 50%, #0f1419 100%);">
+            <span class="gradient-label">Background Gradient</span>
+          </div>
+        </div>
+
+        <h3 style="font-size: var(--font-size-base); font-weight: var(--font-weight-semibold); margin: var(--space-6) 0 var(--space-4);">Module Gradients</h3>
+        <div class="gradient-row">
+          <div class="gradient-card" style="background: linear-gradient(135deg, #22c55e 0%, #059669 100%);">
+            <span class="gradient-label">Invoice</span>
+          </div>
+          <div class="gradient-card" style="background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);">
+            <span class="gradient-label">KDR</span>
+          </div>
+          <div class="gradient-card" style="background: linear-gradient(135deg, #f97316 0%, #f59e0b 100%);">
+            <span class="gradient-label">GA</span>
+          </div>
+          <div class="gradient-card" style="background: linear-gradient(135deg, #a855f7 0%, #8b5cf6 100%);">
+            <span class="gradient-label">KDR Inv</span>
+          </div>
+          <div class="gradient-card" style="background: linear-gradient(135deg, #ec4899 0%, #f43f5e 100%);">
+            <span class="gradient-label">Sellout</span>
+          </div>
+          <div class="gradient-card" style="background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);">
+            <span class="gradient-label">Admin</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Typography Section -->
+      <section class="docs-section">
+        <h2 class="section-title">Typography</h2>
+        <p class="section-description">
+          Typography uses Inter as the primary typeface, with a carefully crafted hierarchy
+          for readability and visual consistency.
+        </p>
+
+        <div class="typography-row">
+          <div class="typography-sample" style="font-size: 1.875rem; font-weight: 700; line-height: 1.25;">
+            Display / H1 - Bold 30px
+          </div>
+          <div class="typography-meta">
+            <span>Size: <code>1.875rem</code></span>
+            <span>Weight: <code>700</code></span>
+            <span>Line Height: <code>1.25</code></span>
+          </div>
+        </div>
+
+        <div class="typography-row">
+          <div class="typography-sample" style="font-size: 1.5rem; font-weight: 700; line-height: 1.25;">
+            Heading 2 - Bold 24px
+          </div>
+          <div class="typography-meta">
+            <span>Size: <code>1.5rem</code></span>
+            <span>Weight: <code>700</code></span>
+            <span>Line Height: <code>1.25</code></span>
+          </div>
+        </div>
+
+        <div class="typography-row">
+          <div class="typography-sample" style="font-size: 1.125rem; font-weight: 600; line-height: 1.5;">
+            Heading 3 / Card Title - Semibold 18px
+          </div>
+          <div class="typography-meta">
+            <span>Size: <code>1.125rem</code></span>
+            <span>Weight: <code>600</code></span>
+            <span>Line Height: <code>1.5</code></span>
+          </div>
+        </div>
+
+        <div class="typography-row">
+          <div class="typography-sample" style="font-size: 1rem; font-weight: 400; line-height: 1.5;">
+            Body Text - Regular 16px. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+          </div>
+          <div class="typography-meta">
+            <span>Size: <code>1rem</code></span>
+            <span>Weight: <code>400</code></span>
+            <span>Line Height: <code>1.5</code></span>
+          </div>
+        </div>
+
+        <div class="typography-row">
+          <div class="typography-sample" style="font-size: 0.875rem; font-weight: 500; line-height: 1.5;">
+            Label - Medium 14px
+          </div>
+          <div class="typography-meta">
+            <span>Size: <code>0.875rem</code></span>
+            <span>Weight: <code>500</code></span>
+            <span>Line Height: <code>1.5</code></span>
+          </div>
+        </div>
+
+        <div class="typography-row">
+          <div class="typography-sample" style="font-size: 0.75rem; font-weight: 400; line-height: 1.5; color: var(--muted);">
+            Caption / Timestamp - Regular 12px
+          </div>
+          <div class="typography-meta">
+            <span>Size: <code>0.75rem</code></span>
+            <span>Weight: <code>400</code></span>
+            <span>Line Height: <code>1.5</code></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Spacing Section -->
+      <section class="docs-section">
+        <h2 class="section-title">Spacing Scale</h2>
+        <p class="section-description">
+          Consistent spacing using a 4px base unit. All spacing values are multiples of 4px.
+        </p>
+
+        <div class="spacing-grid">
+          <div class="spacing-item">
+            <div class="spacing-visual" style="height: 4px;"></div>
+            <span class="spacing-label">space-1</span>
+            <span class="spacing-value">4px</span>
+          </div>
+          <div class="spacing-item">
+            <div class="spacing-visual" style="height: 8px;"></div>
+            <span class="spacing-label">space-2</span>
+            <span class="spacing-value">8px</span>
+          </div>
+          <div class="spacing-item">
+            <div class="spacing-visual" style="height: 12px;"></div>
+            <span class="spacing-label">space-3</span>
+            <span class="spacing-value">12px</span>
+          </div>
+          <div class="spacing-item">
+            <div class="spacing-visual" style="height: 16px;"></div>
+            <span class="spacing-label">space-4</span>
+            <span class="spacing-value">16px</span>
+          </div>
+          <div class="spacing-item">
+            <div class="spacing-visual" style="height: 24px;"></div>
+            <span class="spacing-label">space-6</span>
+            <span class="spacing-value">24px</span>
+          </div>
+          <div class="spacing-item">
+            <div class="spacing-visual" style="height: 32px;"></div>
+            <span class="spacing-label">space-8</span>
+            <span class="spacing-value">32px</span>
+          </div>
+          <div class="spacing-item">
+            <div class="spacing-visual" style="height: 48px;"></div>
+            <span class="spacing-label">space-12</span>
+            <span class="spacing-value">48px</span>
+          </div>
+          <div class="spacing-item">
+            <div class="spacing-visual" style="height: 64px;"></div>
+            <span class="spacing-label">space-16</span>
+            <span class="spacing-value">64px</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Border Radius Section -->
+      <section class="docs-section">
+        <h2 class="section-title">Border Radius</h2>
+        <p class="section-description">
+          Consistent rounded corners for various UI elements.
+        </p>
+
+        <div class="radius-grid">
+          <div class="radius-item">
+            <div class="radius-visual" style="border-radius: 4px;"></div>
+            <span class="radius-label">sm - 4px</span>
+          </div>
+          <div class="radius-item">
+            <div class="radius-visual" style="border-radius: 6px;"></div>
+            <span class="radius-label">md - 6px</span>
+          </div>
+          <div class="radius-item">
+            <div class="radius-visual" style="border-radius: 8px;"></div>
+            <span class="radius-label">lg - 8px</span>
+          </div>
+          <div class="radius-item">
+            <div class="radius-visual" style="border-radius: 12px;"></div>
+            <span class="radius-label">xl - 12px</span>
+          </div>
+          <div class="radius-item">
+            <div class="radius-visual" style="border-radius: 16px;"></div>
+            <span class="radius-label">2xl - 16px</span>
+          </div>
+          <div class="radius-item">
+            <div class="radius-visual" style="border-radius: 18px;"></div>
+            <span class="radius-label">3xl - 18px</span>
+          </div>
+          <div class="radius-item">
+            <div class="radius-visual" style="border-radius: 9999px;"></div>
+            <span class="radius-label">full</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Shadows Section -->
+      <section class="docs-section">
+        <h2 class="section-title">Shadows</h2>
+        <p class="section-description">
+          Elevation system using box shadows for depth and hierarchy.
+        </p>
+
+        <div class="shadow-grid">
+          <div class="shadow-item">
+            <div class="shadow-visual" style="box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);"></div>
+            <span class="shadow-label">shadow-sm</span>
+          </div>
+          <div class="shadow-item">
+            <div class="shadow-visual" style="box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);"></div>
+            <span class="shadow-label">shadow-md</span>
+          </div>
+          <div class="shadow-item">
+            <div class="shadow-visual" style="box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);"></div>
+            <span class="shadow-label">shadow-lg</span>
+          </div>
+          <div class="shadow-item">
+            <div class="shadow-visual" style="box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);"></div>
+            <span class="shadow-label">shadow-xl</span>
+          </div>
+          <div class="shadow-item">
+            <div class="shadow-visual" style="box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);"></div>
+            <span class="shadow-label">shadow-2xl</span>
+          </div>
+          <div class="shadow-item">
+            <div class="shadow-visual" style="box-shadow: 0 10px 25px -5px rgba(74, 144, 245, 0.2);"></div>
+            <span class="shadow-label">shadow-primary</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Breakpoints Section -->
+      <section class="docs-section">
+        <h2 class="section-title">Responsive Breakpoints</h2>
+        <p class="section-description">
+          Mobile-first responsive design breakpoints.
+        </p>
+
+        <table class="docs-table">
+          <thead>
+            <tr>
+              <th>Breakpoint</th>
+              <th>Minimum Width</th>
+              <th>CSS Prefix</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Mobile</td>
+              <td><code>0px</code></td>
+              <td><code>default</code></td>
+              <td>Base styles (mobile-first)</td>
+            </tr>
+            <tr>
+              <td>Small (sm)</td>
+              <td><code>640px</code></td>
+              <td><code>sm:</code></td>
+              <td>Large phones, small tablets</td>
+            </tr>
+            <tr>
+              <td>Medium (md)</td>
+              <td><code>768px</code></td>
+              <td><code>md:</code></td>
+              <td>Tablets</td>
+            </tr>
+            <tr>
+              <td>Large (lg)</td>
+              <td><code>1024px</code></td>
+              <td><code>lg:</code></td>
+              <td>Laptops, desktops</td>
+            </tr>
+            <tr>
+              <td>Extra Large (xl)</td>
+              <td><code>1280px</code></td>
+              <td><code>xl:</code></td>
+              <td>Large desktops</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- CSS Variables Reference -->
+      <section class="docs-section">
+        <h2 class="section-title">CSS Variables Reference</h2>
+        <p class="section-description">
+          All design tokens are available as CSS custom properties.
+        </p>
+
+        <div class="code-block">
+          <code>/* Import in your CSS */
+@import 'design-system.css';
+
+/* Usage */
+.my-component {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-4);
+  color: var(--foreground);
+  transition: all var(--transition-normal) var(--ease-default);
+}
+
+.my-component:hover {
+  background: var(--card-hover);
+  box-shadow: var(--shadow-lg);
+}</code>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Brand Footer -->
+  <div class="brand-footer">
+    <a href="https://www.paa-solutions.com" target="_blank" rel="noopener">PAA Solutions</a>
+  </div>
+</body>
+</html>
