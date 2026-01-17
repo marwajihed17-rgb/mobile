@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { AdminClient } from './admin-client';
-import type { Profile, ModuleAccess, UserSettings } from '@/types/database';
+import type { Profile, SalamEntry, MobilyEntry } from '@/types/database';
 
 export default async function AdminPage() {
   const supabase = createClient();
@@ -23,46 +23,51 @@ export default async function AdminPage() {
     redirect('/login');
   }
 
+  const profileData = currentProfile as Profile;
+
   // Check if user is admin
-  const isAdmin = currentProfile.role === 'admin' || currentProfile.role === 'super_admin';
+  const isAdmin = profileData.role === 'admin' || profileData.role === 'super_admin';
 
   if (!isAdmin) {
     redirect('/dashboard');
   }
 
-  // Get all users
+  // Get all profiles for user management
   const { data: profiles } = await supabase
     .from('profiles')
     .select('*')
     .order('created_at', { ascending: false });
 
-  // Get all module access records
-  const { data: allModuleAccess } = await supabase
-    .from('module_access')
-    .select('*');
+  // Get all salam entries
+  const { data: salamEntries } = await supabase
+    .from('salam_entries')
+    .select('*')
+    .order('created_at', { ascending: false });
 
-  // Get all user settings
-  const { data: allSettings } = await supabase
-    .from('user_settings')
-    .select('*');
+  // Get all mobily entries
+  const { data: mobilyEntries } = await supabase
+    .from('mobily_entries')
+    .select('*')
+    .order('created_at', { ascending: false });
 
   // Calculate stats
   const totalUsers = profiles?.length || 0;
-  const activeUsers = profiles?.filter(p => p.status === 'active').length || 0;
-  const adminCount = profiles?.filter(p => p.role === 'admin' || p.role === 'super_admin').length || 0;
-  const disabledUsers = profiles?.filter(p => p.status !== 'active').length || 0;
+  const profilesList = (profiles || []) as Profile[];
+  const adminCount = profilesList.filter(p => p.role === 'admin' || p.role === 'super_admin').length || 0;
+  const salamCount = salamEntries?.length || 0;
+  const mobilyCount = mobilyEntries?.length || 0;
 
   return (
     <AdminClient
-      currentProfile={currentProfile as Profile}
-      profiles={(profiles || []) as Profile[]}
-      allModuleAccess={(allModuleAccess || []) as ModuleAccess[]}
-      allSettings={(allSettings || []) as UserSettings[]}
+      currentProfile={profileData}
+      profiles={profilesList}
+      salamEntries={(salamEntries || []) as SalamEntry[]}
+      mobilyEntries={(mobilyEntries || []) as MobilyEntry[]}
       stats={{
         totalUsers,
-        activeUsers,
         adminCount,
-        disabledUsers,
+        salamCount,
+        mobilyCount,
       }}
     />
   );
