@@ -11,7 +11,6 @@ import { getSupabaseClient } from '@/lib/supabase/client';
 
 export default function ResetPasswordPage() {
   const router = useRouter();
-  const supabase = getSupabaseClient();
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -24,12 +23,13 @@ export default function ResetPasswordPage() {
   // Check if user has a valid recovery session
   useEffect(() => {
     const checkSession = async () => {
+      const supabase = getSupabaseClient();
       const { data: { session } } = await supabase.auth.getSession();
       setIsValidSession(!!session);
       setIsChecking(false);
     };
     checkSession();
-  }, [supabase]);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { DashboardClient } from './dashboard-client';
-import type { Profile, ModuleAccess } from '@/types/database';
+import type { Profile, SalamEntry, MobilyEntry } from '@/types/database';
 
 export default async function DashboardPage() {
   const supabase = createClient();
@@ -24,16 +24,30 @@ export default async function DashboardPage() {
     redirect('/login');
   }
 
-  // Get module access
-  const { data: modules } = await supabase
-    .from('module_access')
+  // Redirect admin to admin dashboard
+  if (profile.role === 'admin' || profile.role === 'super_admin') {
+    redirect('/admin');
+  }
+
+  // Get recent salam entries (last 10)
+  const { data: salamEntries } = await supabase
+    .from('salam_entries')
     .select('*')
-    .eq('user_id', user.id);
+    .order('created_at', { ascending: false })
+    .limit(10);
+
+  // Get recent mobily entries (last 10)
+  const { data: mobilyEntries } = await supabase
+    .from('mobily_entries')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(10);
 
   return (
     <DashboardClient
       profile={profile as Profile}
-      modules={(modules || []) as ModuleAccess[]}
+      recentSalamEntries={(salamEntries || []) as SalamEntry[]}
+      recentMobilyEntries={(mobilyEntries || []) as MobilyEntry[]}
     />
   );
 }

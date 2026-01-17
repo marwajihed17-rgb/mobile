@@ -14,13 +14,25 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- ============================================
 
 -- User role enum
-CREATE TYPE user_role AS ENUM ('user', 'admin', 'super_admin');
+DO $$ BEGIN
+    CREATE TYPE user_role AS ENUM ('user', 'admin', 'super_admin');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- User status enum
-CREATE TYPE user_status AS ENUM ('active', 'inactive', 'suspended');
+DO $$ BEGIN
+    CREATE TYPE user_status AS ENUM ('active', 'inactive', 'suspended');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- Module type enum
-CREATE TYPE module_type AS ENUM ('invoice', 'kdr', 'ga', 'kdr_inv', 'kdr_sellout');
+DO $$ BEGIN
+    CREATE TYPE module_type AS ENUM ('invoice', 'kdr', 'ga', 'kdr_inv', 'kdr_sellout');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- ============================================
 -- TABLES
@@ -96,6 +108,48 @@ CREATE TABLE IF NOT EXISTS public.audit_logs (
 );
 
 -- ============================================
+-- NEW TABLES: SALAM AND MOBILY PROJECTS
+-- ============================================
+
+-- Salam Project Entries Table
+CREATE TABLE IF NOT EXISTS public.salam_entries (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    identity_number TEXT NOT NULL,
+    phone_number TEXT NOT NULL,
+    sim_number TEXT NOT NULL,
+    device_number TEXT NOT NULL,
+    nationality TEXT NOT NULL,
+    register_number TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    UNIQUE(identity_number)
+);
+
+-- Mobily Project Entries Table
+CREATE TABLE IF NOT EXISTS public.mobily_entries (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    identity_number TEXT NOT NULL,
+    nationality TEXT NOT NULL,
+    phone_number TEXT NOT NULL,
+    birth_date TEXT NOT NULL,
+    identity_expiry_date TEXT NOT NULL,
+    package TEXT NOT NULL,
+    email TEXT NOT NULL,
+    sim_number TEXT NOT NULL,
+    device_number TEXT NOT NULL,
+    city TEXT NOT NULL,
+    district TEXT NOT NULL,
+    register_number TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    UNIQUE(identity_number)
+);
+
+-- ============================================
 -- INDEXES
 -- ============================================
 
@@ -121,6 +175,16 @@ CREATE INDEX IF NOT EXISTS idx_file_uploads_module_type ON public.file_uploads(m
 CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON public.audit_logs(user_id);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON public.audit_logs(action);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON public.audit_logs(created_at DESC);
+
+-- Salam entries indexes
+CREATE INDEX IF NOT EXISTS idx_salam_entries_user_id ON public.salam_entries(user_id);
+CREATE INDEX IF NOT EXISTS idx_salam_entries_identity_number ON public.salam_entries(identity_number);
+CREATE INDEX IF NOT EXISTS idx_salam_entries_created_at ON public.salam_entries(created_at DESC);
+
+-- Mobily entries indexes
+CREATE INDEX IF NOT EXISTS idx_mobily_entries_user_id ON public.mobily_entries(user_id);
+CREATE INDEX IF NOT EXISTS idx_mobily_entries_identity_number ON public.mobily_entries(identity_number);
+CREATE INDEX IF NOT EXISTS idx_mobily_entries_created_at ON public.mobily_entries(created_at DESC);
 
 -- ============================================
 -- FUNCTIONS
@@ -225,6 +289,28 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Function to check if Salam entry exists
+CREATE OR REPLACE FUNCTION public.check_salam_exists(p_identity_number TEXT)
+RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN EXISTS (
+        SELECT 1 FROM public.salam_entries
+        WHERE identity_number = p_identity_number
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to check if Mobily entry exists
+CREATE OR REPLACE FUNCTION public.check_mobily_exists(p_identity_number TEXT)
+RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN EXISTS (
+        SELECT 1 FROM public.mobily_entries
+        WHERE identity_number = p_identity_number
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- ============================================
 -- TRIGGERS
 -- ============================================
@@ -250,6 +336,20 @@ CREATE TRIGGER update_user_settings_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION public.update_updated_at_column();
 
+-- Trigger to auto-update updated_at on salam_entries
+DROP TRIGGER IF EXISTS update_salam_entries_updated_at ON public.salam_entries;
+CREATE TRIGGER update_salam_entries_updated_at
+    BEFORE UPDATE ON public.salam_entries
+    FOR EACH ROW
+    EXECUTE FUNCTION public.update_updated_at_column();
+
+-- Trigger to auto-update updated_at on mobily_entries
+DROP TRIGGER IF EXISTS update_mobily_entries_updated_at ON public.mobily_entries;
+CREATE TRIGGER update_mobily_entries_updated_at
+    BEFORE UPDATE ON public.mobily_entries
+    FOR EACH ROW
+    EXECUTE FUNCTION public.update_updated_at_column();
+
 -- Trigger to handle new user signups
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
@@ -268,10 +368,19 @@ ALTER TABLE public.user_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.file_uploads ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.salam_entries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.mobily_entries ENABLE ROW LEVEL SECURITY;
 
 -- ============================================
 -- PROFILES POLICIES
 -- ============================================
+
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Admins can view all profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Super admins can update any profile" ON public.profiles;
+DROP POLICY IF EXISTS "System inserts profiles" ON public.profiles;
 
 -- Users can view their own profile
 CREATE POLICY "Users can view own profile"
@@ -289,7 +398,6 @@ CREATE POLICY "Users can update own profile"
     USING (auth.uid() = id)
     WITH CHECK (
         auth.uid() = id
-        -- Prevent users from changing their own role/status
         AND (
             role = (SELECT role FROM public.profiles WHERE id = auth.uid())
             OR public.is_super_admin(auth.uid())
@@ -309,6 +417,12 @@ CREATE POLICY "System inserts profiles"
 -- ============================================
 -- MODULE ACCESS POLICIES
 -- ============================================
+
+DROP POLICY IF EXISTS "Users can view own module access" ON public.module_access;
+DROP POLICY IF EXISTS "Admins can view all module access" ON public.module_access;
+DROP POLICY IF EXISTS "Admins can insert module access" ON public.module_access;
+DROP POLICY IF EXISTS "Admins can update module access" ON public.module_access;
+DROP POLICY IF EXISTS "Admins can delete module access" ON public.module_access;
 
 -- Users can view their own module access
 CREATE POLICY "Users can view own module access"
@@ -339,6 +453,12 @@ CREATE POLICY "Admins can delete module access"
 -- USER SETTINGS POLICIES
 -- ============================================
 
+DROP POLICY IF EXISTS "Users can view own settings" ON public.user_settings;
+DROP POLICY IF EXISTS "Admins can view all user settings" ON public.user_settings;
+DROP POLICY IF EXISTS "Users can update own settings" ON public.user_settings;
+DROP POLICY IF EXISTS "Admins can update any user settings" ON public.user_settings;
+DROP POLICY IF EXISTS "System inserts settings" ON public.user_settings;
+
 -- Users can view their own settings
 CREATE POLICY "Users can view own settings"
     ON public.user_settings FOR SELECT
@@ -355,7 +475,6 @@ CREATE POLICY "Users can update own settings"
     USING (auth.uid() = user_id)
     WITH CHECK (
         auth.uid() = user_id
-        -- Prevent users from granting themselves admin privileges
         AND (
             admin_privileges = (SELECT admin_privileges FROM public.user_settings WHERE user_id = auth.uid())
             OR public.is_admin(auth.uid())
@@ -376,6 +495,10 @@ CREATE POLICY "System inserts settings"
 -- CHAT MESSAGES POLICIES
 -- ============================================
 
+DROP POLICY IF EXISTS "Users can view own messages" ON public.chat_messages;
+DROP POLICY IF EXISTS "Users can insert own messages" ON public.chat_messages;
+DROP POLICY IF EXISTS "Users can delete own messages" ON public.chat_messages;
+
 -- Users can view their own messages
 CREATE POLICY "Users can view own messages"
     ON public.chat_messages FOR SELECT
@@ -394,6 +517,10 @@ CREATE POLICY "Users can delete own messages"
 -- ============================================
 -- FILE UPLOADS POLICIES
 -- ============================================
+
+DROP POLICY IF EXISTS "Users can view own uploads" ON public.file_uploads;
+DROP POLICY IF EXISTS "Users can insert own uploads" ON public.file_uploads;
+DROP POLICY IF EXISTS "Users can delete own uploads" ON public.file_uploads;
 
 -- Users can view their own uploads
 CREATE POLICY "Users can view own uploads"
@@ -414,6 +541,9 @@ CREATE POLICY "Users can delete own uploads"
 -- AUDIT LOGS POLICIES
 -- ============================================
 
+DROP POLICY IF EXISTS "Admins can view audit logs" ON public.audit_logs;
+DROP POLICY IF EXISTS "System can insert audit logs" ON public.audit_logs;
+
 -- Only admins can view audit logs
 CREATE POLICY "Admins can view audit logs"
     ON public.audit_logs FOR SELECT
@@ -423,6 +553,54 @@ CREATE POLICY "Admins can view audit logs"
 CREATE POLICY "System can insert audit logs"
     ON public.audit_logs FOR INSERT
     WITH CHECK (true);
+
+-- ============================================
+-- SALAM ENTRIES POLICIES
+-- ============================================
+
+-- Users can view all salam entries
+CREATE POLICY "Users can view salam entries"
+    ON public.salam_entries FOR SELECT
+    USING (auth.uid() IS NOT NULL);
+
+-- Users can insert salam entries
+CREATE POLICY "Users can insert salam entries"
+    ON public.salam_entries FOR INSERT
+    WITH CHECK (auth.uid() IS NOT NULL);
+
+-- Admins can update salam entries
+CREATE POLICY "Admins can update salam entries"
+    ON public.salam_entries FOR UPDATE
+    USING (public.is_admin(auth.uid()));
+
+-- Admins can delete salam entries
+CREATE POLICY "Admins can delete salam entries"
+    ON public.salam_entries FOR DELETE
+    USING (public.is_admin(auth.uid()));
+
+-- ============================================
+-- MOBILY ENTRIES POLICIES
+-- ============================================
+
+-- Users can view all mobily entries
+CREATE POLICY "Users can view mobily entries"
+    ON public.mobily_entries FOR SELECT
+    USING (auth.uid() IS NOT NULL);
+
+-- Users can insert mobily entries
+CREATE POLICY "Users can insert mobily entries"
+    ON public.mobily_entries FOR INSERT
+    WITH CHECK (auth.uid() IS NOT NULL);
+
+-- Admins can update mobily entries
+CREATE POLICY "Admins can update mobily entries"
+    ON public.mobily_entries FOR UPDATE
+    USING (public.is_admin(auth.uid()));
+
+-- Admins can delete mobily entries
+CREATE POLICY "Admins can delete mobily entries"
+    ON public.mobily_entries FOR DELETE
+    USING (public.is_admin(auth.uid()));
 
 -- ============================================
 -- STORAGE BUCKETS
@@ -443,6 +621,7 @@ ON CONFLICT (id) DO NOTHING;
 -- ============================================
 
 -- Users can upload to their own folder in uploads bucket
+DROP POLICY IF EXISTS "Users can upload own files" ON storage.objects;
 CREATE POLICY "Users can upload own files"
     ON storage.objects FOR INSERT
     WITH CHECK (
@@ -451,6 +630,7 @@ CREATE POLICY "Users can upload own files"
     );
 
 -- Users can view their own uploaded files
+DROP POLICY IF EXISTS "Users can view own files" ON storage.objects;
 CREATE POLICY "Users can view own files"
     ON storage.objects FOR SELECT
     USING (
@@ -459,6 +639,7 @@ CREATE POLICY "Users can view own files"
     );
 
 -- Users can delete their own files
+DROP POLICY IF EXISTS "Users can delete own files" ON storage.objects;
 CREATE POLICY "Users can delete own files"
     ON storage.objects FOR DELETE
     USING (
@@ -467,6 +648,7 @@ CREATE POLICY "Users can delete own files"
     );
 
 -- Users can upload their own avatar
+DROP POLICY IF EXISTS "Users can upload own avatar" ON storage.objects;
 CREATE POLICY "Users can upload own avatar"
     ON storage.objects FOR INSERT
     WITH CHECK (
@@ -475,11 +657,13 @@ CREATE POLICY "Users can upload own avatar"
     );
 
 -- Anyone can view avatars (public bucket)
+DROP POLICY IF EXISTS "Anyone can view avatars" ON storage.objects;
 CREATE POLICY "Anyone can view avatars"
     ON storage.objects FOR SELECT
     USING (bucket_id = 'avatars');
 
 -- Users can update their own avatar
+DROP POLICY IF EXISTS "Users can update own avatar" ON storage.objects;
 CREATE POLICY "Users can update own avatar"
     ON storage.objects FOR UPDATE
     USING (
@@ -488,6 +672,7 @@ CREATE POLICY "Users can update own avatar"
     );
 
 -- Users can delete their own avatar
+DROP POLICY IF EXISTS "Users can delete own avatar" ON storage.objects;
 CREATE POLICY "Users can delete own avatar"
     ON storage.objects FOR DELETE
     USING (

@@ -65,6 +65,42 @@ export interface AuditLog {
   created_at: string;
 }
 
+// Salam Project Entry
+export interface SalamEntry {
+  id: string;
+  user_id: string;
+  name: string;
+  identity_number: string;
+  phone_number: string;
+  sim_number: string;
+  device_number: string;
+  nationality: string;
+  register_number: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Mobily Project Entry
+export interface MobilyEntry {
+  id: string;
+  user_id: string;
+  name: string;
+  identity_number: string;
+  nationality: string;
+  phone_number: string;
+  birth_date: string;
+  identity_expiry_date: string;
+  package: string;
+  email: string;
+  sim_number: string;
+  device_number: string;
+  city: string;
+  district: string;
+  register_number: string;
+  created_at: string;
+  updated_at: string;
+}
+
 // Database type for Supabase client
 export interface Database {
   public: {
@@ -99,6 +135,16 @@ export interface Database {
         Insert: Omit<AuditLog, 'id' | 'created_at'>;
         Update: never;
       };
+      salam_entries: {
+        Row: SalamEntry;
+        Insert: Omit<SalamEntry, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<SalamEntry, 'id' | 'created_at'>>;
+      };
+      mobily_entries: {
+        Row: MobilyEntry;
+        Insert: Omit<MobilyEntry, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<MobilyEntry, 'id' | 'created_at'>>;
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -109,6 +155,14 @@ export interface Database {
       get_user_modules: {
         Args: { user_id: string };
         Returns: ModuleType[];
+      };
+      check_salam_exists: {
+        Args: { p_identity_number: string };
+        Returns: boolean;
+      };
+      check_mobily_exists: {
+        Args: { p_identity_number: string };
+        Returns: boolean;
       };
     };
     Enums: {
