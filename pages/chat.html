@@ -16,6 +16,9 @@
   <link rel="stylesheet" href="../styles/animations.css">
   <link rel="stylesheet" href="../styles/components.css">
 
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
     /* Chat Page Specific Styles */
     .chat-page {
@@ -621,7 +624,7 @@
               </svg>
               Clear Chat
             </div>
-            <div class="dropdown-item danger" onclick="window.location.href='login.html'">
+            <div class="dropdown-item danger" onclick="handleLogout()">
               <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                 <polyline points="16,17 21,12 16,7"></polyline>
@@ -1023,6 +1026,22 @@ Would you like me to proceed with processing this invoice?
       sampleMessages.style.flexDirection = 'column';
       sampleMessages.style.gap = 'var(--space-4)';
     }, 1000);
+  </script>
+
+  <!-- Supabase Config and Auth -->
+  <script src="../js/supabase-config.js"></script>
+  <script src="../js/auth.js"></script>
+
+  <script>
+    // Require authentication - redirect to login if not authenticated
+    (async function() {
+      await Auth.requireAuth('login.html');
+    })();
+
+    // Logout handler
+    async function handleLogout() {
+      await Auth.handleLogout('login.html');
+    }
   </script>
 </body>
 </html>
