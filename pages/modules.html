@@ -16,6 +16,9 @@
   <link rel="stylesheet" href="../styles/animations.css">
   <link rel="stylesheet" href="../styles/components.css">
 
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
     /* Modules Page Specific Styles */
     .modules-page {
@@ -164,12 +167,12 @@
           <div class="header-user-info">
             <div class="online-indicator"></div>
             <div>
-              <div class="header-username">John Doe</div>
-              <div class="header-role">Administrator</div>
+              <div class="header-username" id="userName">Loading...</div>
+              <div class="header-role" id="userRole">User</div>
             </div>
-            <div class="avatar">JD</div>
+            <div class="avatar" id="userAvatar">--</div>
           </div>
-          <button class="logout-btn" onclick="window.location.href='login.html'">
+          <button class="logout-btn" id="logoutBtn">
             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
               <polyline points="16,17 21,12 16,7"></polyline>
@@ -185,7 +188,7 @@
     <main class="modules-content">
       <!-- Header Section -->
       <div class="modules-header">
-        <p class="modules-welcome">Welcome back, John!</p>
+        <p class="modules-welcome" id="welcomeMessage">Welcome back!</p>
         <h1 class="modules-title">Select a Module</h1>
         <p class="modules-subtitle">Choose a module to start your conversation</p>
       </div>
@@ -339,7 +342,32 @@
     </div>
   </div>
 
+  <!-- Supabase Config and Auth -->
+  <script src="../js/supabase-config.js"></script>
+  <script src="../js/auth.js"></script>
+
   <script>
+    // Require authentication - redirect to login if not authenticated
+    (async function() {
+      const isAuth = await Auth.requireAuth('login.html');
+      if (isAuth) {
+        // Load user display info
+        const userInfo = await Auth.getUserDisplayInfo();
+        document.getElementById('userName').textContent = userInfo.name;
+        document.getElementById('userRole').textContent = userInfo.role;
+        document.getElementById('userAvatar').textContent = userInfo.initials;
+
+        // Update welcome message with first name
+        const firstName = userInfo.name.split(' ')[0];
+        document.getElementById('welcomeMessage').textContent = `Welcome back, ${firstName}!`;
+      }
+    })();
+
+    // Logout handler
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await Auth.handleLogout('login.html');
+    });
+
     function navigateToChat(module) {
       window.location.href = `chat.html?module=${module}`;
     }

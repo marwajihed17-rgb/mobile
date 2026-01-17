@@ -16,6 +16,9 @@
   <link rel="stylesheet" href="../styles/animations.css">
   <link rel="stylesheet" href="../styles/components.css">
 
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
     /* Login Page Specific Styles */
     .login-page {
@@ -212,14 +215,14 @@
         <!-- Login Form -->
         <form class="login-form" id="loginForm">
           <div class="form-group">
-            <label class="form-label" for="username">Username</label>
+            <label class="form-label" for="email">Email</label>
             <input
-              type="text"
-              id="username"
-              name="username"
+              type="email"
+              id="email"
+              name="email"
               class="form-input focus-ring"
-              placeholder="Enter your username"
-              autocomplete="username"
+              placeholder="Enter your email"
+              autocomplete="email"
               required
             >
           </div>
@@ -271,7 +274,16 @@
     <a href="https://www.paa-solutions.com" target="_blank" rel="noopener">PAA Solutions</a>
   </div>
 
+  <!-- Supabase Config and Auth -->
+  <script src="../js/supabase-config.js"></script>
+  <script src="../js/auth.js"></script>
+
   <script>
+    // Check if already authenticated, redirect to dashboard
+    (async function() {
+      await Auth.redirectIfAuthenticated('modules.html');
+    })();
+
     // Password visibility toggle
     const passwordToggle = document.getElementById('passwordToggle');
     const passwordInput = document.getElementById('password');
@@ -282,7 +294,7 @@
       passwordToggle.classList.toggle('visible', isPassword);
     });
 
-    // Form submission simulation
+    // Form submission with Supabase authentication
     const loginForm = document.getElementById('loginForm');
     const loginBtn = document.getElementById('loginBtn');
     const loginCard = document.getElementById('loginCard');
@@ -300,22 +312,33 @@
       loginBtn.classList.add('loading');
       loginBtn.disabled = true;
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      const username = document.getElementById('username').value;
+      const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
 
-      // Demo: successful login with specific credentials
-      if (username === 'demo' && password === 'demo123') {
-        // Navigate to modules page
+      // Authenticate with Supabase
+      const { user, error } = await Auth.signIn(email, password);
+
+      if (user) {
+        // Successful login - redirect to dashboard
         window.location.href = 'modules.html';
       } else {
         // Show error
         loginBtn.classList.remove('loading');
         loginBtn.disabled = false;
 
-        errorMessage.textContent = 'Invalid username or password. Try demo/demo123';
+        // Display appropriate error message
+        let displayError = 'Invalid email or password. Please try again.';
+        if (error && error.message) {
+          if (error.message.includes('Invalid login credentials')) {
+            displayError = 'Invalid email or password. Please try again.';
+          } else if (error.message.includes('Email not confirmed')) {
+            displayError = 'Please confirm your email before signing in.';
+          } else {
+            displayError = error.message;
+          }
+        }
+
+        errorMessage.textContent = displayError;
         loginError.classList.add('show');
         loginCard.classList.add('shake');
 
