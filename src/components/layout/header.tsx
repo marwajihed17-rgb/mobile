@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { LogOut, ArrowLeft } from 'lucide-react';
+import { LogOut, ArrowRight } from 'lucide-react';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { signOut } from '@/lib/auth';
@@ -29,11 +29,13 @@ export function Header({ user, showBackButton = false, backHref = '/dashboard' }
       border-b border-card-border"
     >
       <div className="max-w-6xl mx-auto flex items-center justify-between">
+        {/* Right side in RTL (Logo and navigation) */}
         <div className="flex items-center gap-4">
           {showBackButton && (
             <Link href={backHref}>
               <Button variant="secondary" size="icon" className="w-10 h-10">
-                <ArrowLeft className="w-5 h-5" />
+                {/* Arrow points right in RTL to indicate "back" */}
+                <ArrowRight className="w-5 h-5" />
               </Button>
             </Link>
           )}
@@ -47,12 +49,13 @@ export function Header({ user, showBackButton = false, backHref = '/dashboard' }
           </Link>
         </div>
 
+        {/* Left side in RTL (User info and actions) */}
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-3">
             {/* Online indicator */}
             <div className="w-2 h-2 bg-success rounded-full animate-pulse" />
 
-            <div className="hidden sm:block text-right">
+            <div className="hidden sm:block text-start">
               <p className="text-sm font-medium text-foreground">
                 {user.fullName || user.email}
               </p>
@@ -75,7 +78,7 @@ export function Header({ user, showBackButton = false, backHref = '/dashboard' }
             className="flex items-center gap-2"
           >
             <LogOut className="w-4 h-4" />
-            <span className="hidden sm:inline">Logout</span>
+            <span className="hidden sm:inline">تسجيل الخروج</span>
           </Button>
         </div>
       </div>

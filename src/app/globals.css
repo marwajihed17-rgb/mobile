@@ -2,19 +2,162 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Base styles */
+/* ============================================
+   ARABIC FONTS - Google Fonts Import
+   ============================================ */
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@200;300;400;500;700;800;900&family=Cairo:wght@200;300;400;500;600;700;800;900&display=swap');
+
+/* ============================================
+   BASE STYLES - RTL OPTIMIZED
+   ============================================ */
 html {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   scroll-behavior: smooth;
+  /* Ensure proper text direction inheritance */
+  direction: rtl;
 }
 
 body {
   @apply bg-gradient-to-br from-background via-background-secondary to-background;
   @apply text-foreground min-h-screen;
+  /* Arabic typography optimizations */
+  font-family: 'Tajawal', 'Cairo', 'Inter', system-ui, -apple-system, sans-serif;
+  /* Improved line height for Arabic text */
+  line-height: 1.8;
+  /* Better letter spacing for Arabic */
+  letter-spacing: 0.01em;
 }
+
+/* ============================================
+   RTL UTILITY CLASSES
+   ============================================ */
+
+/* Logical properties for RTL-aware positioning */
+.start-0 { inset-inline-start: 0; }
+.start-1 { inset-inline-start: 0.25rem; }
+.start-2 { inset-inline-start: 0.5rem; }
+.start-3 { inset-inline-start: 0.75rem; }
+.start-4 { inset-inline-start: 1rem; }
+.start-auto { inset-inline-start: auto; }
+
+.end-0 { inset-inline-end: 0; }
+.end-1 { inset-inline-end: 0.25rem; }
+.end-2 { inset-inline-end: 0.5rem; }
+.end-3 { inset-inline-end: 0.75rem; }
+.end-4 { inset-inline-end: 1rem; }
+.end-auto { inset-inline-end: auto; }
+
+/* RTL-aware margins */
+.ms-0 { margin-inline-start: 0; }
+.ms-1 { margin-inline-start: 0.25rem; }
+.ms-2 { margin-inline-start: 0.5rem; }
+.ms-3 { margin-inline-start: 0.75rem; }
+.ms-4 { margin-inline-start: 1rem; }
+.ms-auto { margin-inline-start: auto; }
+
+.me-0 { margin-inline-end: 0; }
+.me-1 { margin-inline-end: 0.25rem; }
+.me-2 { margin-inline-end: 0.5rem; }
+.me-3 { margin-inline-end: 0.75rem; }
+.me-4 { margin-inline-end: 1rem; }
+.me-auto { margin-inline-end: auto; }
+
+/* RTL-aware padding */
+.ps-0 { padding-inline-start: 0; }
+.ps-1 { padding-inline-start: 0.25rem; }
+.ps-2 { padding-inline-start: 0.5rem; }
+.ps-3 { padding-inline-start: 0.75rem; }
+.ps-4 { padding-inline-start: 1rem; }
+.ps-6 { padding-inline-start: 1.5rem; }
+.ps-8 { padding-inline-start: 2rem; }
+.ps-10 { padding-inline-start: 2.5rem; }
+
+.pe-0 { padding-inline-end: 0; }
+.pe-1 { padding-inline-end: 0.25rem; }
+.pe-2 { padding-inline-end: 0.5rem; }
+.pe-3 { padding-inline-end: 0.75rem; }
+.pe-4 { padding-inline-end: 1rem; }
+.pe-6 { padding-inline-end: 1.5rem; }
+.pe-8 { padding-inline-end: 2rem; }
+.pe-10 { padding-inline-end: 2.5rem; }
+
+/* RTL-aware text alignment */
+.text-start { text-align: start; }
+.text-end { text-align: end; }
+
+/* RTL-aware border radius */
+.rounded-s { border-start-start-radius: 0.25rem; border-end-start-radius: 0.25rem; }
+.rounded-e { border-start-end-radius: 0.25rem; border-end-end-radius: 0.25rem; }
+.rounded-ss { border-start-start-radius: 0.25rem; }
+.rounded-se { border-start-end-radius: 0.25rem; }
+.rounded-es { border-end-start-radius: 0.25rem; }
+.rounded-ee { border-end-end-radius: 0.25rem; }
+
+.rounded-ss-none { border-start-start-radius: 0; }
+.rounded-se-none { border-start-end-radius: 0; }
+.rounded-es-none { border-end-start-radius: 0; }
+.rounded-ee-none { border-end-end-radius: 0; }
+
+.rounded-ss-sm { border-start-start-radius: 0.125rem; }
+.rounded-ee-sm { border-end-end-radius: 0.125rem; }
+.rounded-se-sm { border-start-end-radius: 0.125rem; }
+.rounded-es-sm { border-end-start-radius: 0.125rem; }
+
+/* RTL-aware transforms - flip horizontal transforms for RTL */
+[dir="rtl"] .rtl\:flip-x {
+  transform: scaleX(-1);
+}
+
+/* RTL-specific translate adjustments */
+[dir="rtl"] .rtl\:-translate-x-5 {
+  --tw-translate-x: -1.25rem;
+  transform: translateX(var(--tw-translate-x));
+}
+
+[dir="rtl"] .rtl\:translate-x-5 {
+  --tw-translate-x: 1.25rem;
+  transform: translateX(var(--tw-translate-x));
+}
+
+/* ============================================
+   ARABIC TYPOGRAPHY ENHANCEMENTS
+   ============================================ */
+
+/* Arabic text specific styling */
+.arabic-text {
+  font-family: 'Tajawal', 'Cairo', sans-serif;
+  font-weight: 500;
+  line-height: 1.9;
+  letter-spacing: 0;
+}
+
+/* Heading adjustments for Arabic */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Tajawal', 'Cairo', sans-serif;
+  font-weight: 700;
+  /* Arabic headings need slightly more line height */
+  line-height: 1.5;
+}
+
+/* Input fields Arabic optimization */
+input, textarea, select {
+  font-family: 'Tajawal', 'Cairo', 'Inter', sans-serif;
+  /* Prevent text from being too cramped in Arabic */
+  line-height: 1.6;
+}
+
+/* Button text Arabic optimization */
+button {
+  font-family: 'Tajawal', 'Cairo', 'Inter', sans-serif;
+  font-weight: 500;
+}
+
+/* ============================================
+   SCROLLBAR STYLES
+   ============================================ */
 
 /* Hide scrollbar utility */
 .hide-scrollbar {
@@ -26,7 +169,7 @@ body {
   display: none;
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar - RTL positioned */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -44,12 +187,19 @@ body {
   @apply bg-muted;
 }
 
+/* ============================================
+   FOCUS STATES
+   ============================================ */
+
 /* Focus ring utility */
 .focus-ring {
   @apply focus:outline-none focus:ring-2 focus:ring-primary/30;
 }
 
-/* Animations */
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -78,6 +228,29 @@ body {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* RTL-aware slide animations */
+@keyframes slideInStart {
+  from {
+    opacity: 0;
+    transform: translateX(20px); /* Positive = from right in RTL */
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInEnd {
+  from {
+    opacity: 0;
+    transform: translateX(-20px); /* Negative = from left in RTL */
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }
 
@@ -118,7 +291,10 @@ body {
 .stagger-children > *:nth-child(7) { animation-delay: 0.3s; }
 .stagger-children > *:nth-child(8) { animation-delay: 0.35s; }
 
-/* Module gradients */
+/* ============================================
+   MODULE GRADIENTS
+   ============================================ */
+
 .gradient-invoice {
   @apply bg-gradient-to-br from-green-500 to-emerald-600;
 }
@@ -143,9 +319,153 @@ body {
   @apply bg-gradient-to-br from-amber-500 to-orange-600;
 }
 
-/* Backdrop blur fallback for older browsers */
+/* ============================================
+   BACKDROP BLUR FALLBACK
+   ============================================ */
+
 @supports not (backdrop-filter: blur(24px)) {
   .backdrop-blur-xl {
     background-color: rgba(13, 17, 23, 0.95);
   }
+}
+
+/* ============================================
+   CHAT MESSAGE RTL STYLES
+   ============================================ */
+
+/* User messages align to start (right in RTL) */
+.chat-message-user {
+  align-self: flex-start;
+  /* RTL: User messages on the right, which is start in RTL */
+}
+
+/* Bot messages align to end (left in RTL) */
+.chat-message-bot {
+  align-self: flex-end;
+  /* RTL: Bot messages on the left, which is end in RTL */
+}
+
+/* Message bubble border radius for RTL */
+.chat-message-user .message-bubble {
+  border-start-start-radius: 1.125rem;
+  border-start-end-radius: 1.125rem;
+  border-end-start-radius: 0.25rem;
+  border-end-end-radius: 1.125rem;
+}
+
+.chat-message-bot .message-bubble {
+  border-start-start-radius: 1.125rem;
+  border-start-end-radius: 1.125rem;
+  border-end-start-radius: 1.125rem;
+  border-end-end-radius: 0.25rem;
+}
+
+/* ============================================
+   FORM VALIDATION STATES - RTL AWARE
+   ============================================ */
+
+.form-error-icon {
+  position: absolute;
+  inset-inline-end: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.form-success-icon {
+  position: absolute;
+  inset-inline-end: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* ============================================
+   ARABIC CULTURAL DESIGN ELEMENTS
+   ============================================ */
+
+/* Subtle geometric pattern overlay (optional) */
+.arabic-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0L60 30L30 60L0 30L30 0z' fill='none' stroke='%234A90F5' stroke-opacity='0.03'/%3E%3C/svg%3E");
+  background-size: 60px 60px;
+}
+
+/* Decorative separator using Arabic-inspired geometry */
+.arabic-separator {
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(74, 144, 245, 0.3) 20%,
+    rgba(199, 74, 255, 0.5) 50%,
+    rgba(74, 144, 245, 0.3) 80%,
+    transparent 100%
+  );
+  position: relative;
+}
+
+.arabic-separator::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(45deg);
+  width: 8px;
+  height: 8px;
+  background: linear-gradient(135deg, #4A90F5 0%, #C74AFF 100%);
+  border-radius: 2px;
+}
+
+/* Ornamental corners for cards */
+.arabic-corner::before,
+.arabic-corner::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(74, 144, 245, 0.2);
+}
+
+.arabic-corner::before {
+  top: -1px;
+  inset-inline-start: -1px;
+  border-inline-end: none;
+  border-bottom: none;
+  border-start-start-radius: 8px;
+}
+
+.arabic-corner::after {
+  bottom: -1px;
+  inset-inline-end: -1px;
+  border-inline-start: none;
+  border-top: none;
+  border-end-end-radius: 8px;
+}
+
+/* ============================================
+   ACCESSIBILITY IMPROVEMENTS FOR ARABIC
+   ============================================ */
+
+/* Ensure sufficient contrast for Arabic text */
+.high-contrast-arabic {
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+/* Focus visible styles for keyboard navigation */
+:focus-visible {
+  outline: 2px solid rgba(74, 144, 245, 0.6);
+  outline-offset: 2px;
+}
+
+/* Skip link for accessibility */
+.skip-link {
+  position: absolute;
+  inset-inline-start: -9999px;
+  z-index: 999;
+  padding: 1rem;
+  background: var(--primary);
+  color: white;
+}
+
+.skip-link:focus {
+  inset-inline-start: 0;
 }

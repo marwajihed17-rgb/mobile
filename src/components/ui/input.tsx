@@ -19,13 +19,13 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="flex flex-col gap-2">
         {label && (
-          <label className="text-sm font-medium text-foreground-secondary">
+          <label className="text-sm font-medium text-foreground-secondary text-start">
             {label}
           </label>
         )}
         <div className="relative">
           {icon && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none">
+            <div className="absolute start-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none">
               {icon}
             </div>
           )}
@@ -37,9 +37,10 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
               text-foreground placeholder:text-muted
               transition-all duration-200
               focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20
-              disabled:opacity-50 disabled:cursor-not-allowed`,
-              icon && 'pl-10',
-              isPassword && 'pr-10',
+              disabled:opacity-50 disabled:cursor-not-allowed
+              text-start`,
+              icon && 'ps-10',
+              isPassword && 'pe-10',
               error && 'border-error focus:border-error focus:ring-error/20',
               className
             )}
@@ -50,7 +51,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-foreground transition-colors"
+              className="absolute end-3 top-1/2 -translate-y-1/2 text-muted hover:text-foreground transition-colors"
+              aria-label={showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'}
             >
               {showPassword ? (
                 <EyeOff className="w-5 h-5" />
@@ -61,7 +63,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           )}
         </div>
         {error && (
-          <span className="text-xs text-error">{error}</span>
+          <span className="text-xs text-error text-start">{error}</span>
         )}
       </div>
     );

@@ -63,7 +63,37 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        // Arabic-optimized font stack with proper fallbacks
+        sans: [
+          'Tajawal',           // Modern Arabic font
+          'Cairo',             // Alternative Arabic font
+          'Inter',             // Latin fallback
+          'system-ui',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'Segoe UI',
+          'Roboto',
+          'Noto Sans Arabic', // Google's Arabic support
+          'sans-serif',
+        ],
+        arabic: [
+          'Tajawal',
+          'Cairo',
+          'Noto Sans Arabic',
+          'Arial',
+          'sans-serif',
+        ],
+      },
+      // RTL-aware spacing using logical properties
+      spacing: {
+        'start-1': 'var(--space-1)',
+        'start-2': 'var(--space-2)',
+        'start-3': 'var(--space-3)',
+        'start-4': 'var(--space-4)',
+        'end-1': 'var(--space-1)',
+        'end-2': 'var(--space-2)',
+        'end-3': 'var(--space-3)',
+        'end-4': 'var(--space-4)',
       },
       borderRadius: {
         'xl': '0.75rem',
