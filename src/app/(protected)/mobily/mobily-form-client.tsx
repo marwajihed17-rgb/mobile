@@ -89,11 +89,12 @@ export function MobilyFormClient({ profile }: MobilyFormClientProps) {
         return;
       }
 
-      // Check if user already exists (use maybeSingle to avoid errors)
+      // Check if customer already exists in this project
       const { data: existing, error: checkError } = await supabase
-        .from('mobily_entries')
+        .from('customers')
         .select('id')
         .eq('identity_number', formData.identity_number)
+        .eq('project_type', 'mobily')
         .maybeSingle();
 
       if (checkError) {
@@ -109,24 +110,26 @@ export function MobilyFormClient({ profile }: MobilyFormClientProps) {
         return;
       }
 
-      // Insert new entry
+      // Insert new customer entry
       const { error: insertError } = await supabase
-        .from('mobily_entries')
+        .from('customers')
         .insert({
           user_id: profile.id,
+          project_type: 'mobily',
           name: formData.name.trim(),
           identity_number: formData.identity_number.trim(),
-          nationality: formData.nationality.trim(),
           phone_number: formData.phone_number.trim(),
+          sim_number: formData.sim_number.trim(),
+          device_number: formData.device_number.trim(),
+          nationality: formData.nationality.trim(),
+          register_number: formData.register_number.trim(),
+          // Mobily-specific fields
           birth_date: formData.birth_date,
           identity_expiry_date: formData.identity_expiry_date,
           package: formData.package.trim(),
           email: formData.email.trim(),
-          sim_number: formData.sim_number.trim(),
-          device_number: formData.device_number.trim(),
           city: formData.city.trim(),
           district: formData.district.trim(),
-          register_number: formData.register_number.trim(),
         });
 
       if (insertError) {
