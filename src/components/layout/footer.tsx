@@ -13,14 +13,14 @@ export function BrandFooter() {
         insetInlineStart: '1rem'
       }}
     >
-      <span className="w-6 h-0.5 rounded-full bg-gradient-to-r from-primary to-secondary" />
+      <span className="w-6 h-0.5 rounded-full bg-gradient-to-r from-[#2B91D9] via-[#8B4FA8] to-[#2B91D9]" />
       <a
-        href="https://www.paa-solutions.com"
+        href="https://www.retaam-solutions.com"
         target="_blank"
         rel="noopener noreferrer"
         className="hover:text-foreground transition-colors"
       >
-        PAA Solutions
+        Retaam Solutions
       </a>
     </div>
   );
