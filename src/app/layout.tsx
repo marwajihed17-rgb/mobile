@@ -2,19 +2,36 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'PAA Solutions | حلول PAA',
+  title: 'Retaam Solutions | حلول ريتام',
   description: 'حلول المؤسسات للدردشة وأتمتة الأعمال - Enterprise chat solution for business automation',
-  keywords: ['حلول الأعمال', 'أتمتة', 'دردشة المؤسسات', 'business solutions', 'automation'],
-  authors: [{ name: 'PAA Solutions' }],
-  creator: 'PAA Solutions',
-  publisher: 'PAA Solutions',
+  keywords: ['حلول الأعمال', 'أتمتة', 'دردشة المؤسسات', 'business solutions', 'automation', 'retaam'],
+  authors: [{ name: 'Retaam Solutions' }],
+  creator: 'Retaam Solutions',
+  publisher: 'Retaam Solutions',
   robots: 'index, follow',
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: '32x32', type: 'image/svg+xml' },
+      { url: '/logo-icon.svg', sizes: 'any', type: 'image/svg+xml' },
+    ],
+    apple: [
+      { url: '/logo-icon.svg', sizes: '180x180', type: 'image/svg+xml' },
+    ],
+  },
   openGraph: {
-    title: 'PAA Solutions | حلول PAA',
+    title: 'Retaam Solutions | حلول ريتام',
     description: 'حلول المؤسسات للدردشة وأتمتة الأعمال',
     type: 'website',
     locale: 'ar_SA',
     alternateLocale: 'en_US',
+    images: [
+      {
+        url: '/logo.svg',
+        width: 300,
+        height: 80,
+        alt: 'Retaam Solutions Logo',
+      },
+    ],
   },
 };
 
