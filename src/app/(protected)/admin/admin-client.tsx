@@ -173,19 +173,14 @@ export function AdminClient({
     if (!confirm('هل أنت متأكد من حذف هذا المستخدم؟')) return;
 
     try {
-      const response = await fetch('/api/admin/delete-user', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId }),
-      });
+      const supabase = getSupabaseClient();
 
-      const data = await response.json();
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId);
 
-      if (!response.ok) {
-        throw new Error(data.error || 'فشل حذف المستخدم');
-      }
+      if (error) throw error;
 
       setProfiles(prev => prev.filter(p => p.id !== userId));
       setSuccess('تم حذف المستخدم بنجاح');
