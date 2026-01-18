@@ -56,11 +56,11 @@
   }
 }
 
-/* Slide In - Horizontal entry */
+/* Slide In - Horizontal entry (from start - right in RTL) */
 @keyframes slideIn {
   from {
     opacity: 0;
-    transform: translateX(-20px);
+    transform: translateX(20px); /* In RTL, positive = from right */
   }
   to {
     opacity: 1;
@@ -68,8 +68,20 @@
   }
 }
 
-/* Slide In Right */
-@keyframes slideInRight {
+/* Slide In from End (from left in RTL) */
+@keyframes slideInEnd {
+  from {
+    opacity: 0;
+    transform: translateX(-20px); /* In RTL, negative = from left */
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* RTL-aware slide animations using logical directions */
+@keyframes slideInStart {
   from {
     opacity: 0;
     transform: translateX(20px);
@@ -466,7 +478,7 @@
 }
 
 .skeleton-message.right {
-  margin-left: auto;
+  margin-inline-start: auto; /* RTL-aware alignment */
 }
 
 /* ============================================
@@ -640,10 +652,11 @@
    NOTIFICATION ANIMATIONS
    ============================================ */
 
+/* RTL-aware notification animations - slides from start edge */
 @keyframes notificationIn {
   from {
     opacity: 0;
-    transform: translateX(100%);
+    transform: translateX(-100%); /* In RTL, negative = from right edge */
   }
   to {
     opacity: 1;
@@ -658,7 +671,7 @@
   }
   to {
     opacity: 0;
-    transform: translateX(100%);
+    transform: translateX(-100%); /* In RTL, slides out to right edge */
   }
 }
 
@@ -668,4 +681,23 @@
 
 .notification-exit {
   animation: notificationOut 0.2s var(--ease-in) forwards;
+}
+
+/* ============================================
+   RTL-SPECIFIC ANIMATION UTILITIES
+   ============================================ */
+
+/* Flip icon horizontally for RTL navigation arrows */
+[dir="rtl"] .rtl-flip {
+  transform: scaleX(-1);
+}
+
+/* RTL-aware slide from start (right in RTL) */
+.animate-slide-in-start {
+  animation: slideInStart 0.3s var(--ease-out) forwards;
+}
+
+/* RTL-aware slide from end (left in RTL) */
+.animate-slide-in-end {
+  animation: slideInEnd 0.3s var(--ease-out) forwards;
 }

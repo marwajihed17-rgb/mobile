@@ -7,37 +7,56 @@ interface ToggleProps {
   onChange: (checked: boolean) => void;
   disabled?: boolean;
   className?: string;
+  label?: string;
 }
 
 export function Toggle({
   checked,
   onChange,
   disabled = false,
-  className
+  className,
+  label
 }: ToggleProps) {
   return (
-    <label className={cn('relative inline-block w-11 h-6 cursor-pointer', disabled && 'opacity-50 cursor-not-allowed', className)}>
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-        disabled={disabled}
-        className="sr-only peer"
-      />
-      <span
-        className={cn(
-          `absolute inset-0 rounded-full transition-colors duration-200
-          bg-card-border peer-checked:bg-primary
-          peer-focus:ring-2 peer-focus:ring-primary/20`
-        )}
-      />
-      <span
-        className={cn(
-          `absolute top-0.5 left-0.5 w-5 h-5 rounded-full
-          bg-white transition-transform duration-200
-          peer-checked:translate-x-5`
-        )}
-      />
+    <label
+      className={cn(
+        'relative inline-flex items-center gap-3 cursor-pointer',
+        disabled && 'opacity-50 cursor-not-allowed',
+        className
+      )}
+    >
+      <div className="relative w-11 h-6">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+          disabled={disabled}
+          className="sr-only peer"
+          aria-label={label}
+        />
+        <span
+          className={cn(
+            `absolute inset-0 rounded-full transition-colors duration-200
+            bg-card-border peer-checked:bg-primary
+            peer-focus:ring-2 peer-focus:ring-primary/20`
+          )}
+        />
+        {/* RTL-aware thumb positioning using CSS logical properties */}
+        <span
+          className={cn(
+            `absolute top-0.5 w-5 h-5 rounded-full
+            bg-white transition-all duration-200
+            start-0.5 peer-checked:start-[1.375rem]`
+          )}
+          style={{
+            // Fallback for browsers that don't fully support start
+            insetInlineStart: checked ? '1.375rem' : '0.125rem'
+          }}
+        />
+      </div>
+      {label && (
+        <span className="text-sm text-foreground-secondary">{label}</span>
+      )}
     </label>
   );
 }

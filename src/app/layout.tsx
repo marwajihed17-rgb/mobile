@@ -1,10 +1,28 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'PAA Solutions',
-  description: 'Enterprise chat solution for business automation',
+  title: 'PAA Solutions | حلول PAA',
+  description: 'حلول المؤسسات للدردشة وأتمتة الأعمال - Enterprise chat solution for business automation',
+  keywords: ['حلول الأعمال', 'أتمتة', 'دردشة المؤسسات', 'business solutions', 'automation'],
+  authors: [{ name: 'PAA Solutions' }],
+  creator: 'PAA Solutions',
+  publisher: 'PAA Solutions',
+  robots: 'index, follow',
+  openGraph: {
+    title: 'PAA Solutions | حلول PAA',
+    description: 'حلول المؤسسات للدردشة وأتمتة الأعمال',
+    type: 'website',
+    locale: 'ar_SA',
+    alternateLocale: 'en_US',
+  },
+};
+
+export const viewport: Viewport = {
   themeColor: '#0a0e1a',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
 };
 
 export default function RootLayout({
@@ -13,9 +31,23 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="ar" dir="rtl">
-      <body className="font-sans antialiased">
-        {children}
+    <html lang="ar" dir="rtl" className="scroll-smooth">
+      <head>
+        {/* Preconnect to Google Fonts for faster loading */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      </head>
+      <body className="font-sans antialiased text-foreground bg-background selection:bg-primary/20 selection:text-primary">
+        {/* Skip link for accessibility */}
+        <a
+          href="#main-content"
+          className="skip-link sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-primary focus:text-white focus:top-0 focus:start-0"
+        >
+          تخطي إلى المحتوى الرئيسي
+        </a>
+        <main id="main-content">
+          {children}
+        </main>
       </body>
     </html>
   );

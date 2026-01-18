@@ -31,7 +31,7 @@
   background: var(--primary);
   opacity: 0.08;
   top: -200px;
-  right: -200px;
+  inset-inline-start: -200px; /* RTL aware - positions at start */
   animation-delay: 0s;
 }
 
@@ -41,7 +41,7 @@
   background: var(--secondary);
   opacity: 0.06;
   bottom: -150px;
-  left: -150px;
+  inset-inline-end: -150px; /* RTL aware - positions at end */
   animation-delay: 2s;
 }
 
@@ -196,32 +196,32 @@
   cursor: not-allowed;
 }
 
-/* Input with icon */
+/* Input with icon - RTL aware */
 .input-with-icon {
   position: relative;
 }
 
 .input-with-icon .form-input {
-  padding-left: var(--space-10);
+  padding-inline-start: var(--space-10);
 }
 
 .input-with-icon .input-icon {
   position: absolute;
-  left: var(--space-3);
+  inset-inline-start: var(--space-3);
   top: 50%;
   transform: translateY(-50%);
   color: var(--muted);
   pointer-events: none;
 }
 
-/* Password input toggle */
+/* Password input toggle - RTL aware */
 .input-with-toggle .form-input {
-  padding-right: var(--space-10);
+  padding-inline-end: var(--space-10);
 }
 
 .input-with-toggle .toggle-btn {
   position: absolute;
-  right: var(--space-3);
+  inset-inline-end: var(--space-3);
   top: 50%;
   transform: translateY(-50%);
   background: none;
@@ -369,11 +369,11 @@
   line-height: var(--line-height-relaxed);
 }
 
-/* Module Status Badge */
+/* Module Status Badge - RTL aware */
 .module-status {
   position: absolute;
   top: var(--space-4);
-  right: var(--space-4);
+  inset-inline-start: var(--space-4);
   display: flex;
   align-items: center;
   gap: var(--space-1);
@@ -400,15 +400,19 @@
   background: currentColor;
 }
 
-/* Module Arrow */
+/* Module Arrow - RTL aware */
 .module-arrow {
   position: absolute;
   bottom: var(--space-4);
-  right: var(--space-4);
+  inset-inline-end: var(--space-4);
   color: var(--muted);
   opacity: 0;
-  transform: translateX(-10px);
+  transform: translateX(10px); /* Positive in RTL to slide from left */
   transition: all var(--transition-normal) var(--ease-default);
+}
+
+[dir="rtl"] .module-arrow {
+  transform: translateX(-10px); /* Negative in RTL */
 }
 
 .module-card:hover .module-arrow {
@@ -504,17 +508,19 @@
 .chat-message.user .message-bubble {
   background: var(--gradient-primary);
   color: white;
-  border-bottom-right-radius: var(--radius-sm);
+  /* RTL aware border radius - user message corner at start-end */
+  border-end-start-radius: var(--radius-sm);
 }
 
 .chat-message.bot .message-bubble {
   background: rgba(26, 31, 46, 0.9);
   border: 1px solid var(--card-border);
   color: var(--foreground-secondary);
-  border-bottom-left-radius: var(--radius-sm);
+  /* RTL aware border radius - bot message corner at end-end */
+  border-end-end-radius: var(--radius-sm);
 }
 
-/* Message Timestamp */
+/* Message Timestamp - RTL aware */
 .message-timestamp {
   font-size: var(--font-size-xs);
   margin-top: var(--space-1);
@@ -523,11 +529,12 @@
 
 .chat-message.user .message-timestamp {
   color: rgba(255, 255, 255, 0.6);
-  text-align: right;
+  text-align: start; /* Aligns to start (right in RTL) */
 }
 
 .chat-message.bot .message-timestamp {
   color: var(--muted);
+  text-align: end; /* Aligns to end (left in RTL) */
 }
 
 /* Message with Attachment */
@@ -985,12 +992,12 @@
 .toggle-thumb {
   position: absolute;
   top: 2px;
-  left: 2px;
+  inset-inline-start: 2px;
   width: 20px;
   height: 20px;
   background: white;
   border-radius: 50%;
-  transition: transform var(--transition-normal) var(--ease-default);
+  transition: all var(--transition-normal) var(--ease-default);
 }
 
 .toggle input:checked + .toggle-track {
@@ -998,7 +1005,7 @@
 }
 
 .toggle input:checked + .toggle-track .toggle-thumb {
-  transform: translateX(20px);
+  inset-inline-start: 22px; /* Move to end position */
 }
 
 .toggle input:focus + .toggle-track {
@@ -1141,7 +1148,7 @@
 .brand-footer {
   position: fixed;
   bottom: var(--space-4);
-  right: var(--space-4);
+  inset-inline-start: var(--space-4); /* RTL aware - positions on right in RTL */
   display: flex;
   align-items: center;
   gap: var(--space-3);

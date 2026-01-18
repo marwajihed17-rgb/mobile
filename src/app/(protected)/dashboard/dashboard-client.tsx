@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, Phone, Smartphone, List } from 'lucide-react';
+import { ArrowLeft, Phone, Smartphone, List } from 'lucide-react';
 import { Header } from '@/components/layout/header';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -86,7 +86,7 @@ export function DashboardClient({ profile, recentSalamEntries, recentMobilyEntri
               className="relative min-h-[240px] group cursor-pointer bg-gradient-to-br from-green-500/10 to-emerald-600/10 border-green-500/30 hover:border-green-500"
               onClick={() => router.push('/salam')}
             >
-              <div className="absolute top-4 right-4">
+              <div className="absolute top-4" style={{ insetInlineStart: '1rem' }}>
                 <Badge variant="success" className="flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-current" />
                   نشط
@@ -104,8 +104,8 @@ export function DashboardClient({ profile, recentSalamEntries, recentMobilyEntri
                 إدخال بيانات عملاء مشروع سلام
               </p>
 
-              <div className="absolute bottom-4 left-4 text-muted opacity-0 group-hover:opacity-100 transition-all translate-x-[-10px] group-hover:translate-x-0">
-                <ArrowRight className="w-6 h-6 rotate-180" />
+              <div className="absolute bottom-4 text-muted opacity-0 group-hover:opacity-100 transition-all" style={{ insetInlineEnd: '1rem' }}>
+                <ArrowLeft className="w-6 h-6" />
               </div>
             </Card>
 
@@ -116,7 +116,7 @@ export function DashboardClient({ profile, recentSalamEntries, recentMobilyEntri
               className="relative min-h-[240px] group cursor-pointer bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-blue-500/30 hover:border-blue-500"
               onClick={() => router.push('/mobily')}
             >
-              <div className="absolute top-4 right-4">
+              <div className="absolute top-4" style={{ insetInlineStart: '1rem' }}>
                 <Badge variant="primary" className="flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-current" />
                   نشط
@@ -134,8 +134,8 @@ export function DashboardClient({ profile, recentSalamEntries, recentMobilyEntri
                 إدخال بيانات عملاء مشروع موبايلي
               </p>
 
-              <div className="absolute bottom-4 left-4 text-muted opacity-0 group-hover:opacity-100 transition-all translate-x-[-10px] group-hover:translate-x-0">
-                <ArrowRight className="w-6 h-6 rotate-180" />
+              <div className="absolute bottom-4 text-muted opacity-0 group-hover:opacity-100 transition-all" style={{ insetInlineEnd: '1rem' }}>
+                <ArrowLeft className="w-6 h-6" />
               </div>
             </Card>
           </div>
@@ -155,10 +155,10 @@ export function DashboardClient({ profile, recentSalamEntries, recentMobilyEntri
                     <table className="w-full">
                       <thead className="bg-card-hover border-b border-card-border">
                         <tr>
-                          <th className="text-right text-sm font-medium text-muted px-4 py-3">الإسم</th>
-                          <th className="text-right text-sm font-medium text-muted px-4 py-3">رقم الهوية</th>
-                          <th className="text-right text-sm font-medium text-muted px-4 py-3">رقم الجوال</th>
-                          <th className="text-right text-sm font-medium text-muted px-4 py-3">التاريخ</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3">الإسم</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3">رقم الهوية</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3">رقم الجوال</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3">التاريخ</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -193,10 +193,10 @@ export function DashboardClient({ profile, recentSalamEntries, recentMobilyEntri
                     <table className="w-full">
                       <thead className="bg-card-hover border-b border-card-border">
                         <tr>
-                          <th className="text-right text-sm font-medium text-muted px-4 py-3">الإسم</th>
-                          <th className="text-right text-sm font-medium text-muted px-4 py-3">رقم الهوية</th>
-                          <th className="text-right text-sm font-medium text-muted px-4 py-3">رقم الجوال</th>
-                          <th className="text-right text-sm font-medium text-muted px-4 py-3">التاريخ</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3">الإسم</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3">رقم الهوية</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3">رقم الجوال</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3">التاريخ</th>
                         </tr>
                       </thead>
                       <tbody>
