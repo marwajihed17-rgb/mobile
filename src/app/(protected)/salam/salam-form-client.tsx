@@ -76,12 +76,11 @@ export function SalamFormClient({ profile }: SalamFormClientProps) {
         return;
       }
 
-      // Check if customer already exists in this project
+      // Check if customer already exists in salam project
       const { data: existing, error: checkError } = await supabase
-        .from('customers')
+        .from('salam_customers')
         .select('id')
         .eq('identity_number', formData.identity_number)
-        .eq('project_type', 'salam')
         .maybeSingle();
 
       if (checkError) {
@@ -97,12 +96,11 @@ export function SalamFormClient({ profile }: SalamFormClientProps) {
         return;
       }
 
-      // Insert new customer entry
+      // Insert new salam customer entry
       const { error: insertError } = await supabase
-        .from('customers')
+        .from('salam_customers')
         .insert({
           user_id: profile.id,
-          project_type: 'salam',
           name: formData.name.trim(),
           identity_number: formData.identity_number.trim(),
           phone_number: formData.phone_number.trim(),
@@ -110,13 +108,6 @@ export function SalamFormClient({ profile }: SalamFormClientProps) {
           device_number: formData.device_number.trim(),
           nationality: formData.nationality.trim(),
           register_number: formData.register_number.trim(),
-          // Mobily-specific fields (null for Salam)
-          birth_date: null,
-          identity_expiry_date: null,
-          package: null,
-          email: null,
-          city: null,
-          district: null,
         });
 
       if (insertError) {
