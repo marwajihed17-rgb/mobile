@@ -9,19 +9,19 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
 import { getSupabaseClient } from '@/lib/supabase/client';
-import type { Profile, SalamEntry, MobilyEntry } from '@/types/database';
+import type { Profile, Customer } from '@/types/database';
 
 interface DashboardClientProps {
   profile: Profile;
-  recentSalamEntries: SalamEntry[];
-  recentMobilyEntries: MobilyEntry[];
+  recentSalamCustomers: Customer[];
+  recentMobilyCustomers: Customer[];
 }
 
-export function DashboardClient({ profile, recentSalamEntries, recentMobilyEntries }: DashboardClientProps) {
+export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCustomers }: DashboardClientProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'projects' | 'recent'>('projects');
-  const [salamEntries, setSalamEntries] = useState<SalamEntry[]>(recentSalamEntries);
-  const [mobilyEntries, setMobilyEntries] = useState<MobilyEntry[]>(recentMobilyEntries);
+  const [salamCustomers, setSalamCustomers] = useState<Customer[]>(recentSalamCustomers);
+  const [mobilyCustomers, setMobilyCustomers] = useState<Customer[]>(recentMobilyCustomers);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -48,58 +48,33 @@ export function DashboardClient({ profile, recentSalamEntries, recentMobilyEntri
     });
   };
 
-  const handleDeleteSalamEntry = async (entryId: string, entryName: string) => {
-    if (!confirm(`هل أنت متأكد من حذف ${entryName}؟`)) {
+  const handleDeleteCustomer = async (customerId: string, customerName: string, projectType: 'salam' | 'mobily') => {
+    if (!confirm(`هل أنت متأكد من حذف ${customerName}؟`)) {
       return;
     }
 
-    setIsDeleting(entryId);
+    setIsDeleting(customerId);
     setError('');
     setSuccess('');
 
     try {
       const supabase = getSupabaseClient();
       const { error: deleteError } = await supabase
-        .from('salam_entries')
+        .from('customers')
         .delete()
-        .eq('id', entryId);
+        .eq('id', customerId);
 
       if (deleteError) {
         throw deleteError;
       }
 
-      setSalamEntries(salamEntries.filter(entry => entry.id !== entryId));
-      setSuccess('تم حذف العميل بنجاح');
-      setTimeout(() => setSuccess(''), 3000);
-    } catch (err) {
-      console.error('Delete error:', err);
-      setError(err instanceof Error ? `خطأ: ${err.message}` : 'حدث خطأ أثناء الحذف');
-    } finally {
-      setIsDeleting(null);
-    }
-  };
-
-  const handleDeleteMobilyEntry = async (entryId: string, entryName: string) => {
-    if (!confirm(`هل أنت متأكد من حذف ${entryName}؟`)) {
-      return;
-    }
-
-    setIsDeleting(entryId);
-    setError('');
-    setSuccess('');
-
-    try {
-      const supabase = getSupabaseClient();
-      const { error: deleteError } = await supabase
-        .from('mobily_entries')
-        .delete()
-        .eq('id', entryId);
-
-      if (deleteError) {
-        throw deleteError;
+      // Update the appropriate state based on project type
+      if (projectType === 'salam') {
+        setSalamCustomers(salamCustomers.filter(customer => customer.id !== customerId));
+      } else {
+        setMobilyCustomers(mobilyCustomers.filter(customer => customer.id !== customerId));
       }
 
-      setMobilyEntries(mobilyEntries.filter(entry => entry.id !== entryId));
       setSuccess('تم حذف العميل بنجاح');
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
@@ -227,13 +202,13 @@ export function DashboardClient({ profile, recentSalamEntries, recentMobilyEntri
               </Alert>
             )}
 
-            {/* Recent Salam Entries */}
+            {/* Recent Salam Customers */}
             <div>
               <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                آخر إدخالات مشروع سلام
+                آخر 5 عملاء - مشروع سلام
               </h2>
-              {salamEntries.length > 0 ? (
+              {salamCustomers.length > 0 ? (
                 <div className="bg-card border border-card-border rounded-xl overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full">
@@ -241,23 +216,31 @@ export function DashboardClient({ profile, recentSalamEntries, recentMobilyEntri
                         <tr>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3">الإسم</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3">رقم الهوية</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3">الجنسية</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3">رقم الجوال</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3">رقم الشريحة</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3">رقم الجهاز</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3">رقم السجل</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3">التاريخ</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3">الإجراءات</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {salamEntries.map((entry) => (
-                          <tr key={entry.id} className="border-b border-card-border last:border-0 hover:bg-card-hover transition-colors">
-                            <td className="px-4 py-3 text-foreground">{entry.name}</td>
-                            <td className="px-4 py-3 text-muted">{entry.identity_number}</td>
-                            <td className="px-4 py-3 text-muted">{entry.phone_number}</td>
-                            <td className="px-4 py-3 text-muted text-sm">{formatDate(entry.created_at)}</td>
+                        {salamCustomers.map((customer) => (
+                          <tr key={customer.id} className="border-b border-card-border last:border-0 hover:bg-card-hover transition-colors">
+                            <td className="px-4 py-3 text-foreground">{customer.name}</td>
+                            <td className="px-4 py-3 text-muted">{customer.identity_number}</td>
+                            <td className="px-4 py-3 text-muted">{customer.nationality}</td>
+                            <td className="px-4 py-3 text-muted">{customer.phone_number}</td>
+                            <td className="px-4 py-3 text-muted">{customer.sim_number}</td>
+                            <td className="px-4 py-3 text-muted">{customer.device_number}</td>
+                            <td className="px-4 py-3 text-muted">{customer.register_number}</td>
+                            <td className="px-4 py-3 text-muted text-sm">{formatDate(customer.created_at)}</td>
                             <td className="px-4 py-3">
                               <div className="flex gap-2">
                                 <button
-                                  onClick={() => handleDeleteSalamEntry(entry.id, entry.name)}
-                                  disabled={isDeleting === entry.id}
+                                  onClick={() => handleDeleteCustomer(customer.id, customer.name, 'salam')}
+                                  disabled={isDeleting === customer.id}
                                   className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
                                   title="حذف"
                                 >
@@ -278,13 +261,13 @@ export function DashboardClient({ profile, recentSalamEntries, recentMobilyEntri
               )}
             </div>
 
-            {/* Recent Mobily Entries */}
+            {/* Recent Mobily Customers */}
             <div>
               <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                آخر إدخالات مشروع موبايلي
+                آخر 5 عملاء - مشروع موبايلي
               </h2>
-              {mobilyEntries.length > 0 ? (
+              {mobilyCustomers.length > 0 ? (
                 <div className="bg-card border border-card-border rounded-xl overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full">
@@ -292,23 +275,43 @@ export function DashboardClient({ profile, recentSalamEntries, recentMobilyEntri
                         <tr>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3">الإسم</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3">رقم الهوية</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3">الجنسية</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3">رقم الجوال</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3">تاريخ الميلاد</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3">انتهاء الهوية</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3">الباقة</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3">الإيميل</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3">رقم الشريحة</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3">رقم الجهاز</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3">المدينة</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3">الحي</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3">رقم السجل</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3">التاريخ</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3">الإجراءات</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {mobilyEntries.map((entry) => (
-                          <tr key={entry.id} className="border-b border-card-border last:border-0 hover:bg-card-hover transition-colors">
-                            <td className="px-4 py-3 text-foreground">{entry.name}</td>
-                            <td className="px-4 py-3 text-muted">{entry.identity_number}</td>
-                            <td className="px-4 py-3 text-muted">{entry.phone_number}</td>
-                            <td className="px-4 py-3 text-muted text-sm">{formatDate(entry.created_at)}</td>
+                        {mobilyCustomers.map((customer) => (
+                          <tr key={customer.id} className="border-b border-card-border last:border-0 hover:bg-card-hover transition-colors">
+                            <td className="px-4 py-3 text-foreground">{customer.name}</td>
+                            <td className="px-4 py-3 text-muted">{customer.identity_number}</td>
+                            <td className="px-4 py-3 text-muted">{customer.nationality}</td>
+                            <td className="px-4 py-3 text-muted">{customer.phone_number}</td>
+                            <td className="px-4 py-3 text-muted">{customer.birth_date || '-'}</td>
+                            <td className="px-4 py-3 text-muted">{customer.identity_expiry_date || '-'}</td>
+                            <td className="px-4 py-3 text-muted">{customer.package || '-'}</td>
+                            <td className="px-4 py-3 text-muted">{customer.email || '-'}</td>
+                            <td className="px-4 py-3 text-muted">{customer.sim_number}</td>
+                            <td className="px-4 py-3 text-muted">{customer.device_number}</td>
+                            <td className="px-4 py-3 text-muted">{customer.city || '-'}</td>
+                            <td className="px-4 py-3 text-muted">{customer.district || '-'}</td>
+                            <td className="px-4 py-3 text-muted">{customer.register_number}</td>
+                            <td className="px-4 py-3 text-muted text-sm">{formatDate(customer.created_at)}</td>
                             <td className="px-4 py-3">
                               <div className="flex gap-2">
                                 <button
-                                  onClick={() => handleDeleteMobilyEntry(entry.id, entry.name)}
-                                  disabled={isDeleting === entry.id}
+                                  onClick={() => handleDeleteCustomer(customer.id, customer.name, 'mobily')}
+                                  disabled={isDeleting === customer.id}
                                   className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
                                   title="حذف"
                                 >
