@@ -568,15 +568,15 @@ CREATE POLICY "Users can insert salam entries"
     ON public.salam_entries FOR INSERT
     WITH CHECK (auth.uid() IS NOT NULL);
 
--- Admins can update salam entries
-CREATE POLICY "Admins can update salam entries"
+-- Users can update their own salam entries, admins can update all
+CREATE POLICY "Users can update own salam entries"
     ON public.salam_entries FOR UPDATE
-    USING (public.is_admin(auth.uid()));
+    USING (auth.uid() = user_id OR public.is_admin(auth.uid()));
 
--- Admins can delete salam entries
-CREATE POLICY "Admins can delete salam entries"
+-- Users can delete their own salam entries, admins can delete all
+CREATE POLICY "Users can delete own salam entries"
     ON public.salam_entries FOR DELETE
-    USING (public.is_admin(auth.uid()));
+    USING (auth.uid() = user_id OR public.is_admin(auth.uid()));
 
 -- ============================================
 -- MOBILY ENTRIES POLICIES
@@ -592,15 +592,15 @@ CREATE POLICY "Users can insert mobily entries"
     ON public.mobily_entries FOR INSERT
     WITH CHECK (auth.uid() IS NOT NULL);
 
--- Admins can update mobily entries
-CREATE POLICY "Admins can update mobily entries"
+-- Users can update their own mobily entries, admins can update all
+CREATE POLICY "Users can update own mobily entries"
     ON public.mobily_entries FOR UPDATE
-    USING (public.is_admin(auth.uid()));
+    USING (auth.uid() = user_id OR public.is_admin(auth.uid()));
 
--- Admins can delete mobily entries
-CREATE POLICY "Admins can delete mobily entries"
+-- Users can delete their own mobily entries, admins can delete all
+CREATE POLICY "Users can delete own mobily entries"
     ON public.mobily_entries FOR DELETE
-    USING (public.is_admin(auth.uid()));
+    USING (auth.uid() = user_id OR public.is_admin(auth.uid()));
 
 -- ============================================
 -- STORAGE BUCKETS

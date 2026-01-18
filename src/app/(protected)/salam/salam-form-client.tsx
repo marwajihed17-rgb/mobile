@@ -67,15 +67,31 @@ export function SalamFormClient({ profile }: SalamFormClientProps) {
     try {
       const supabase = getSupabaseClient();
 
-      // Check if user already exists
-      const { data: existing } = await supabase
+      // Validate all required fields
+      if (!formData.name || !formData.identity_number || !formData.phone_number ||
+          !formData.sim_number || !formData.device_number || !formData.nationality ||
+          !formData.register_number) {
+        setError('يرجى ملء جميع الحقول المطلوبة');
+        setIsLoading(false);
+        return;
+      }
+
+      // Check if user already exists (use maybeSingle to avoid errors)
+      const { data: existing, error: checkError } = await supabase
         .from('salam_entries')
         .select('id')
         .eq('identity_number', formData.identity_number)
-        .single();
+        .maybeSingle();
+
+      if (checkError) {
+        console.error('Error checking for duplicate:', checkError);
+        setError('حدث خطأ أثناء التحقق من البيانات');
+        setIsLoading(false);
+        return;
+      }
 
       if (existing) {
-        setError('المستخدم موجود مسبقاً');
+        setError('المستخدم موجود مسبقاً - رقم الهوية مسجل من قبل');
         setIsLoading(false);
         return;
       }
@@ -85,20 +101,29 @@ export function SalamFormClient({ profile }: SalamFormClientProps) {
         .from('salam_entries')
         .insert({
           user_id: profile.id,
-          name: formData.name,
-          identity_number: formData.identity_number,
-          phone_number: formData.phone_number,
-          sim_number: formData.sim_number,
-          device_number: formData.device_number,
-          nationality: formData.nationality,
-          register_number: formData.register_number,
+          name: formData.name.trim(),
+          identity_number: formData.identity_number.trim(),
+          phone_number: formData.phone_number.trim(),
+          sim_number: formData.sim_number.trim(),
+          device_number: formData.device_number.trim(),
+          nationality: formData.nationality.trim(),
+          register_number: formData.register_number.trim(),
         });
 
       if (insertError) {
-        throw insertError;
+        console.error('Insert error:', insertError);
+        if (insertError.code === '23505') {
+          setError('رقم الهوية مسجل مسبقاً في النظام');
+        } else if (insertError.code === '23503') {
+          setError('خطأ في الاتصال بقاعدة البيانات - يرجى المحاولة مرة أخرى');
+        } else {
+          setError(`خطأ في الحفظ: ${insertError.message}`);
+        }
+        setIsLoading(false);
+        return;
       }
 
-      setSuccess('تم حفظ البيانات بنجاح');
+      setSuccess('تم حفظ البيانات بنجاح ✓');
       setFormData({
         name: '',
         identity_number: '',
@@ -108,8 +133,12 @@ export function SalamFormClient({ profile }: SalamFormClientProps) {
         nationality: '',
         register_number: '',
       });
+
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'حدث خطأ أثناء الحفظ');
+      console.error('Unexpected error:', err);
+      setError(err instanceof Error ? `خطأ: ${err.message}` : 'حدث خطأ غير متوقع أثناء الحفظ');
     } finally {
       setIsLoading(false);
     }
