@@ -81,13 +81,11 @@ export function AdminClient({
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('ar-SA', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}/${month}/${day}`;
   };
 
   // Export to CSV
@@ -179,15 +177,13 @@ export function AdminClient({
 
       const { error } = await supabase
         .from('profiles')
-        .update({ status: 'suspended' } as never)
+        .delete()
         .eq('id', userId);
 
       if (error) throw error;
 
-      setProfiles(prev => prev.map(p =>
-        p.id === userId ? { ...p, status: 'suspended' } : p
-      ) as Profile[]);
-      setSuccess('تم تعطيل المستخدم بنجاح');
+      setProfiles(prev => prev.filter(p => p.id !== userId));
+      setSuccess('تم حذف المستخدم بنجاح');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'حدث خطأ');
     }
