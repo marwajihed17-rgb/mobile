@@ -69,38 +69,3 @@ export function slugify(str: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '');
 }
-
-export const MODULE_INFO = {
-  invoice: {
-    name: 'Invoice Processing',
-    description: 'Dedicated general invoice Chat for processing and managing your invoices efficiently',
-    emoji: '🧾',
-    gradient: 'from-green-500 to-emerald-600',
-  },
-  kdr: {
-    name: 'KDR Report Generator',
-    description: 'KDR Report Creation and Analysis with advanced data processing capabilities',
-    emoji: '📈',
-    gradient: 'from-blue-500 to-cyan-500',
-  },
-  ga: {
-    name: 'GA Processing',
-    description: 'Analytics and reporting automation for comprehensive data insights',
-    emoji: '📊',
-    gradient: 'from-orange-500 to-amber-500',
-  },
-  kdr_inv: {
-    name: 'KDRs Invoice Processing',
-    description: 'Dedicated KDR invoice chat for specialized invoice handling',
-    emoji: '📋',
-    gradient: 'from-purple-500 to-violet-500',
-  },
-  kdr_sellout: {
-    name: 'KDRs Sellout Processing',
-    description: 'Dedicated KDR sellout chat for sales data processing',
-    emoji: '💰',
-    gradient: 'from-pink-500 to-rose-500',
-  },
-} as const;
-
-export type ModuleKey = keyof typeof MODULE_INFO;

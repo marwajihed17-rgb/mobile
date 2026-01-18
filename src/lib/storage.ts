@@ -130,27 +130,3 @@ export async function uploadAvatar(
   const uploaded = await uploadFile(file, 'avatars', userId);
   return uploaded.url;
 }
-
-// Save file upload record to database
-export async function saveFileRecord(
-  userId: string,
-  file: UploadedFile,
-  moduleType?: string
-): Promise<void> {
-  const supabase = getSupabaseClient();
-
-  const { error } = await supabase
-    .from('file_uploads')
-    .insert({
-      user_id: userId,
-      file_name: file.name,
-      file_path: file.path,
-      file_size: file.size,
-      file_type: file.type,
-      module_type: moduleType || null,
-    });
-
-  if (error) {
-    throw new Error(`Failed to save file record: ${error.message}`);
-  }
-}
