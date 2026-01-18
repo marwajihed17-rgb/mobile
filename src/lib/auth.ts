@@ -1,5 +1,5 @@
 import { getSupabaseClient } from './supabase/client';
-import type { Profile, UserSettings, ModuleAccess, UserRole } from '@/types/database';
+import type { Profile, UserSettings, UserRole } from '@/types/database';
 
 export interface AuthUser {
   id: string;
@@ -11,10 +11,9 @@ export interface AuthUser {
   isSuperAdmin: boolean;
 }
 
-export interface UserWithAccess {
+export interface UserWithSettings {
   profile: Profile;
   settings: UserSettings | null;
-  modules: ModuleAccess[];
 }
 
 // Get current authenticated user with profile
@@ -49,13 +48,12 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
 }
 
 // Get user with all related data
-export async function getUserWithAccess(userId: string): Promise<UserWithAccess | null> {
+export async function getUserWithSettings(userId: string): Promise<UserWithSettings | null> {
   const supabase = getSupabaseClient();
 
-  const [profileRes, settingsRes, modulesRes] = await Promise.all([
+  const [profileRes, settingsRes] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', userId).single(),
     supabase.from('user_settings').select('*').eq('user_id', userId).single(),
-    supabase.from('module_access').select('*').eq('user_id', userId),
   ]);
 
   if (profileRes.error || !profileRes.data) {
@@ -65,7 +63,6 @@ export async function getUserWithAccess(userId: string): Promise<UserWithAccess 
   return {
     profile: profileRes.data,
     settings: settingsRes.data,
-    modules: modulesRes.data || [],
   };
 }
 
@@ -159,22 +156,4 @@ export async function updateProfile(userId: string, updates: Partial<Profile>) {
   }
 
   return data;
-}
-
-// Check if user has access to a module
-export async function checkModuleAccess(userId: string, moduleType: string): Promise<boolean> {
-  const supabase = getSupabaseClient();
-
-  const { data, error } = await supabase
-    .from('module_access')
-    .select('has_access')
-    .eq('user_id', userId)
-    .eq('module_type', moduleType)
-    .single();
-
-  if (error || !data) {
-    return false;
-  }
-
-  return data.has_access;
 }
