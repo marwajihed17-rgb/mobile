@@ -9,19 +9,19 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
 import { getSupabaseClient } from '@/lib/supabase/client';
-import type { Profile, Customer } from '@/types/database';
+import type { Profile, SalamCustomer, MobilyCustomer } from '@/types/database';
 
 interface DashboardClientProps {
   profile: Profile;
-  recentSalamCustomers: Customer[];
-  recentMobilyCustomers: Customer[];
+  recentSalamCustomers: SalamCustomer[];
+  recentMobilyCustomers: MobilyCustomer[];
 }
 
 export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCustomers }: DashboardClientProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'projects' | 'recent'>('projects');
-  const [salamCustomers, setSalamCustomers] = useState<Customer[]>(recentSalamCustomers);
-  const [mobilyCustomers, setMobilyCustomers] = useState<Customer[]>(recentMobilyCustomers);
+  const [salamCustomers, setSalamCustomers] = useState<SalamCustomer[]>(recentSalamCustomers);
+  const [mobilyCustomers, setMobilyCustomers] = useState<MobilyCustomer[]>(recentMobilyCustomers);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -59,8 +59,10 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
 
     try {
       const supabase = getSupabaseClient();
+      const tableName = projectType === 'salam' ? 'salam_customers' : 'mobily_customers';
+
       const { error: deleteError } = await supabase
-        .from('customers')
+        .from(tableName)
         .delete()
         .eq('id', customerId);
 
@@ -297,14 +299,14 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                             <td className="px-4 py-3 text-muted">{customer.identity_number}</td>
                             <td className="px-4 py-3 text-muted">{customer.nationality}</td>
                             <td className="px-4 py-3 text-muted">{customer.phone_number}</td>
-                            <td className="px-4 py-3 text-muted">{customer.birth_date || '-'}</td>
-                            <td className="px-4 py-3 text-muted">{customer.identity_expiry_date || '-'}</td>
-                            <td className="px-4 py-3 text-muted">{customer.package || '-'}</td>
-                            <td className="px-4 py-3 text-muted">{customer.email || '-'}</td>
+                            <td className="px-4 py-3 text-muted">{customer.birth_date}</td>
+                            <td className="px-4 py-3 text-muted">{customer.identity_expiry_date}</td>
+                            <td className="px-4 py-3 text-muted">{customer.package}</td>
+                            <td className="px-4 py-3 text-muted">{customer.email}</td>
                             <td className="px-4 py-3 text-muted">{customer.sim_number}</td>
                             <td className="px-4 py-3 text-muted">{customer.device_number}</td>
-                            <td className="px-4 py-3 text-muted">{customer.city || '-'}</td>
-                            <td className="px-4 py-3 text-muted">{customer.district || '-'}</td>
+                            <td className="px-4 py-3 text-muted">{customer.city}</td>
+                            <td className="px-4 py-3 text-muted">{customer.district}</td>
                             <td className="px-4 py-3 text-muted">{customer.register_number}</td>
                             <td className="px-4 py-3 text-muted text-sm">{formatDate(customer.created_at)}</td>
                             <td className="px-4 py-3">

@@ -127,7 +127,7 @@ CREATE TABLE IF NOT EXISTS public.salam_entries (
     UNIQUE(identity_number)
 );
 
--- Mobily Project Entries Table
+-- Mobily Project Entries Table (Legacy - kept for backward compatibility)
 CREATE TABLE IF NOT EXISTS public.mobily_entries (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -147,6 +147,62 @@ CREATE TABLE IF NOT EXISTS public.mobily_entries (
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     UNIQUE(identity_number)
+);
+
+-- ============================================
+-- NEW SEPARATE PROJECT TABLES
+-- ============================================
+
+-- Salam Customers Table
+CREATE TABLE IF NOT EXISTS public.salam_customers (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+
+    -- Salam-specific fields (7 fields)
+    name TEXT NOT NULL,
+    identity_number TEXT NOT NULL,
+    phone_number TEXT NOT NULL,
+    sim_number TEXT NOT NULL,
+    device_number TEXT NOT NULL,
+    nationality TEXT NOT NULL,
+    register_number TEXT NOT NULL,
+
+    -- System fields
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+
+    -- Constraint: identity_number must be unique within Salam project
+    CONSTRAINT salam_customers_identity_unique UNIQUE (identity_number)
+);
+
+-- Mobily Customers Table
+CREATE TABLE IF NOT EXISTS public.mobily_customers (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+
+    -- Common fields
+    name TEXT NOT NULL,
+    identity_number TEXT NOT NULL,
+    phone_number TEXT NOT NULL,
+    sim_number TEXT NOT NULL,
+    device_number TEXT NOT NULL,
+    nationality TEXT NOT NULL,
+    register_number TEXT NOT NULL,
+
+    -- Mobily-specific additional fields (6 more fields)
+    birth_date TEXT NOT NULL,
+    identity_expiry_date TEXT NOT NULL,
+    package TEXT NOT NULL,
+    email TEXT NOT NULL,
+    city TEXT NOT NULL,
+    district TEXT NOT NULL,
+
+    -- System fields
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+
+    -- Constraint: identity_number must be unique within Mobily project
+    CONSTRAINT mobily_customers_identity_unique UNIQUE (identity_number)
 );
 
 -- ============================================
@@ -185,6 +241,16 @@ CREATE INDEX IF NOT EXISTS idx_salam_entries_created_at ON public.salam_entries(
 CREATE INDEX IF NOT EXISTS idx_mobily_entries_user_id ON public.mobily_entries(user_id);
 CREATE INDEX IF NOT EXISTS idx_mobily_entries_identity_number ON public.mobily_entries(identity_number);
 CREATE INDEX IF NOT EXISTS idx_mobily_entries_created_at ON public.mobily_entries(created_at DESC);
+
+-- Salam customers indexes
+CREATE INDEX IF NOT EXISTS idx_salam_customers_user_id ON public.salam_customers(user_id);
+CREATE INDEX IF NOT EXISTS idx_salam_customers_identity_number ON public.salam_customers(identity_number);
+CREATE INDEX IF NOT EXISTS idx_salam_customers_created_at ON public.salam_customers(created_at DESC);
+
+-- Mobily customers indexes
+CREATE INDEX IF NOT EXISTS idx_mobily_customers_user_id ON public.mobily_customers(user_id);
+CREATE INDEX IF NOT EXISTS idx_mobily_customers_identity_number ON public.mobily_customers(identity_number);
+CREATE INDEX IF NOT EXISTS idx_mobily_customers_created_at ON public.mobily_customers(created_at DESC);
 
 -- ============================================
 -- FUNCTIONS
@@ -311,6 +377,28 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Function to check if Salam customer exists
+CREATE OR REPLACE FUNCTION public.check_salam_customer_exists(p_identity_number TEXT)
+RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN EXISTS (
+        SELECT 1 FROM public.salam_customers
+        WHERE identity_number = p_identity_number
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to check if Mobily customer exists
+CREATE OR REPLACE FUNCTION public.check_mobily_customer_exists(p_identity_number TEXT)
+RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN EXISTS (
+        SELECT 1 FROM public.mobily_customers
+        WHERE identity_number = p_identity_number
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- ============================================
 -- TRIGGERS
 -- ============================================
@@ -350,6 +438,20 @@ CREATE TRIGGER update_mobily_entries_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION public.update_updated_at_column();
 
+-- Trigger to auto-update updated_at on salam_customers
+DROP TRIGGER IF EXISTS update_salam_customers_updated_at ON public.salam_customers;
+CREATE TRIGGER update_salam_customers_updated_at
+    BEFORE UPDATE ON public.salam_customers
+    FOR EACH ROW
+    EXECUTE FUNCTION public.update_updated_at_column();
+
+-- Trigger to auto-update updated_at on mobily_customers
+DROP TRIGGER IF EXISTS update_mobily_customers_updated_at ON public.mobily_customers;
+CREATE TRIGGER update_mobily_customers_updated_at
+    BEFORE UPDATE ON public.mobily_customers
+    FOR EACH ROW
+    EXECUTE FUNCTION public.update_updated_at_column();
+
 -- Trigger to handle new user signups
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
@@ -370,6 +472,8 @@ ALTER TABLE public.file_uploads ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.salam_entries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mobily_entries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.salam_customers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.mobily_customers ENABLE ROW LEVEL SECURITY;
 
 -- ============================================
 -- PROFILES POLICIES
@@ -601,6 +705,56 @@ CREATE POLICY "Users can update own mobily entries"
 CREATE POLICY "Users can delete own mobily entries"
     ON public.mobily_entries FOR DELETE
     USING (auth.uid() = user_id OR public.is_admin(auth.uid()));
+
+-- ============================================
+-- SALAM CUSTOMERS POLICIES
+-- ============================================
+
+-- Users can view their own salam customers
+CREATE POLICY "Users can view own salam customers"
+    ON public.salam_customers FOR SELECT
+    USING (auth.uid() = user_id);
+
+-- Users can insert their own salam customers
+CREATE POLICY "Users can insert own salam customers"
+    ON public.salam_customers FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
+
+-- Users can update their own salam customers
+CREATE POLICY "Users can update own salam customers"
+    ON public.salam_customers FOR UPDATE
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+
+-- Users can delete their own salam customers
+CREATE POLICY "Users can delete own salam customers"
+    ON public.salam_customers FOR DELETE
+    USING (auth.uid() = user_id);
+
+-- ============================================
+-- MOBILY CUSTOMERS POLICIES
+-- ============================================
+
+-- Users can view their own mobily customers
+CREATE POLICY "Users can view own mobily customers"
+    ON public.mobily_customers FOR SELECT
+    USING (auth.uid() = user_id);
+
+-- Users can insert their own mobily customers
+CREATE POLICY "Users can insert own mobily customers"
+    ON public.mobily_customers FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
+
+-- Users can update their own mobily customers
+CREATE POLICY "Users can update own mobily customers"
+    ON public.mobily_customers FOR UPDATE
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+
+-- Users can delete their own mobily customers
+CREATE POLICY "Users can delete own mobily customers"
+    ON public.mobily_customers FOR DELETE
+    USING (auth.uid() = user_id);
 
 -- ============================================
 -- STORAGE BUCKETS

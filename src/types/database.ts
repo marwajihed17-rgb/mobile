@@ -1,7 +1,6 @@
 // Database types for Supabase tables
 export type UserRole = 'user' | 'admin' | 'super_admin';
 export type UserStatus = 'active' | 'inactive' | 'suspended';
-export type ProjectType = 'salam' | 'mobily';
 
 export interface Profile {
   id: string;
@@ -24,8 +23,8 @@ export interface UserSettings {
   updated_at: string;
 }
 
-// Salam Project Entry
-export interface SalamEntry {
+// Salam Customer (7 fields + system fields)
+export interface SalamCustomer {
   id: string;
   user_id: string;
   name: string;
@@ -39,50 +38,30 @@ export interface SalamEntry {
   updated_at: string;
 }
 
-// Mobily Project Entry
-export interface MobilyEntry {
+// Mobily Customer (13 fields + system fields)
+export interface MobilyCustomer {
   id: string;
   user_id: string;
   name: string;
   identity_number: string;
-  nationality: string;
   phone_number: string;
+  sim_number: string;
+  device_number: string;
+  nationality: string;
+  register_number: string;
   birth_date: string;
   identity_expiry_date: string;
   package: string;
   email: string;
-  sim_number: string;
-  device_number: string;
   city: string;
   district: string;
-  register_number: string;
   created_at: string;
   updated_at: string;
 }
 
-// Unified Customer Entry (supports both Salam and Mobily projects)
-export interface Customer {
-  id: string;
-  user_id: string;
-  project_type: ProjectType;
-  // Common fields (required for all projects)
-  name: string;
-  identity_number: string;
-  phone_number: string;
-  sim_number: string;
-  device_number: string;
-  nationality: string;
-  register_number: string;
-  // Mobily-specific fields (nullable for Salam)
-  birth_date: string | null;
-  identity_expiry_date: string | null;
-  package: string | null;
-  email: string | null;
-  city: string | null;
-  district: string | null;
-  created_at: string;
-  updated_at: string;
-}
+// Legacy interfaces for backward compatibility
+export interface SalamEntry extends SalamCustomer {}
+export interface MobilyEntry extends MobilyCustomer {}
 
 // Database type for Supabase client
 export interface Database {
@@ -98,6 +77,17 @@ export interface Database {
         Insert: Omit<UserSettings, 'id' | 'created_at' | 'updated_at'>;
         Update: Partial<Omit<UserSettings, 'id' | 'created_at'>>;
       };
+      salam_customers: {
+        Row: SalamCustomer;
+        Insert: Omit<SalamCustomer, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<SalamCustomer, 'id' | 'created_at'>>;
+      };
+      mobily_customers: {
+        Row: MobilyCustomer;
+        Insert: Omit<MobilyCustomer, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<MobilyCustomer, 'id' | 'created_at'>>;
+      };
+      // Legacy tables kept for backward compatibility
       salam_entries: {
         Row: SalamEntry;
         Insert: Omit<SalamEntry, 'id' | 'created_at' | 'updated_at'>;
@@ -107,11 +97,6 @@ export interface Database {
         Row: MobilyEntry;
         Insert: Omit<MobilyEntry, 'id' | 'created_at' | 'updated_at'>;
         Update: Partial<Omit<MobilyEntry, 'id' | 'created_at'>>;
-      };
-      customers: {
-        Row: Customer;
-        Insert: Omit<Customer, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<Customer, 'id' | 'created_at'>>;
       };
     };
     Views: Record<string, never>;
@@ -128,19 +113,26 @@ export interface Database {
         Args: { p_identity_number: string };
         Returns: boolean;
       };
-      check_customer_exists: {
-        Args: { p_identity_number: string; p_project_type: ProjectType };
+      check_salam_customer_exists: {
+        Args: { p_identity_number: string };
         Returns: boolean;
       };
-      get_recent_customers: {
-        Args: { p_project_type: ProjectType; p_limit?: number };
-        Returns: Customer[];
+      check_mobily_customer_exists: {
+        Args: { p_identity_number: string };
+        Returns: boolean;
+      };
+      get_recent_salam_customers: {
+        Args: { p_limit?: number };
+        Returns: SalamCustomer[];
+      };
+      get_recent_mobily_customers: {
+        Args: { p_limit?: number };
+        Returns: MobilyCustomer[];
       };
     };
     Enums: {
       user_role: UserRole;
       user_status: UserStatus;
-      project_type: ProjectType;
     };
   };
 }

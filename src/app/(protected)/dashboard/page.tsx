@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { DashboardClient } from './dashboard-client';
-import type { Profile, Customer } from '@/types/database';
+import type { Profile, SalamCustomer, MobilyCustomer } from '@/types/database';
 
 export default async function DashboardPage() {
   const supabase = createClient();
@@ -31,25 +31,23 @@ export default async function DashboardPage() {
 
   // Get recent customers from Salam project (last 5)
   const { data: salamCustomers } = await supabase
-    .from('customers')
+    .from('salam_customers')
     .select('*')
-    .eq('project_type', 'salam')
     .order('created_at', { ascending: false })
     .limit(5);
 
   // Get recent customers from Mobily project (last 5)
   const { data: mobilyCustomers } = await supabase
-    .from('customers')
+    .from('mobily_customers')
     .select('*')
-    .eq('project_type', 'mobily')
     .order('created_at', { ascending: false })
     .limit(5);
 
   return (
     <DashboardClient
       profile={profile as Profile}
-      recentSalamCustomers={(salamCustomers || []) as Customer[]}
-      recentMobilyCustomers={(mobilyCustomers || []) as Customer[]}
+      recentSalamCustomers={(salamCustomers || []) as SalamCustomer[]}
+      recentMobilyCustomers={(mobilyCustomers || []) as MobilyCustomer[]}
     />
   );
 }
