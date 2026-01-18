@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { LogOut, ArrowRight } from 'lucide-react';
 import { Avatar } from '@/components/ui/avatar';
@@ -40,29 +39,13 @@ export function Header({ user, showBackButton = false, backHref = '/dashboard' }
               </Button>
             </Link>
           )}
-          <Link href="/dashboard" className="flex items-center gap-3 group">
-            {/* Logo icon - visible on all screens */}
-            <div className="relative w-10 h-10 flex-shrink-0">
-              <Image
-                src="/logo-icon.svg"
-                alt="Retaam Solutions"
-                width={40}
-                height={40}
-                className="w-full h-full object-contain transition-transform group-hover:scale-105"
-                priority
-              />
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+              <span className="text-white font-bold text-lg">P</span>
             </div>
-            {/* Full logo - hidden on mobile, shown on larger screens */}
-            <div className="relative hidden md:block h-8 w-32">
-              <Image
-                src="/logo.svg"
-                alt="Retaam Solutions"
-                width={128}
-                height={32}
-                className="w-full h-full object-contain object-right"
-                priority
-              />
-            </div>
+            <span className="text-lg font-bold text-foreground hidden sm:block">
+              PAA Solutions
+            </span>
           </Link>
         </div>
 

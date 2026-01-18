@@ -1,39 +1,19 @@
-<svg width="300" height="80" viewBox="0 0 300 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="121" height="64" viewBox="0 0 121 64" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="retaamGradient" x1="22.5" y1="10" x2="22.5" y2="55" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#2B91D9"/>
-      <stop offset="50%" stop-color="#8B4FA8"/>
-      <stop offset="100%" stop-color="#2B91D9"/>
+    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4A90F5"/>
+      <stop offset="100%" stop-color="#C74AFF"/>
     </linearGradient>
   </defs>
 
-  <!-- Location Pin Icon -->
-  <g id="pin-icon">
-    <!-- Outer pin shape -->
-    <path d="M22.5 10C15.596 10 10 15.596 10 22.5C10 31.25 22.5 45 22.5 45C22.5 45 35 31.25 35 22.5C35 15.596 29.404 10 22.5 10Z"
-          fill="url(#retaamGradient)" stroke="url(#retaamGradient)" stroke-width="1.5"/>
+  <!-- Logo Icon -->
+  <rect x="4" y="12" width="40" height="40" rx="10" fill="url(#logoGradient)"/>
 
-    <!-- Inner circle -->
-    <circle cx="22.5" cy="22.5" r="5" fill="white"/>
+  <!-- Abstract P letter/shape -->
+  <path d="M16 22h12c4.418 0 8 3.582 8 8s-3.582 8-8 8h-4v6h-8V22z" fill="white" fill-opacity="0.9"/>
+  <rect x="16" y="30" width="12" height="8" rx="4" fill="url(#logoGradient)"/>
 
-    <!-- Bottom curve/tail -->
-    <path d="M22.5 45C22.5 45 19 48 19 51C19 53.209 20.567 55 22.5 55C24.433 55 26 53.209 26 51C26 48 22.5 45 22.5 45Z"
-          fill="url(#retaamGradient)"/>
-  </g>
-
-  <!-- Retaam Text -->
-  <g id="text-retaam">
-    <text x="55" y="38" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif"
-          font-size="32" font-weight="600" fill="#6B7280" letter-spacing="-0.5">
-      Retaam
-    </text>
-  </g>
-
-  <!-- Solutions Text -->
-  <g id="text-solutions">
-    <text x="55" y="58" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif"
-          font-size="20" font-weight="500" fill="#9CA3AF" letter-spacing="0">
-      Solutions
-    </text>
-  </g>
+  <!-- Company Name -->
+  <text x="52" y="28" font-family="Inter, system-ui, sans-serif" font-size="18" font-weight="700" fill="white">PAA</text>
+  <text x="52" y="46" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="500" fill="#71717a">Solutions</text>
 </svg>
