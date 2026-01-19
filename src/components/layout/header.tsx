@@ -59,9 +59,6 @@ export function Header({ user, showBackButton = false, backHref = '/dashboard' }
               <p className="text-sm font-medium text-foreground">
                 {user.username || user.email}
               </p>
-              <p className="text-xs text-muted capitalize">
-                {user.role.replace('_', ' ')}
-              </p>
             </div>
 
             <Avatar
