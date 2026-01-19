@@ -349,7 +349,7 @@ export function AdminClient({
               className="relative min-h-[200px] group cursor-pointer bg-gradient-to-br from-green-500/10 to-emerald-600/10 border-green-500/30 hover:border-green-500"
               onClick={() => setActiveView('salam')}
             >
-              <div className="absolute top-4 right-4">
+              <div className="absolute top-4 left-4 z-10">
                 <Badge variant="success">{stats.salamCount} سجل</Badge>
               </div>
 
@@ -357,14 +357,14 @@ export function AdminClient({
                 <Phone className="w-7 h-7 text-white" />
               </div>
 
-              <h3 className="text-lg font-semibold text-foreground mb-2">
+              <h3 className="text-lg font-semibold text-foreground mb-2 pr-0">
                 مشروع سلام
               </h3>
-              <p className="text-sm text-muted">
+              <p className="text-sm text-muted pr-0">
                 عرض بيانات العملاء
               </p>
 
-              <div className="absolute bottom-4 left-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute bottom-4 right-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity">
                 <ArrowRight className="w-5 h-5 rotate-180" />
               </div>
             </Card>
@@ -376,7 +376,7 @@ export function AdminClient({
               className="relative min-h-[200px] group cursor-pointer bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-blue-500/30 hover:border-blue-500"
               onClick={() => setActiveView('mobily')}
             >
-              <div className="absolute top-4 right-4">
+              <div className="absolute top-4 left-4 z-10">
                 <Badge variant="primary">{stats.mobilyCount} سجل</Badge>
               </div>
 
@@ -384,14 +384,14 @@ export function AdminClient({
                 <Smartphone className="w-7 h-7 text-white" />
               </div>
 
-              <h3 className="text-lg font-semibold text-foreground mb-2">
+              <h3 className="text-lg font-semibold text-foreground mb-2 pr-0">
                 مشروع موبايلي
               </h3>
-              <p className="text-sm text-muted">
+              <p className="text-sm text-muted pr-0">
                 عرض بيانات العملاء
               </p>
 
-              <div className="absolute bottom-4 left-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute bottom-4 right-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity">
                 <ArrowRight className="w-5 h-5 rotate-180" />
               </div>
             </Card>
@@ -403,7 +403,7 @@ export function AdminClient({
               className="relative min-h-[200px] group cursor-pointer bg-gradient-to-br from-amber-500/10 to-orange-600/10 border-amber-500/30 hover:border-amber-500"
               onClick={() => setActiveView('settings')}
             >
-              <div className="absolute top-4 right-4">
+              <div className="absolute top-4 left-4 z-10">
                 <Badge variant="warning">{profiles.length} مستخدم</Badge>
               </div>
 
@@ -411,14 +411,14 @@ export function AdminClient({
                 <Users className="w-7 h-7 text-white" />
               </div>
 
-              <h3 className="text-lg font-semibold text-foreground mb-2">
+              <h3 className="text-lg font-semibold text-foreground mb-2 pr-0">
                 إدارة المستخدمين
               </h3>
-              <p className="text-sm text-muted">
+              <p className="text-sm text-muted pr-0">
                 إضافة وحذف وتعديل الصلاحيات
               </p>
 
-              <div className="absolute bottom-4 left-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute bottom-4 right-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity">
                 <ArrowRight className="w-5 h-5 rotate-180" />
               </div>
             </Card>
