@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { LogOut, ArrowLeft } from 'lucide-react';
 import { Avatar } from '@/components/ui/avatar';
@@ -40,12 +41,14 @@ export function Header({ user, showBackButton = false, backHref = '/dashboard' }
             </Link>
           )}
           <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-              <span className="text-white font-bold text-lg">P</span>
-            </div>
-            <span className="text-lg font-bold text-foreground hidden sm:block">
-              PAA Solutions
-            </span>
+            <Image
+              src="/retaam-logo.png"
+              alt="Retaam Solutions"
+              width={180}
+              height={48}
+              className="h-12 w-auto"
+              priority
+            />
           </Link>
         </div>
 
