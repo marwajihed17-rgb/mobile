@@ -92,7 +92,7 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
       <main className="max-w-6xl mx-auto px-6 py-8">
         {/* Welcome Section */}
         <div className="mb-10 animate-fade-in-up">
-          <p className="text-sm text-muted mb-2">مرحباً بك، {displayName}!</p>
+          <p className="text-sm text-muted mb-2">مرحباً بك،</p>
           <h1 className="text-3xl font-bold text-foreground mb-2">اختر المشروع</h1>
           <p className="text-muted">اختر مشروعاً لإدخال البيانات</p>
         </div>

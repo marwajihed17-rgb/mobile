@@ -88,7 +88,6 @@ export default function LoginPage() {
           />
         </div>
         <h1 className="text-2xl font-bold text-foreground">مرحباً بك</h1>
-        <p className="text-muted mt-2">سجل دخولك للمتابعة</p>
       </div>
 
       {/* Login Form */}
@@ -131,17 +130,6 @@ export default function LoginPage() {
           </Button>
         </form>
       </div>
-
-      {/* Support link */}
-      <p className="text-center text-sm text-muted mt-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-        تحتاج مساعدة؟{' '}
-        <a
-          href="mailto:support@paa-solutions.com"
-          className="text-primary hover:text-primary-400 transition-colors"
-        >
-          تواصل معنا
-        </a>
-      </p>
     </div>
   );
 }
