@@ -43,11 +43,36 @@ export default async function DashboardPage() {
     .order('created_at', { ascending: false })
     .limit(5);
 
+  // Get total counts for each project
+  const { data: allSalamCustomers } = await supabase
+    .from('salam_customers')
+    .select('id', { count: 'exact', head: false });
+
+  const { data: allMobilyCustomers } = await supabase
+    .from('mobily_customers')
+    .select('id', { count: 'exact', head: false });
+
+  const salamCount = allSalamCustomers?.length || 0;
+  const mobilyCount = allMobilyCustomers?.length || 0;
+
+  // Get daily counts using database functions
+  const { data: salamDailyCountData } = await supabase.rpc('get_salam_daily_count');
+  const { data: mobilyDailyCountData } = await supabase.rpc('get_mobily_daily_count');
+
+  const salamDailyCount = salamDailyCountData || 0;
+  const mobilyDailyCount = mobilyDailyCountData || 0;
+
   return (
     <DashboardClient
       profile={profile as Profile}
       recentSalamCustomers={(salamCustomers || []) as SalamCustomer[]}
       recentMobilyCustomers={(mobilyCustomers || []) as MobilyCustomer[]}
+      stats={{
+        salamCount,
+        mobilyCount,
+        salamDailyCount,
+        mobilyDailyCount,
+      }}
     />
   );
 }
