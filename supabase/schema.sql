@@ -407,28 +407,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Function to get total Salam customer count
-CREATE OR REPLACE FUNCTION public.get_salam_total_count()
-RETURNS INTEGER AS $$
-BEGIN
-    RETURN (
-        SELECT COUNT(*)::INTEGER
-        FROM public.salam_customers
-    );
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Function to get total Mobily customer count
-CREATE OR REPLACE FUNCTION public.get_mobily_total_count()
-RETURNS INTEGER AS $$
-BEGIN
-    RETURN (
-        SELECT COUNT(*)::INTEGER
-        FROM public.mobily_customers
-    );
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
 -- Function to get today's Salam customer count
 CREATE OR REPLACE FUNCTION public.get_salam_daily_count()
 RETURNS INTEGER AS $$
