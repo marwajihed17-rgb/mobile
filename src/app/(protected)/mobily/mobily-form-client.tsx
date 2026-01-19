@@ -35,6 +35,8 @@ export function MobilyFormClient({ profile }: MobilyFormClientProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [identityError, setIdentityError] = useState('');
+  const [simError, setSimError] = useState('');
 
   const [formData, setFormData] = useState({
     name: '',
@@ -63,11 +65,78 @@ export function MobilyFormClient({ profile }: MobilyFormClientProps) {
     isSuperAdmin: profile.role === 'super_admin',
   };
 
+  // Validate identity number uniqueness
+  const validateIdentityNumber = async (value: string) => {
+    if (!value.trim()) {
+      setIdentityError('');
+      return;
+    }
+
+    try {
+      const supabase = getSupabaseClient();
+      const { data: existing, error: checkError } = await supabase
+        .from('mobily_customers')
+        .select('id')
+        .eq('identity_number', value.trim())
+        .maybeSingle();
+
+      if (checkError) {
+        console.error('Error checking identity number:', checkError);
+        return;
+      }
+
+      if (existing) {
+        setIdentityError('رقم الهوية مستخدم مسبقاً. الرجاء إدخال رقم آخر.');
+      } else {
+        setIdentityError('');
+      }
+    } catch (err) {
+      console.error('Unexpected error validating identity:', err);
+    }
+  };
+
+  // Validate SIM number uniqueness
+  const validateSimNumber = async (value: string) => {
+    if (!value.trim()) {
+      setSimError('');
+      return;
+    }
+
+    try {
+      const supabase = getSupabaseClient();
+      const { data: existing, error: checkError } = await supabase
+        .from('mobily_customers')
+        .select('id')
+        .eq('sim_number', value.trim())
+        .maybeSingle();
+
+      if (checkError) {
+        console.error('Error checking SIM number:', checkError);
+        return;
+      }
+
+      if (existing) {
+        setSimError('رقم الشريحة مستخدم مسبقاً. الرجاء إدخال رقم آخر.');
+      } else {
+        setSimError('');
+      }
+    } catch (err) {
+      console.error('Unexpected error validating SIM:', err);
+    }
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     setError('');
     setSuccess('');
+
+    // Clear field-specific errors when user types
+    if (name === 'identity_number') {
+      setIdentityError('');
+    } else if (name === 'sim_number') {
+      setSimError('');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -90,22 +159,44 @@ export function MobilyFormClient({ profile }: MobilyFormClientProps) {
         return;
       }
 
-      // Check if customer already exists in mobily project
-      const { data: existing, error: checkError } = await supabase
+      // Final validation check for identity number
+      const { data: existingIdentity, error: identityCheckError } = await supabase
         .from('mobily_customers')
         .select('id')
-        .eq('identity_number', formData.identity_number)
+        .eq('identity_number', formData.identity_number.trim())
         .maybeSingle();
 
-      if (checkError) {
-        console.error('Error checking for duplicate:', checkError);
+      if (identityCheckError) {
+        console.error('Error checking identity number:', identityCheckError);
         setError('حدث خطأ أثناء التحقق من البيانات');
         setIsLoading(false);
         return;
       }
 
-      if (existing) {
-        setError('المستخدم موجود مسبقاً - رقم الهوية مسجل من قبل');
+      if (existingIdentity) {
+        setIdentityError('رقم الهوية مستخدم مسبقاً. الرجاء إدخال رقم آخر.');
+        setError('رقم الهوية مستخدم مسبقاً');
+        setIsLoading(false);
+        return;
+      }
+
+      // Final validation check for SIM number
+      const { data: existingSim, error: simCheckError } = await supabase
+        .from('mobily_customers')
+        .select('id')
+        .eq('sim_number', formData.sim_number.trim())
+        .maybeSingle();
+
+      if (simCheckError) {
+        console.error('Error checking SIM number:', simCheckError);
+        setError('حدث خطأ أثناء التحقق من البيانات');
+        setIsLoading(false);
+        return;
+      }
+
+      if (existingSim) {
+        setSimError('رقم الشريحة مستخدم مسبقاً. الرجاء إدخال رقم آخر.');
+        setError('رقم الشريحة مستخدم مسبقاً');
         setIsLoading(false);
         return;
       }
@@ -133,7 +224,16 @@ export function MobilyFormClient({ profile }: MobilyFormClientProps) {
       if (insertError) {
         console.error('Insert error:', insertError);
         if (insertError.code === '23505') {
-          setError('رقم الهوية مسجل مسبقاً في النظام');
+          // Unique constraint violation
+          if (insertError.message.includes('identity_number')) {
+            setIdentityError('رقم الهوية مستخدم مسبقاً. الرجاء إدخال رقم آخر.');
+            setError('رقم الهوية مسجل مسبقاً في النظام');
+          } else if (insertError.message.includes('sim_number')) {
+            setSimError('رقم الشريحة مستخدم مسبقاً. الرجاء إدخال رقم آخر.');
+            setError('رقم الشريحة مسجل مسبقاً في النظام');
+          } else {
+            setError('البيانات المدخلة مسجلة مسبقاً في النظام');
+          }
         } else if (insertError.code === '23503') {
           setError('خطأ في الاتصال بقاعدة البيانات - يرجى المحاولة مرة أخرى');
         } else {
@@ -224,8 +324,11 @@ export function MobilyFormClient({ profile }: MobilyFormClientProps) {
                 placeholder="أدخل رقم الهوية"
                 value={formData.identity_number}
                 onChange={handleChange}
+                onBlur={(e) => validateIdentityNumber(e.target.value)}
                 icon={<CreditCard className="w-5 h-5" />}
+                error={identityError}
                 required
+                dir="rtl"
               />
 
               <Input
@@ -248,6 +351,7 @@ export function MobilyFormClient({ profile }: MobilyFormClientProps) {
                 onChange={handleChange}
                 icon={<Phone className="w-5 h-5" />}
                 required
+                dir="rtl"
               />
 
               <Input
@@ -299,8 +403,11 @@ export function MobilyFormClient({ profile }: MobilyFormClientProps) {
                 placeholder="أدخل رقم الشريحة"
                 value={formData.sim_number}
                 onChange={handleChange}
+                onBlur={(e) => validateSimNumber(e.target.value)}
                 icon={<Smartphone className="w-5 h-5" />}
+                error={simError}
                 required
+                dir="rtl"
               />
 
               <Input
