@@ -142,7 +142,7 @@ export function AdminClient({
   ])).sort();
 
   // Filter customers based on search, date, and creator
-  const filterCustomers = (customers: Customer[] | MobilyCustomer[]) => {
+  const filterCustomers = <T extends Customer>(customers: T[]): T[] => {
     return customers.filter(customer => {
       // Search filter
       const matchesSearch = !searchQuery ||
