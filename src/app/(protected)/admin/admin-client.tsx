@@ -83,8 +83,19 @@ export function AdminClient({
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState('');
   const [profiles, setProfiles] = useState(initialProfiles);
-  const [salamCustomers] = useState(initialSalamCustomers);
-  const [mobilyCustomers] = useState(initialMobilyCustomers);
+  const [salamCustomers] = useState(initialSalamCustomers || []);
+  const [mobilyCustomers] = useState(initialMobilyCustomers || []);
+
+  // Debug logging
+  console.log('AdminClient received data:', {
+    salamCustomersCount: salamCustomers?.length || 0,
+    mobilyCustomersCount: mobilyCustomers?.length || 0,
+    profilesCount: profiles?.length || 0,
+    stats,
+    currentUserRole: currentProfile?.role,
+    salamSample: salamCustomers?.[0] || 'No data',
+    mobilySample: mobilyCustomers?.[0] || 'No data',
+  });
 
   // User Management States
   const [showAddUser, setShowAddUser] = useState(false);
@@ -251,6 +262,14 @@ export function AdminClient({
               <p className="text-muted">إدارة النظام والمستخدمين</p>
             </div>
           </div>
+
+          {/* Data Status Warning */}
+          {salamCustomers.length === 0 && mobilyCustomers.length === 0 && (
+            <Alert variant="warning" className="mt-4">
+              <AlertCircle className="w-4 h-4" />
+              لا توجد بيانات عملاء في النظام. تأكد من وجود سجلات في قاعدة البيانات وأن لديك صلاحيات المشرف.
+            </Alert>
+          )}
         </div>
 
         {/* Stats Cards */}
