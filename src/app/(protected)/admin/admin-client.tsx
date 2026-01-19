@@ -90,7 +90,7 @@ export function AdminClient({
   const [showAddUser, setShowAddUser] = useState(false);
   const [newUserData, setNewUserData] = useState({
     username: '',
-    admin_name: '',
+    supervisor_name: '',
     password: '',
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -161,7 +161,7 @@ export function AdminClient({
         options: {
           data: {
             username: newUserData.username,
-            full_name: newUserData.admin_name,
+            supervisor_name: newUserData.supervisor_name,
           },
         },
       });
@@ -169,7 +169,7 @@ export function AdminClient({
       if (authError) throw authError;
 
       setSuccess('تم إضافة المستخدم بنجاح');
-      setNewUserData({ username: '', admin_name: '', password: '' });
+      setNewUserData({ username: '', supervisor_name: '', password: '' });
       setShowAddUser(false);
       router.refresh();
     } catch (err) {
@@ -627,8 +627,8 @@ export function AdminClient({
                     type="text"
                     label="إسم المشرف"
                     placeholder="أدخل إسم المشرف"
-                    value={newUserData.admin_name}
-                    onChange={(e) => setNewUserData(prev => ({ ...prev, admin_name: e.target.value }))}
+                    value={newUserData.supervisor_name}
+                    onChange={(e) => setNewUserData(prev => ({ ...prev, supervisor_name: e.target.value }))}
                     icon={<User className="w-5 h-5" />}
                     required
                   />
@@ -659,7 +659,8 @@ export function AdminClient({
                 <table className="w-full">
                   <thead className="bg-card-hover border-b border-card-border">
                     <tr>
-                      <th className="text-right text-sm font-medium text-muted px-4 py-3">الإسم</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3">إسم المستخدم</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3">إسم المشرف</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">الحالة</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">تاريخ الإنشاء</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">الإجراءات</th>
@@ -669,7 +670,8 @@ export function AdminClient({
                     {filteredProfiles.length > 0 ? (
                       filteredProfiles.map((profile) => (
                         <tr key={profile.id} className="border-b border-card-border last:border-0 hover:bg-card-hover transition-colors">
-                          <td className="px-4 py-3 text-foreground">{profile.username || profile.full_name || '-'}</td>
+                          <td className="px-4 py-3 text-foreground">{profile.username || '-'}</td>
+                          <td className="px-4 py-3 text-muted">{profile.supervisor_name || '-'}</td>
                           <td className="px-4 py-3">
                             <select
                               value={profile.status}
@@ -697,7 +699,7 @@ export function AdminClient({
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={4} className="px-4 py-8 text-center text-muted">
+                        <td colSpan={5} className="px-4 py-8 text-center text-muted">
                           لا توجد نتائج
                         </td>
                       </tr>

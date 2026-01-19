@@ -7,6 +7,7 @@ export interface Profile {
   email: string;
   full_name: string | null;
   username: string | null;
+  supervisor_name: string | null;
   avatar_url: string | null;
   role: UserRole;
   status: UserStatus;
@@ -131,6 +132,18 @@ export interface Database {
       get_recent_mobily_customers: {
         Args: { p_limit?: number };
         Returns: MobilyCustomer[];
+      };
+      get_salam_daily_count: {
+        Args: Record<string, never>;
+        Returns: number;
+      };
+      get_mobily_daily_count: {
+        Args: Record<string, never>;
+        Returns: number;
+      };
+      get_stats_by_date_range: {
+        Args: { p_start_date: string; p_end_date?: string };
+        Returns: { date: string; salam_count: number; mobily_count: number; total_count: number }[];
       };
     };
     Enums: {

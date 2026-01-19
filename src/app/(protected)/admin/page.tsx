@@ -55,22 +55,12 @@ export default async function AdminPage() {
   const salamCount = salamCustomers?.length || 0;
   const mobilyCount = mobilyCustomers?.length || 0;
 
-  // Calculate daily counts (today's entries)
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayISO = today.toISOString();
+  // Get daily counts using database functions for better performance
+  const { data: salamDailyCountData } = await supabase.rpc('get_salam_daily_count');
+  const { data: mobilyDailyCountData } = await supabase.rpc('get_mobily_daily_count');
 
-  const salamDailyCount = salamCustomers?.filter(entry => {
-    const entryDate = new Date(entry.created_at);
-    entryDate.setHours(0, 0, 0, 0);
-    return entryDate.toISOString() === todayISO;
-  }).length || 0;
-
-  const mobilyDailyCount = mobilyCustomers?.filter(entry => {
-    const entryDate = new Date(entry.created_at);
-    entryDate.setHours(0, 0, 0, 0);
-    return entryDate.toISOString() === todayISO;
-  }).length || 0;
+  const salamDailyCount = salamDailyCountData || 0;
+  const mobilyDailyCount = mobilyDailyCountData || 0;
 
   return (
     <AdminClient
