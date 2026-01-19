@@ -360,7 +360,7 @@ export function AdminClient({
                 عرض بيانات العملاء
               </p>
 
-              <div className="absolute bottom-4 right-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute bottom-4 left-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity">
                 <ArrowRight className="w-5 h-5 rotate-180" />
               </div>
             </Card>
@@ -383,7 +383,7 @@ export function AdminClient({
                 عرض بيانات العملاء
               </p>
 
-              <div className="absolute bottom-4 right-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute bottom-4 left-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity">
                 <ArrowRight className="w-5 h-5 rotate-180" />
               </div>
             </Card>
@@ -406,7 +406,7 @@ export function AdminClient({
                 إضافة وحذف وتعديل الصلاحيات
               </p>
 
-              <div className="absolute bottom-4 right-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute bottom-4 left-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity">
                 <ArrowRight className="w-5 h-5 rotate-180" />
               </div>
             </Card>
