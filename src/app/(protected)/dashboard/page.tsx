@@ -43,17 +43,12 @@ export default async function DashboardPage() {
     .order('created_at', { ascending: false })
     .limit(5);
 
-  // Get total counts for each project
-  const { data: allSalamCustomers } = await supabase
-    .from('salam_customers')
-    .select('id', { count: 'exact', head: false });
+  // Get total counts using database functions (bypasses RLS to show all users' data)
+  const { data: salamTotalCountData } = await supabase.rpc('get_salam_total_count');
+  const { data: mobilyTotalCountData } = await supabase.rpc('get_mobily_total_count');
 
-  const { data: allMobilyCustomers } = await supabase
-    .from('mobily_customers')
-    .select('id', { count: 'exact', head: false });
-
-  const salamCount = allSalamCustomers?.length || 0;
-  const mobilyCount = allMobilyCustomers?.length || 0;
+  const salamCount = salamTotalCountData || 0;
+  const mobilyCount = mobilyTotalCountData || 0;
 
   // Get daily counts using database functions
   const { data: salamDailyCountData } = await supabase.rpc('get_salam_daily_count');
