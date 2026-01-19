@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { LogOut, ArrowRight } from 'lucide-react';
+import { LogOut, ArrowLeft } from 'lucide-react';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { signOut } from '@/lib/auth';
@@ -34,8 +34,8 @@ export function Header({ user, showBackButton = false, backHref = '/dashboard' }
           {showBackButton && (
             <Link href={backHref}>
               <Button variant="secondary" size="icon" className="w-10 h-10">
-                {/* Arrow points right in RTL to indicate "back" */}
-                <ArrowRight className="w-5 h-5" />
+                {/* Arrow points left in RTL to indicate "back" */}
+                <ArrowLeft className="w-5 h-5" />
               </Button>
             </Link>
           )}
@@ -52,12 +52,9 @@ export function Header({ user, showBackButton = false, backHref = '/dashboard' }
         {/* Left side in RTL (User info and actions) */}
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-3">
-            {/* Online indicator */}
-            <div className="w-2 h-2 bg-success rounded-full animate-pulse" />
-
             <div className="hidden sm:block text-start">
               <p className="text-sm font-medium text-foreground">
-                {user.fullName || user.email}
+                {user.username || user.email}
               </p>
               <p className="text-xs text-muted capitalize">
                 {user.role.replace('_', ' ')}
@@ -65,7 +62,7 @@ export function Header({ user, showBackButton = false, backHref = '/dashboard' }
             </div>
 
             <Avatar
-              name={user.fullName || user.email}
+              name={user.username || user.email}
               imageUrl={user.avatarUrl}
               size="md"
             />

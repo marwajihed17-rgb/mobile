@@ -5,6 +5,7 @@ export interface AuthUser {
   id: string;
   email: string;
   fullName: string | null;
+  username: string | null;
   avatarUrl: string | null;
   role: UserRole;
   isAdmin: boolean;
@@ -40,6 +41,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
     id: profile.id,
     email: profile.email,
     fullName: profile.full_name,
+    username: profile.username,
     avatarUrl: profile.avatar_url,
     role: profile.role,
     isAdmin: profile.role === 'admin' || profile.role === 'super_admin',
