@@ -74,6 +74,7 @@ export function AdminClient({
     id: currentProfile.id,
     email: currentProfile.email,
     fullName: currentProfile.full_name,
+    username: currentProfile.username,
     avatarUrl: currentProfile.avatar_url,
     role: currentProfile.role,
     isAdmin: true,

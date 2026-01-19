@@ -33,6 +33,7 @@ export function ProfileClient({ profile, settings }: ProfileClientProps) {
     id: profile.id,
     email: profile.email,
     fullName: profile.full_name,
+    username: profile.username,
     avatarUrl: profile.avatar_url,
     role: profile.role,
     isAdmin: profile.role === 'admin' || profile.role === 'super_admin',
