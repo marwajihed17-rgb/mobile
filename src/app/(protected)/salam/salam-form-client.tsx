@@ -193,6 +193,7 @@ export function SalamFormClient({ profile }: SalamFormClientProps) {
         .from('salam_customers')
         .insert({
           user_id: profile.id,
+          created_by_username: profile.username || profile.full_name || profile.email,
           name: formData.name.trim(),
           identity_number: formData.identity_number.trim(),
           phone_number: formData.phone_number.trim(),
