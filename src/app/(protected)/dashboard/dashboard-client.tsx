@@ -14,9 +14,15 @@ interface DashboardClientProps {
   profile: Profile;
   recentSalamCustomers: SalamCustomer[];
   recentMobilyCustomers: MobilyCustomer[];
+  stats: {
+    salamCount: number;
+    mobilyCount: number;
+    salamDailyCount: number;
+    mobilyDailyCount: number;
+  };
 }
 
-export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCustomers }: DashboardClientProps) {
+export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCustomers, stats }: DashboardClientProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'projects' | 'recent'>('projects');
   const [salamCustomers, setSalamCustomers] = useState<SalamCustomer[]>(recentSalamCustomers);
@@ -237,6 +243,30 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                           </tr>
                         ))}
                       </tbody>
+                      <tfoot className="bg-green-500/5 border-t-2 border-green-500/30">
+                        <tr>
+                          <td colSpan={9} className="px-4 py-3">
+                            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-sm">
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-green-700 dark:text-green-400">
+                                  إجمالي – عدد المستخدمين مشروع سلام:
+                                </span>
+                                <span className="font-bold text-green-600 dark:text-green-500">
+                                  {stats.salamCount}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-green-700 dark:text-green-400">
+                                  عدد المستخدمين اليومي - سلام:
+                                </span>
+                                <span className="font-bold text-green-600 dark:text-green-500">
+                                  {stats.salamDailyCount}
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      </tfoot>
                     </table>
                   </div>
                 </div>
@@ -308,6 +338,30 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                           </tr>
                         ))}
                       </tbody>
+                      <tfoot className="bg-blue-500/5 border-t-2 border-blue-500/30">
+                        <tr>
+                          <td colSpan={15} className="px-4 py-3">
+                            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-sm">
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-blue-700 dark:text-blue-400">
+                                  إجمالي – عدد المستخدمين مشروع موبايلي:
+                                </span>
+                                <span className="font-bold text-blue-600 dark:text-blue-500">
+                                  {stats.mobilyCount}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-blue-700 dark:text-blue-400">
+                                  عدد المستخدمين اليومي - موبايلي:
+                                </span>
+                                <span className="font-bold text-blue-600 dark:text-blue-500">
+                                  {stats.mobilyDailyCount}
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      </tfoot>
                     </table>
                   </div>
                 </div>
