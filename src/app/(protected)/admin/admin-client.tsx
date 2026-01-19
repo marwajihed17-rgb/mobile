@@ -7,7 +7,6 @@ import {
   Smartphone,
   Settings,
   Users,
-  Download,
   Search,
   Trash2,
   Shield,
@@ -83,7 +82,6 @@ export function AdminClient({
   const [activeView, setActiveView] = useState<ActiveView>('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState('');
-  const [creatorFilter, setCreatorFilter] = useState('');
   const [profiles, setProfiles] = useState(initialProfiles);
   const [salamCustomers] = useState(initialSalamCustomers);
   const [mobilyCustomers] = useState(initialMobilyCustomers);
@@ -118,30 +116,7 @@ export function AdminClient({
     return `${year}/${month}/${day}`;
   };
 
-  // Export to CSV
-  const exportToCSV = (data: Record<string, unknown>[], filename: string) => {
-    if (data.length === 0) return;
-
-    const headers = Object.keys(data[0]);
-    const csvContent = [
-      headers.join(','),
-      ...data.map(row => headers.map(h => `"${row[h] || ''}"`).join(','))
-    ].join('\n');
-
-    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `${filename}_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-  };
-
-  // Get unique creators for filter dropdown
-  const allCreators = Array.from(new Set([
-    ...salamCustomers.map(c => c.created_by_username || c.profiles?.username || c.profiles?.full_name || 'غير محدد'),
-    ...mobilyCustomers.map(c => c.created_by_username || c.profiles?.username || c.profiles?.full_name || 'غير محدد')
-  ])).sort();
-
-  // Filter customers based on search, date, and creator
+  // Filter customers based on search and date
   const filterCustomers = <T extends Customer>(customers: T[]): T[] => {
     return customers.filter(customer => {
       // Search filter
@@ -154,11 +129,7 @@ export function AdminClient({
       const matchesDate = !dateFilter ||
         customer.created_at.startsWith(dateFilter);
 
-      // Creator filter
-      const creatorName = customer.created_by_username || customer.profiles?.username || customer.profiles?.full_name || 'غير محدد';
-      const matchesCreator = !creatorFilter || creatorName === creatorFilter;
-
-      return matchesSearch && matchesDate && matchesCreator;
+      return matchesSearch && matchesDate;
     });
   };
 
@@ -371,7 +342,7 @@ export function AdminClient({
                 مشروع سلام
               </h3>
               <p className="text-sm text-muted">
-                عرض وتصدير بيانات العملاء
+                عرض بيانات العملاء
               </p>
 
               <div className="absolute bottom-4 left-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity">
@@ -398,7 +369,7 @@ export function AdminClient({
                 مشروع موبايلي
               </h3>
               <p className="text-sm text-muted">
-                عرض وتصدير بيانات العملاء
+                عرض بيانات العملاء
               </p>
 
               <div className="absolute bottom-4 left-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity">
@@ -438,66 +409,36 @@ export function AdminClient({
         {/* Salam List View */}
         {activeView === 'salam' && (
           <div className="space-y-6">
-            {/* Filters and Export */}
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-                <div className="relative flex-1 max-w-md">
-                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
-                  <input
-                    type="text"
-                    placeholder="بحث بالاسم أو رقم الهوية أو الجوال..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pr-10 pl-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
-                  />
-                </div>
+            {/* Filters */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
+                <input
+                  type="text"
+                  placeholder="بحث بالاسم أو رقم الهوية أو الجوال..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pr-10 pl-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+                />
+              </div>
+              <div className="flex-1 max-w-xs">
+                <input
+                  type="date"
+                  value={dateFilter}
+                  onChange={(e) => setDateFilter(e.target.value)}
+                  placeholder="تصفية حسب التاريخ"
+                  className="w-full px-4 py-2 bg-card border border-card-border rounded-lg text-foreground focus:outline-none focus:border-primary"
+                />
+              </div>
+              {dateFilter && (
                 <Button
-                  onClick={() => exportToCSV(filteredSalamCustomers as unknown as Record<string, unknown>[], 'salam_customers')}
                   variant="secondary"
-                  className="flex items-center gap-2"
+                  onClick={() => setDateFilter('')}
+                  className="self-start"
                 >
-                  <Download className="w-4 h-4" />
-                  تصدير CSV
+                  إلغاء الفلتر
                 </Button>
-              </div>
-
-              {/* Additional Filters */}
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1">
-                  <label className="text-sm text-muted mb-2 block">تصفية حسب التاريخ</label>
-                  <input
-                    type="date"
-                    value={dateFilter}
-                    onChange={(e) => setDateFilter(e.target.value)}
-                    className="w-full px-4 py-2 bg-card border border-card-border rounded-lg text-foreground focus:outline-none focus:border-primary"
-                  />
-                </div>
-                <div className="flex-1">
-                  <label className="text-sm text-muted mb-2 block">تصفية حسب المدخل</label>
-                  <select
-                    value={creatorFilter}
-                    onChange={(e) => setCreatorFilter(e.target.value)}
-                    className="w-full px-4 py-2 bg-card border border-card-border rounded-lg text-foreground focus:outline-none focus:border-primary"
-                  >
-                    <option value="">الكل</option>
-                    {allCreators.map(creator => (
-                      <option key={creator} value={creator}>{creator}</option>
-                    ))}
-                  </select>
-                </div>
-                {(dateFilter || creatorFilter) && (
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      setDateFilter('');
-                      setCreatorFilter('');
-                    }}
-                    className="self-end"
-                  >
-                    إلغاء الفلاتر
-                  </Button>
-                )}
-              </div>
+              )}
             </div>
 
             {/* Table */}
@@ -551,66 +492,36 @@ export function AdminClient({
         {/* Mobily List View */}
         {activeView === 'mobily' && (
           <div className="space-y-6">
-            {/* Filters and Export */}
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-                <div className="relative flex-1 max-w-md">
-                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
-                  <input
-                    type="text"
-                    placeholder="بحث بالاسم أو رقم الهوية أو الجوال..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pr-10 pl-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
-                  />
-                </div>
+            {/* Filters */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
+                <input
+                  type="text"
+                  placeholder="بحث بالاسم أو رقم الهوية أو الجوال..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pr-10 pl-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+                />
+              </div>
+              <div className="flex-1 max-w-xs">
+                <input
+                  type="date"
+                  value={dateFilter}
+                  onChange={(e) => setDateFilter(e.target.value)}
+                  placeholder="تصفية حسب التاريخ"
+                  className="w-full px-4 py-2 bg-card border border-card-border rounded-lg text-foreground focus:outline-none focus:border-primary"
+                />
+              </div>
+              {dateFilter && (
                 <Button
-                  onClick={() => exportToCSV(filteredMobilyCustomers as unknown as Record<string, unknown>[], 'mobily_customers')}
                   variant="secondary"
-                  className="flex items-center gap-2"
+                  onClick={() => setDateFilter('')}
+                  className="self-start"
                 >
-                  <Download className="w-4 h-4" />
-                  تصدير CSV
+                  إلغاء الفلتر
                 </Button>
-              </div>
-
-              {/* Additional Filters */}
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1">
-                  <label className="text-sm text-muted mb-2 block">تصفية حسب التاريخ</label>
-                  <input
-                    type="date"
-                    value={dateFilter}
-                    onChange={(e) => setDateFilter(e.target.value)}
-                    className="w-full px-4 py-2 bg-card border border-card-border rounded-lg text-foreground focus:outline-none focus:border-primary"
-                  />
-                </div>
-                <div className="flex-1">
-                  <label className="text-sm text-muted mb-2 block">تصفية حسب المدخل</label>
-                  <select
-                    value={creatorFilter}
-                    onChange={(e) => setCreatorFilter(e.target.value)}
-                    className="w-full px-4 py-2 bg-card border border-card-border rounded-lg text-foreground focus:outline-none focus:border-primary"
-                  >
-                    <option value="">الكل</option>
-                    {allCreators.map(creator => (
-                      <option key={creator} value={creator}>{creator}</option>
-                    ))}
-                  </select>
-                </div>
-                {(dateFilter || creatorFilter) && (
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      setDateFilter('');
-                      setCreatorFilter('');
-                    }}
-                    className="self-end"
-                  >
-                    إلغاء الفلاتر
-                  </Button>
-                )}
-              </div>
+              )}
             </div>
 
             {/* Table */}
