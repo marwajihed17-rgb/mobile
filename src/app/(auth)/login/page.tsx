@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Mail, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -76,8 +77,15 @@ export default function LoginPage() {
     <div className={`w-full max-w-md ${shake ? 'animate-shake' : ''}`}>
       {/* Logo */}
       <div className="text-center mb-8 animate-fade-in">
-        <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center mb-4">
-          <span className="text-white font-bold text-2xl">P</span>
+        <div className="mx-auto mb-4 flex justify-center">
+          <Image
+            src="/retaam-logo.png"
+            alt="Retaam Solutions"
+            width={200}
+            height={60}
+            className="h-16 w-auto"
+            priority
+          />
         </div>
         <h1 className="text-2xl font-bold text-foreground">مرحباً بك</h1>
         <p className="text-muted mt-2">سجل دخولك للمتابعة</p>
