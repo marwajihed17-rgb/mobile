@@ -414,7 +414,7 @@ export function AdminClient({
               onClick={() => setActiveView('settings')}
             >
               <div className="absolute top-4 right-4">
-                <Badge variant="warning">{stats.totalUsers} مستخدم</Badge>
+                <Badge variant="warning">{profiles.length} مستخدم</Badge>
               </div>
 
               <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
