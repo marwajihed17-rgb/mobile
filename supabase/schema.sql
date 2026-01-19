@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     email TEXT NOT NULL,
     full_name TEXT,
+    username TEXT,
     avatar_url TEXT,
     role user_role DEFAULT 'user' NOT NULL,
     status user_status DEFAULT 'active' NOT NULL,
@@ -157,6 +158,7 @@ CREATE TABLE IF NOT EXISTS public.mobily_entries (
 CREATE TABLE IF NOT EXISTS public.salam_customers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    created_by_username TEXT,
 
     -- Salam-specific fields (7 fields)
     name TEXT NOT NULL,
@@ -179,6 +181,7 @@ CREATE TABLE IF NOT EXISTS public.salam_customers (
 CREATE TABLE IF NOT EXISTS public.mobily_customers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    created_by_username TEXT,
 
     -- Common fields
     name TEXT NOT NULL,
@@ -311,11 +314,12 @@ CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
     -- Create profile
-    INSERT INTO public.profiles (id, email, full_name)
+    INSERT INTO public.profiles (id, email, full_name, username)
     VALUES (
         NEW.id,
         NEW.email,
-        COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.email)
+        COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.email),
+        COALESCE(NEW.raw_user_meta_data->>'username', NEW.raw_user_meta_data->>'full_name', NEW.email)
     );
 
     -- Create default user settings
@@ -715,6 +719,11 @@ CREATE POLICY "Users can view own salam customers"
     ON public.salam_customers FOR SELECT
     USING (auth.uid() = user_id);
 
+-- Admins can view all salam customers
+CREATE POLICY "Admins can view all salam customers"
+    ON public.salam_customers FOR SELECT
+    USING (public.is_admin(auth.uid()));
+
 -- Users can insert their own salam customers
 CREATE POLICY "Users can insert own salam customers"
     ON public.salam_customers FOR INSERT
@@ -726,10 +735,20 @@ CREATE POLICY "Users can update own salam customers"
     USING (auth.uid() = user_id)
     WITH CHECK (auth.uid() = user_id);
 
+-- Admins can update all salam customers
+CREATE POLICY "Admins can update all salam customers"
+    ON public.salam_customers FOR UPDATE
+    USING (public.is_admin(auth.uid()));
+
 -- Users can delete their own salam customers
 CREATE POLICY "Users can delete own salam customers"
     ON public.salam_customers FOR DELETE
     USING (auth.uid() = user_id);
+
+-- Admins can delete all salam customers
+CREATE POLICY "Admins can delete all salam customers"
+    ON public.salam_customers FOR DELETE
+    USING (public.is_admin(auth.uid()));
 
 -- ============================================
 -- MOBILY CUSTOMERS POLICIES
@@ -739,6 +758,11 @@ CREATE POLICY "Users can delete own salam customers"
 CREATE POLICY "Users can view own mobily customers"
     ON public.mobily_customers FOR SELECT
     USING (auth.uid() = user_id);
+
+-- Admins can view all mobily customers
+CREATE POLICY "Admins can view all mobily customers"
+    ON public.mobily_customers FOR SELECT
+    USING (public.is_admin(auth.uid()));
 
 -- Users can insert their own mobily customers
 CREATE POLICY "Users can insert own mobily customers"
@@ -751,10 +775,20 @@ CREATE POLICY "Users can update own mobily customers"
     USING (auth.uid() = user_id)
     WITH CHECK (auth.uid() = user_id);
 
+-- Admins can update all mobily customers
+CREATE POLICY "Admins can update all mobily customers"
+    ON public.mobily_customers FOR UPDATE
+    USING (public.is_admin(auth.uid()));
+
 -- Users can delete their own mobily customers
 CREATE POLICY "Users can delete own mobily customers"
     ON public.mobily_customers FOR DELETE
     USING (auth.uid() = user_id);
+
+-- Admins can delete all mobily customers
+CREATE POLICY "Admins can delete all mobily customers"
+    ON public.mobily_customers FOR DELETE
+    USING (public.is_admin(auth.uid()));
 
 -- ============================================
 -- STORAGE BUCKETS

@@ -14,7 +14,6 @@ import {
   ArrowRight,
   X,
   UserPlus,
-  Mail,
   Lock,
   CheckCircle,
   AlertCircle,
@@ -27,18 +26,47 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert } from '@/components/ui/alert';
 import { getSupabaseClient } from '@/lib/supabase/client';
-import type { Profile, SalamEntry, MobilyEntry, UserRole } from '@/types/database';
+import type { Profile, UserRole, UserStatus } from '@/types/database';
+
+interface Customer {
+  id: string;
+  user_id: string;
+  created_by_username: string | null;
+  name: string;
+  identity_number: string;
+  phone_number: string;
+  sim_number: string;
+  device_number: string;
+  nationality: string;
+  register_number: string;
+  created_at: string;
+  updated_at: string;
+  profiles?: {
+    username: string | null;
+    full_name: string | null;
+    email: string;
+  } | null;
+}
+
+interface MobilyCustomer extends Customer {
+  birth_date: string;
+  identity_expiry_date: string;
+  package: string;
+  email: string;
+  city: string;
+  district: string;
+}
 
 interface AdminClientProps {
   currentProfile: Profile;
   profiles: Profile[];
-  salamEntries: SalamEntry[];
-  mobilyEntries: MobilyEntry[];
+  salamCustomers: Customer[];
+  mobilyCustomers: MobilyCustomer[];
   stats: {
-    totalUsers: number;
-    adminCount: number;
     salamCount: number;
     mobilyCount: number;
+    salamDailyCount: number;
+    mobilyDailyCount: number;
   };
 }
 
@@ -47,24 +75,25 @@ type ActiveView = 'dashboard' | 'salam' | 'mobily' | 'settings';
 export function AdminClient({
   currentProfile,
   profiles: initialProfiles,
-  salamEntries: initialSalamEntries,
-  mobilyEntries: initialMobilyEntries,
+  salamCustomers: initialSalamCustomers,
+  mobilyCustomers: initialMobilyCustomers,
   stats,
 }: AdminClientProps) {
   const router = useRouter();
   const [activeView, setActiveView] = useState<ActiveView>('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
+  const [dateFilter, setDateFilter] = useState('');
+  const [creatorFilter, setCreatorFilter] = useState('');
   const [profiles, setProfiles] = useState(initialProfiles);
-  const [salamEntries] = useState(initialSalamEntries);
-  const [mobilyEntries] = useState(initialMobilyEntries);
+  const [salamCustomers] = useState(initialSalamCustomers);
+  const [mobilyCustomers] = useState(initialMobilyCustomers);
 
   // User Management States
   const [showAddUser, setShowAddUser] = useState(false);
   const [newUserData, setNewUserData] = useState({
-    email: '',
+    username: '',
+    admin_name: '',
     password: '',
-    full_name: '',
-    role: 'user' as UserRole,
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -106,18 +135,35 @@ export function AdminClient({
     link.click();
   };
 
-  // Filter entries based on search
-  const filteredSalamEntries = salamEntries.filter(entry =>
-    entry.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    entry.identity_number.includes(searchQuery) ||
-    entry.phone_number.includes(searchQuery)
-  );
+  // Get unique creators for filter dropdown
+  const allCreators = Array.from(new Set([
+    ...salamCustomers.map(c => c.created_by_username || c.profiles?.username || c.profiles?.full_name || 'غير محدد'),
+    ...mobilyCustomers.map(c => c.created_by_username || c.profiles?.username || c.profiles?.full_name || 'غير محدد')
+  ])).sort();
 
-  const filteredMobilyEntries = mobilyEntries.filter(entry =>
-    entry.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    entry.identity_number.includes(searchQuery) ||
-    entry.phone_number.includes(searchQuery)
-  );
+  // Filter customers based on search, date, and creator
+  const filterCustomers = (customers: Customer[] | MobilyCustomer[]) => {
+    return customers.filter(customer => {
+      // Search filter
+      const matchesSearch = !searchQuery ||
+        customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        customer.identity_number.includes(searchQuery) ||
+        customer.phone_number.includes(searchQuery);
+
+      // Date filter
+      const matchesDate = !dateFilter ||
+        customer.created_at.startsWith(dateFilter);
+
+      // Creator filter
+      const creatorName = customer.created_by_username || customer.profiles?.username || customer.profiles?.full_name || 'غير محدد';
+      const matchesCreator = !creatorFilter || creatorName === creatorFilter;
+
+      return matchesSearch && matchesDate && matchesCreator;
+    });
+  };
+
+  const filteredSalamCustomers = filterCustomers(salamCustomers);
+  const filteredMobilyCustomers = filterCustomers(mobilyCustomers);
 
   const filteredProfiles = profiles.filter(profile =>
     (profile.full_name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
@@ -134,32 +180,25 @@ export function AdminClient({
     try {
       const supabase = getSupabaseClient();
 
+      // Generate email from username for authentication
+      const email = `${newUserData.username.toLowerCase().replace(/\s+/g, '_')}@system.local`;
+
       // Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: newUserData.email,
+        email: email,
         password: newUserData.password,
         options: {
           data: {
-            full_name: newUserData.full_name,
+            username: newUserData.username,
+            full_name: newUserData.admin_name,
           },
         },
       });
 
       if (authError) throw authError;
 
-      if (authData.user) {
-        // Update profile role after a brief delay to allow trigger to create profile
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ role: newUserData.role } as never)
-          .eq('id', authData.user.id);
-
-        if (updateError) console.error('Role update error:', updateError);
-      }
-
       setSuccess('تم إضافة المستخدم بنجاح');
-      setNewUserData({ email: '', password: '', full_name: '', role: 'user' });
+      setNewUserData({ username: '', admin_name: '', password: '' });
       setShowAddUser(false);
       router.refresh();
     } catch (err) {
@@ -190,22 +229,22 @@ export function AdminClient({
     }
   };
 
-  // Update user role
-  const handleUpdateRole = async (userId: string, role: UserRole) => {
+  // Update user status
+  const handleUpdateStatus = async (userId: string, status: UserStatus) => {
     try {
       const supabase = getSupabaseClient();
 
       const { error } = await supabase
         .from('profiles')
-        .update({ role } as never)
+        .update({ status } as never)
         .eq('id', userId);
 
       if (error) throw error;
 
       setProfiles(prev => prev.map(p =>
-        p.id === userId ? { ...p, role } : p
+        p.id === userId ? { ...p, status } : p
       ) as Profile[]);
-      setSuccess('تم تحديث الصلاحية بنجاح');
+      setSuccess('تم تحديث الحالة بنجاح');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'حدث خطأ');
     }
@@ -247,19 +286,19 @@ export function AdminClient({
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <Card className="p-4 text-center">
             <p className="text-3xl font-bold text-foreground">{stats.salamCount}</p>
-            <p className="text-sm text-muted">مشروع سلام</p>
+            <p className="text-sm text-muted">إجمالي - مشروع سلام</p>
           </Card>
           <Card className="p-4 text-center">
             <p className="text-3xl font-bold text-foreground">{stats.mobilyCount}</p>
-            <p className="text-sm text-muted">مشروع موبايلي</p>
+            <p className="text-sm text-muted">إجمالي - مشروع موبايلي</p>
           </Card>
           <Card className="p-4 text-center">
-            <p className="text-3xl font-bold text-foreground">{stats.totalUsers}</p>
-            <p className="text-sm text-muted">المستخدمين</p>
+            <p className="text-3xl font-bold text-green-600">{stats.salamDailyCount}</p>
+            <p className="text-sm text-muted">عدد المستخدمين اليومي - سلام</p>
           </Card>
           <Card className="p-4 text-center">
-            <p className="text-3xl font-bold text-foreground">{stats.adminCount}</p>
-            <p className="text-sm text-muted">المشرفين</p>
+            <p className="text-3xl font-bold text-blue-600">{stats.mobilyDailyCount}</p>
+            <p className="text-sm text-muted">عدد المستخدمين اليومي - موبايلي</p>
           </Card>
         </div>
 
@@ -399,26 +438,66 @@ export function AdminClient({
         {/* Salam List View */}
         {activeView === 'salam' && (
           <div className="space-y-6">
-            {/* Search and Export */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
-                <input
-                  type="text"
-                  placeholder="بحث بالاسم أو رقم الهوية أو الجوال..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pr-10 pl-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
-                />
+            {/* Filters and Export */}
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                <div className="relative flex-1 max-w-md">
+                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
+                  <input
+                    type="text"
+                    placeholder="بحث بالاسم أو رقم الهوية أو الجوال..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pr-10 pl-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+                  />
+                </div>
+                <Button
+                  onClick={() => exportToCSV(filteredSalamCustomers as unknown as Record<string, unknown>[], 'salam_customers')}
+                  variant="secondary"
+                  className="flex items-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  تصدير CSV
+                </Button>
               </div>
-              <Button
-                onClick={() => exportToCSV(filteredSalamEntries as unknown as Record<string, unknown>[], 'salam_entries')}
-                variant="secondary"
-                className="flex items-center gap-2"
-              >
-                <Download className="w-4 h-4" />
-                تصدير CSV
-              </Button>
+
+              {/* Additional Filters */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-1">
+                  <label className="text-sm text-muted mb-2 block">تصفية حسب التاريخ</label>
+                  <input
+                    type="date"
+                    value={dateFilter}
+                    onChange={(e) => setDateFilter(e.target.value)}
+                    className="w-full px-4 py-2 bg-card border border-card-border rounded-lg text-foreground focus:outline-none focus:border-primary"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="text-sm text-muted mb-2 block">تصفية حسب المدخل</label>
+                  <select
+                    value={creatorFilter}
+                    onChange={(e) => setCreatorFilter(e.target.value)}
+                    className="w-full px-4 py-2 bg-card border border-card-border rounded-lg text-foreground focus:outline-none focus:border-primary"
+                  >
+                    <option value="">الكل</option>
+                    {allCreators.map(creator => (
+                      <option key={creator} value={creator}>{creator}</option>
+                    ))}
+                  </select>
+                </div>
+                {(dateFilter || creatorFilter) && (
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setDateFilter('');
+                      setCreatorFilter('');
+                    }}
+                    className="self-end"
+                  >
+                    إلغاء الفلاتر
+                  </Button>
+                )}
+              </div>
             </div>
 
             {/* Table */}
@@ -434,26 +513,30 @@ export function AdminClient({
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">الجهاز</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">الجنسية</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">السجل</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3">المدخل</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">التاريخ</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredSalamEntries.length > 0 ? (
-                      filteredSalamEntries.map((entry) => (
-                        <tr key={entry.id} className="border-b border-card-border last:border-0 hover:bg-card-hover transition-colors">
-                          <td className="px-4 py-3 text-foreground">{entry.name}</td>
-                          <td className="px-4 py-3 text-muted">{entry.identity_number}</td>
-                          <td className="px-4 py-3 text-muted">{entry.phone_number}</td>
-                          <td className="px-4 py-3 text-muted">{entry.sim_number}</td>
-                          <td className="px-4 py-3 text-muted">{entry.device_number}</td>
-                          <td className="px-4 py-3 text-muted">{entry.nationality}</td>
-                          <td className="px-4 py-3 text-muted">{entry.register_number}</td>
-                          <td className="px-4 py-3 text-muted text-sm">{formatDate(entry.created_at)}</td>
+                    {filteredSalamCustomers.length > 0 ? (
+                      filteredSalamCustomers.map((customer) => (
+                        <tr key={customer.id} className="border-b border-card-border last:border-0 hover:bg-card-hover transition-colors">
+                          <td className="px-4 py-3 text-foreground">{customer.name}</td>
+                          <td className="px-4 py-3 text-muted">{customer.identity_number}</td>
+                          <td className="px-4 py-3 text-muted">{customer.phone_number}</td>
+                          <td className="px-4 py-3 text-muted">{customer.sim_number}</td>
+                          <td className="px-4 py-3 text-muted">{customer.device_number}</td>
+                          <td className="px-4 py-3 text-muted">{customer.nationality}</td>
+                          <td className="px-4 py-3 text-muted">{customer.register_number}</td>
+                          <td className="px-4 py-3 text-muted">
+                            {customer.created_by_username || customer.profiles?.username || customer.profiles?.full_name || 'غير محدد'}
+                          </td>
+                          <td className="px-4 py-3 text-muted text-sm">{formatDate(customer.created_at)}</td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={8} className="px-4 py-8 text-center text-muted">
+                        <td colSpan={9} className="px-4 py-8 text-center text-muted">
                           لا توجد نتائج
                         </td>
                       </tr>
@@ -468,26 +551,66 @@ export function AdminClient({
         {/* Mobily List View */}
         {activeView === 'mobily' && (
           <div className="space-y-6">
-            {/* Search and Export */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
-                <input
-                  type="text"
-                  placeholder="بحث بالاسم أو رقم الهوية أو الجوال..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pr-10 pl-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
-                />
+            {/* Filters and Export */}
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                <div className="relative flex-1 max-w-md">
+                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
+                  <input
+                    type="text"
+                    placeholder="بحث بالاسم أو رقم الهوية أو الجوال..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pr-10 pl-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+                  />
+                </div>
+                <Button
+                  onClick={() => exportToCSV(filteredMobilyCustomers as unknown as Record<string, unknown>[], 'mobily_customers')}
+                  variant="secondary"
+                  className="flex items-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  تصدير CSV
+                </Button>
               </div>
-              <Button
-                onClick={() => exportToCSV(filteredMobilyEntries as unknown as Record<string, unknown>[], 'mobily_entries')}
-                variant="secondary"
-                className="flex items-center gap-2"
-              >
-                <Download className="w-4 h-4" />
-                تصدير CSV
-              </Button>
+
+              {/* Additional Filters */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-1">
+                  <label className="text-sm text-muted mb-2 block">تصفية حسب التاريخ</label>
+                  <input
+                    type="date"
+                    value={dateFilter}
+                    onChange={(e) => setDateFilter(e.target.value)}
+                    className="w-full px-4 py-2 bg-card border border-card-border rounded-lg text-foreground focus:outline-none focus:border-primary"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="text-sm text-muted mb-2 block">تصفية حسب المدخل</label>
+                  <select
+                    value={creatorFilter}
+                    onChange={(e) => setCreatorFilter(e.target.value)}
+                    className="w-full px-4 py-2 bg-card border border-card-border rounded-lg text-foreground focus:outline-none focus:border-primary"
+                  >
+                    <option value="">الكل</option>
+                    {allCreators.map(creator => (
+                      <option key={creator} value={creator}>{creator}</option>
+                    ))}
+                  </select>
+                </div>
+                {(dateFilter || creatorFilter) && (
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setDateFilter('');
+                      setCreatorFilter('');
+                    }}
+                    className="self-end"
+                  >
+                    إلغاء الفلاتر
+                  </Button>
+                )}
+              </div>
             </div>
 
             {/* Table */}
@@ -505,28 +628,32 @@ export function AdminClient({
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">الباقة</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">الإيميل</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">المدينة</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3">المدخل</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">التاريخ</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredMobilyEntries.length > 0 ? (
-                      filteredMobilyEntries.map((entry) => (
-                        <tr key={entry.id} className="border-b border-card-border last:border-0 hover:bg-card-hover transition-colors">
-                          <td className="px-4 py-3 text-foreground">{entry.name}</td>
-                          <td className="px-4 py-3 text-muted">{entry.identity_number}</td>
-                          <td className="px-4 py-3 text-muted">{entry.nationality}</td>
-                          <td className="px-4 py-3 text-muted">{entry.phone_number}</td>
-                          <td className="px-4 py-3 text-muted">{entry.birth_date}</td>
-                          <td className="px-4 py-3 text-muted">{entry.identity_expiry_date}</td>
-                          <td className="px-4 py-3 text-muted">{entry.package}</td>
-                          <td className="px-4 py-3 text-muted">{entry.email}</td>
-                          <td className="px-4 py-3 text-muted">{entry.city}</td>
-                          <td className="px-4 py-3 text-muted text-sm">{formatDate(entry.created_at)}</td>
+                    {filteredMobilyCustomers.length > 0 ? (
+                      filteredMobilyCustomers.map((customer) => (
+                        <tr key={customer.id} className="border-b border-card-border last:border-0 hover:bg-card-hover transition-colors">
+                          <td className="px-4 py-3 text-foreground">{customer.name}</td>
+                          <td className="px-4 py-3 text-muted">{customer.identity_number}</td>
+                          <td className="px-4 py-3 text-muted">{customer.nationality}</td>
+                          <td className="px-4 py-3 text-muted">{customer.phone_number}</td>
+                          <td className="px-4 py-3 text-muted">{customer.birth_date}</td>
+                          <td className="px-4 py-3 text-muted">{customer.identity_expiry_date}</td>
+                          <td className="px-4 py-3 text-muted">{customer.package}</td>
+                          <td className="px-4 py-3 text-muted">{customer.email}</td>
+                          <td className="px-4 py-3 text-muted">{customer.city}</td>
+                          <td className="px-4 py-3 text-muted">
+                            {customer.created_by_username || customer.profiles?.username || customer.profiles?.full_name || 'غير محدد'}
+                          </td>
+                          <td className="px-4 py-3 text-muted text-sm">{formatDate(customer.created_at)}</td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={10} className="px-4 py-8 text-center text-muted">
+                        <td colSpan={11} className="px-4 py-8 text-center text-muted">
                           لا توجد نتائج
                         </td>
                       </tr>
@@ -578,20 +705,20 @@ export function AdminClient({
                 <form onSubmit={handleAddUser} className="space-y-4">
                   <Input
                     type="text"
-                    label="الإسم الكامل"
-                    placeholder="أدخل الإسم"
-                    value={newUserData.full_name}
-                    onChange={(e) => setNewUserData(prev => ({ ...prev, full_name: e.target.value }))}
+                    label="إسم المستخدم"
+                    placeholder="أدخل إسم المستخدم"
+                    value={newUserData.username}
+                    onChange={(e) => setNewUserData(prev => ({ ...prev, username: e.target.value }))}
                     icon={<User className="w-5 h-5" />}
                     required
                   />
                   <Input
-                    type="email"
-                    label="البريد الإلكتروني"
-                    placeholder="أدخل البريد الإلكتروني"
-                    value={newUserData.email}
-                    onChange={(e) => setNewUserData(prev => ({ ...prev, email: e.target.value }))}
-                    icon={<Mail className="w-5 h-5" />}
+                    type="text"
+                    label="إسم المشرف"
+                    placeholder="أدخل إسم المشرف"
+                    value={newUserData.admin_name}
+                    onChange={(e) => setNewUserData(prev => ({ ...prev, admin_name: e.target.value }))}
+                    icon={<User className="w-5 h-5" />}
                     required
                   />
                   <Input
@@ -603,17 +730,6 @@ export function AdminClient({
                     icon={<Lock className="w-5 h-5" />}
                     required
                   />
-                  <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-foreground-secondary">الصلاحية</label>
-                    <select
-                      value={newUserData.role}
-                      onChange={(e) => setNewUserData(prev => ({ ...prev, role: e.target.value as UserRole }))}
-                      className="w-full px-4 py-3 bg-card-hover border border-card-border rounded-xl text-foreground focus:outline-none focus:border-primary"
-                    >
-                      <option value="user">مستخدم عادي</option>
-                      <option value="admin">مشرف</option>
-                    </select>
-                  </div>
                   <div className="flex gap-4 pt-4">
                     <Button type="submit" isLoading={isLoading}>
                       إضافة المستخدم
@@ -633,8 +749,6 @@ export function AdminClient({
                   <thead className="bg-card-hover border-b border-card-border">
                     <tr>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">الإسم</th>
-                      <th className="text-right text-sm font-medium text-muted px-4 py-3">البريد الإلكتروني</th>
-                      <th className="text-right text-sm font-medium text-muted px-4 py-3">الصلاحية</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">الحالة</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">تاريخ الإنشاء</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">الإجراءات</th>
@@ -644,23 +758,17 @@ export function AdminClient({
                     {filteredProfiles.length > 0 ? (
                       filteredProfiles.map((profile) => (
                         <tr key={profile.id} className="border-b border-card-border last:border-0 hover:bg-card-hover transition-colors">
-                          <td className="px-4 py-3 text-foreground">{profile.full_name || '-'}</td>
-                          <td className="px-4 py-3 text-muted">{profile.email}</td>
+                          <td className="px-4 py-3 text-foreground">{profile.username || profile.full_name || '-'}</td>
                           <td className="px-4 py-3">
                             <select
-                              value={profile.role}
-                              onChange={(e) => handleUpdateRole(profile.id, e.target.value as UserRole)}
-                              className="px-2 py-1 bg-card border border-card-border rounded text-sm text-foreground focus:outline-none focus:border-primary"
+                              value={profile.status}
+                              onChange={(e) => handleUpdateStatus(profile.id, e.target.value as UserStatus)}
+                              className="px-3 py-1 bg-card border border-card-border rounded text-sm text-foreground focus:outline-none focus:border-primary"
                               disabled={profile.id === currentProfile.id}
                             >
-                              <option value="user">مستخدم</option>
-                              <option value="admin">مشرف</option>
+                              <option value="active">مفعل</option>
+                              <option value="inactive">غير مفعل</option>
                             </select>
-                          </td>
-                          <td className="px-4 py-3">
-                            <Badge variant={profile.status === 'active' ? 'success' : 'error'}>
-                              {profile.status === 'active' ? 'نشط' : 'معطل'}
-                            </Badge>
                           </td>
                           <td className="px-4 py-3 text-muted text-sm">{formatDate(profile.created_at)}</td>
                           <td className="px-4 py-3">
@@ -678,7 +786,7 @@ export function AdminClient({
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={6} className="px-4 py-8 text-center text-muted">
+                        <td colSpan={4} className="px-4 py-8 text-center text-muted">
                           لا توجد نتائج
                         </td>
                       </tr>

@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { AdminClient } from './admin-client';
-import type { Profile, SalamEntry, MobilyEntry } from '@/types/database';
+import type { Profile } from '@/types/database';
 
 export default async function AdminPage() {
   const supabase = createClient();
@@ -38,36 +38,51 @@ export default async function AdminPage() {
     .select('*')
     .order('created_at', { ascending: false });
 
-  // Get all salam entries
-  const { data: salamEntries } = await supabase
-    .from('salam_entries')
-    .select('*')
+  // Get all salam customers with profiles data
+  const { data: salamCustomers } = await supabase
+    .from('salam_customers')
+    .select('*, profiles(username, full_name, email)')
     .order('created_at', { ascending: false });
 
-  // Get all mobily entries
-  const { data: mobilyEntries } = await supabase
-    .from('mobily_entries')
-    .select('*')
+  // Get all mobily customers with profiles data
+  const { data: mobilyCustomers } = await supabase
+    .from('mobily_customers')
+    .select('*, profiles(username, full_name, email)')
     .order('created_at', { ascending: false });
 
   // Calculate stats
-  const totalUsers = profiles?.length || 0;
   const profilesList = (profiles || []) as Profile[];
-  const adminCount = profilesList.filter(p => p.role === 'admin' || p.role === 'super_admin').length || 0;
-  const salamCount = salamEntries?.length || 0;
-  const mobilyCount = mobilyEntries?.length || 0;
+  const salamCount = salamCustomers?.length || 0;
+  const mobilyCount = mobilyCustomers?.length || 0;
+
+  // Calculate daily counts (today's entries)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayISO = today.toISOString();
+
+  const salamDailyCount = salamCustomers?.filter(entry => {
+    const entryDate = new Date(entry.created_at);
+    entryDate.setHours(0, 0, 0, 0);
+    return entryDate.toISOString() === todayISO;
+  }).length || 0;
+
+  const mobilyDailyCount = mobilyCustomers?.filter(entry => {
+    const entryDate = new Date(entry.created_at);
+    entryDate.setHours(0, 0, 0, 0);
+    return entryDate.toISOString() === todayISO;
+  }).length || 0;
 
   return (
     <AdminClient
       currentProfile={profileData}
       profiles={profilesList}
-      salamEntries={(salamEntries || []) as SalamEntry[]}
-      mobilyEntries={(mobilyEntries || []) as MobilyEntry[]}
+      salamCustomers={(salamCustomers || []) as any[]}
+      mobilyCustomers={(mobilyCustomers || []) as any[]}
       stats={{
-        totalUsers,
-        adminCount,
         salamCount,
         mobilyCount,
+        salamDailyCount,
+        mobilyDailyCount,
       }}
     />
   );

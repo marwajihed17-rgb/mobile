@@ -28,6 +28,7 @@ export interface UserSettings {
 export interface SalamCustomer {
   id: string;
   user_id: string;
+  created_by_username: string | null;
   name: string;
   identity_number: string;
   phone_number: string;
@@ -43,6 +44,7 @@ export interface SalamCustomer {
 export interface MobilyCustomer {
   id: string;
   user_id: string;
+  created_by_username: string | null;
   name: string;
   identity_number: string;
   phone_number: string;
