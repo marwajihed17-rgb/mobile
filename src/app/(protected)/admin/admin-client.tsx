@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Phone,
@@ -83,9 +83,8 @@ export function AdminClient({
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState('');
   const [profiles, setProfiles] = useState(initialProfiles);
-  const [salamCustomers, setSalamCustomers] = useState(initialSalamCustomers);
-  const [mobilyCustomers, setMobilyCustomers] = useState(initialMobilyCustomers);
-  const [statsData, setStatsData] = useState(stats);
+  const [salamCustomers] = useState(initialSalamCustomers);
+  const [mobilyCustomers] = useState(initialMobilyCustomers);
 
   // User Management States
   const [showAddUser, setShowAddUser] = useState(false);
@@ -222,149 +221,6 @@ export function AdminClient({
     }
   };
 
-  // Set up real-time subscriptions for all data
-  useEffect(() => {
-    const supabase = getSupabaseClient();
-
-    // Function to fetch updated stats
-    const fetchStats = async () => {
-      try {
-        const { count: salamCount } = await supabase
-          .from('salam_customers')
-          .select('*', { count: 'exact', head: true });
-
-        const { count: mobilyCount } = await supabase
-          .from('mobily_customers')
-          .select('*', { count: 'exact', head: true });
-
-        const { data: salamDailyData } = await supabase.rpc('get_salam_daily_count');
-        const { data: mobilyDailyData } = await supabase.rpc('get_mobily_daily_count');
-
-        setStatsData({
-          salamCount: salamCount || 0,
-          mobilyCount: mobilyCount || 0,
-          salamDailyCount: salamDailyData || 0,
-          mobilyDailyCount: mobilyDailyData || 0,
-        });
-      } catch (err) {
-        console.error('Error fetching stats:', err);
-      }
-    };
-
-    // Real-time subscription for Salam customers
-    const salamChannel = supabase
-      .channel('admin_salam_customers')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'salam_customers'
-        },
-        async (payload) => {
-          console.log('Admin: Salam customer change detected:', payload);
-
-          if (payload.eventType === 'INSERT') {
-            const { data: newCustomer } = await supabase
-              .from('salam_customers')
-              .select('*')
-              .eq('id', payload.new.id)
-              .single();
-
-            if (newCustomer) {
-              setSalamCustomers(prev => [newCustomer as Customer, ...prev]);
-              fetchStats(); // Update stats
-            }
-          } else if (payload.eventType === 'DELETE') {
-            setSalamCustomers(prev => prev.filter(c => c.id !== payload.old.id));
-            fetchStats(); // Update stats
-          } else if (payload.eventType === 'UPDATE') {
-            setSalamCustomers(prev =>
-              prev.map(c => c.id === payload.new.id ? payload.new as Customer : c)
-            );
-          }
-        }
-      )
-      .subscribe();
-
-    // Real-time subscription for Mobily customers
-    const mobilyChannel = supabase
-      .channel('admin_mobily_customers')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'mobily_customers'
-        },
-        async (payload) => {
-          console.log('Admin: Mobily customer change detected:', payload);
-
-          if (payload.eventType === 'INSERT') {
-            const { data: newCustomer } = await supabase
-              .from('mobily_customers')
-              .select('*')
-              .eq('id', payload.new.id)
-              .single();
-
-            if (newCustomer) {
-              setMobilyCustomers(prev => [newCustomer as MobilyCustomer, ...prev]);
-              fetchStats(); // Update stats
-            }
-          } else if (payload.eventType === 'DELETE') {
-            setMobilyCustomers(prev => prev.filter(c => c.id !== payload.old.id));
-            fetchStats(); // Update stats
-          } else if (payload.eventType === 'UPDATE') {
-            setMobilyCustomers(prev =>
-              prev.map(c => c.id === payload.new.id ? payload.new as MobilyCustomer : c)
-            );
-          }
-        }
-      )
-      .subscribe();
-
-    // Real-time subscription for user profiles
-    const profilesChannel = supabase
-      .channel('admin_profiles')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'profiles'
-        },
-        async (payload) => {
-          console.log('Admin: Profile change detected:', payload);
-
-          if (payload.eventType === 'INSERT') {
-            const { data: newProfile } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', payload.new.id)
-              .single();
-
-            if (newProfile) {
-              setProfiles(prev => [newProfile as Profile, ...prev]);
-            }
-          } else if (payload.eventType === 'DELETE') {
-            setProfiles(prev => prev.filter(p => p.id !== payload.old.id));
-          } else if (payload.eventType === 'UPDATE') {
-            setProfiles(prev =>
-              prev.map(p => p.id === payload.new.id ? payload.new as Profile : p)
-            );
-          }
-        }
-      )
-      .subscribe();
-
-    // Cleanup subscriptions on unmount
-    return () => {
-      supabase.removeChannel(salamChannel);
-      supabase.removeChannel(mobilyChannel);
-      supabase.removeChannel(profilesChannel);
-    };
-  }, []);
-
   return (
     <div className="min-h-screen pb-16">
       <Header user={authUser} />
@@ -400,19 +256,19 @@ export function AdminClient({
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <Card className="p-4 text-center">
-            <p className="text-3xl font-bold text-foreground">{statsData.salamCount}</p>
+            <p className="text-3xl font-bold text-foreground">{stats.salamCount}</p>
             <p className="text-sm text-muted">إجمالي - مشروع سلام</p>
           </Card>
           <Card className="p-4 text-center">
-            <p className="text-3xl font-bold text-foreground">{statsData.mobilyCount}</p>
+            <p className="text-3xl font-bold text-foreground">{stats.mobilyCount}</p>
             <p className="text-sm text-muted">إجمالي - مشروع موبايلي</p>
           </Card>
           <Card className="p-4 text-center">
-            <p className="text-3xl font-bold text-green-600">{statsData.salamDailyCount}</p>
+            <p className="text-3xl font-bold text-green-600">{stats.salamDailyCount}</p>
             <p className="text-sm text-muted">عدد المستخدمين اليومي - سلام</p>
           </Card>
           <Card className="p-4 text-center">
-            <p className="text-3xl font-bold text-blue-600">{statsData.mobilyDailyCount}</p>
+            <p className="text-3xl font-bold text-blue-600">{stats.mobilyDailyCount}</p>
             <p className="text-sm text-muted">عدد المستخدمين اليومي - موبايلي</p>
           </Card>
         </div>
@@ -475,7 +331,7 @@ export function AdminClient({
               onClick={() => setActiveView('salam')}
             >
               <div className="absolute top-4 right-4">
-                <Badge variant="success">{statsData.salamCount} سجل</Badge>
+                <Badge variant="success">{stats.salamCount} سجل</Badge>
               </div>
 
               <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
@@ -502,7 +358,7 @@ export function AdminClient({
               onClick={() => setActiveView('mobily')}
             >
               <div className="absolute top-4 right-4">
-                <Badge variant="primary">{statsData.mobilyCount} سجل</Badge>
+                <Badge variant="primary">{stats.mobilyCount} سجل</Badge>
               </div>
 
               <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
@@ -627,17 +483,6 @@ export function AdminClient({
                       </tr>
                     )}
                   </tbody>
-                  <tfoot className="bg-green-500/10 border-t-2 border-green-500">
-                    <tr>
-                      <td colSpan={9} className="px-4 py-4">
-                        <div className="flex justify-center items-center gap-3">
-                          <span className="text-lg font-bold text-green-600">إجمالي – مشروع سلام:</span>
-                          <span className="text-2xl font-bold text-green-700">{statsData.salamCount}</span>
-                          <span className="text-sm text-muted">عميل</span>
-                        </div>
-                      </td>
-                    </tr>
-                  </tfoot>
                 </table>
               </div>
             </Card>
@@ -725,17 +570,6 @@ export function AdminClient({
                       </tr>
                     )}
                   </tbody>
-                  <tfoot className="bg-blue-500/10 border-t-2 border-blue-500">
-                    <tr>
-                      <td colSpan={11} className="px-4 py-4">
-                        <div className="flex justify-center items-center gap-3">
-                          <span className="text-lg font-bold text-blue-600">إجمالي – مشروع موبايلي:</span>
-                          <span className="text-2xl font-bold text-blue-700">{statsData.mobilyCount}</span>
-                          <span className="text-sm text-muted">عميل</span>
-                        </div>
-                      </td>
-                    </tr>
-                  </tfoot>
                 </table>
               </div>
             </Card>
