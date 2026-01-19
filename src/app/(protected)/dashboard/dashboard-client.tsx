@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Phone, Smartphone, List, Trash2, Edit, AlertCircle } from 'lucide-react';
 import { Header } from '@/components/layout/header';
@@ -21,6 +21,8 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
   const [activeTab, setActiveTab] = useState<'projects' | 'recent'>('projects');
   const [salamCustomers, setSalamCustomers] = useState<SalamCustomer[]>(recentSalamCustomers);
   const [mobilyCustomers, setMobilyCustomers] = useState<MobilyCustomer[]>(recentMobilyCustomers);
+  const [salamTotalCount, setSalamTotalCount] = useState<number>(0);
+  const [mobilyTotalCount, setMobilyTotalCount] = useState<number>(0);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -84,6 +86,118 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
       setIsDeleting(null);
     }
   };
+
+  // Fetch total counts and set up real-time subscriptions
+  useEffect(() => {
+    const supabase = getSupabaseClient();
+
+    // Fetch total counts for both projects
+    const fetchTotalCounts = async () => {
+      try {
+        // Fetch Salam total count
+        const { count: salamCount, error: salamError } = await supabase
+          .from('salam_customers')
+          .select('*', { count: 'exact', head: true });
+
+        if (!salamError && salamCount !== null) {
+          setSalamTotalCount(salamCount);
+        }
+
+        // Fetch Mobily total count
+        const { count: mobilyCount, error: mobilyError } = await supabase
+          .from('mobily_customers')
+          .select('*', { count: 'exact', head: true });
+
+        if (!mobilyError && mobilyCount !== null) {
+          setMobilyTotalCount(mobilyCount);
+        }
+      } catch (err) {
+        console.error('Error fetching total counts:', err);
+      }
+    };
+
+    fetchTotalCounts();
+
+    // Set up real-time subscription for Salam customers
+    const salamChannel = supabase
+      .channel('salam_customers_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'salam_customers'
+        },
+        async (payload) => {
+          console.log('Salam customer change detected:', payload);
+
+          if (payload.eventType === 'INSERT') {
+            // Fetch the new customer with full details
+            const { data: newCustomer } = await supabase
+              .from('salam_customers')
+              .select('*')
+              .eq('id', payload.new.id)
+              .single();
+
+            if (newCustomer) {
+              setSalamCustomers(prev => [newCustomer as SalamCustomer, ...prev.slice(0, 4)]);
+              setSalamTotalCount(prev => prev + 1);
+            }
+          } else if (payload.eventType === 'DELETE') {
+            setSalamCustomers(prev => prev.filter(c => c.id !== payload.old.id));
+            setSalamTotalCount(prev => prev - 1);
+          } else if (payload.eventType === 'UPDATE') {
+            setSalamCustomers(prev =>
+              prev.map(c => c.id === payload.new.id ? payload.new as SalamCustomer : c)
+            );
+          }
+        }
+      )
+      .subscribe();
+
+    // Set up real-time subscription for Mobily customers
+    const mobilyChannel = supabase
+      .channel('mobily_customers_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'mobily_customers'
+        },
+        async (payload) => {
+          console.log('Mobily customer change detected:', payload);
+
+          if (payload.eventType === 'INSERT') {
+            // Fetch the new customer with full details
+            const { data: newCustomer } = await supabase
+              .from('mobily_customers')
+              .select('*')
+              .eq('id', payload.new.id)
+              .single();
+
+            if (newCustomer) {
+              setMobilyCustomers(prev => [newCustomer as MobilyCustomer, ...prev.slice(0, 4)]);
+              setMobilyTotalCount(prev => prev + 1);
+            }
+          } else if (payload.eventType === 'DELETE') {
+            setMobilyCustomers(prev => prev.filter(c => c.id !== payload.old.id));
+            setMobilyTotalCount(prev => prev - 1);
+          } else if (payload.eventType === 'UPDATE') {
+            setMobilyCustomers(prev =>
+              prev.map(c => c.id === payload.new.id ? payload.new as MobilyCustomer : c)
+            );
+          }
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscriptions on unmount
+    return () => {
+      supabase.removeChannel(salamChannel);
+      supabase.removeChannel(mobilyChannel);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen pb-16">
@@ -237,6 +351,17 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                           </tr>
                         ))}
                       </tbody>
+                      <tfoot className="bg-green-500/10 border-t-2 border-green-500">
+                        <tr>
+                          <td colSpan={9} className="px-4 py-4">
+                            <div className="flex justify-center items-center gap-3">
+                              <span className="text-lg font-bold text-green-600">إجمالي – مشروع سلام:</span>
+                              <span className="text-2xl font-bold text-green-700">{salamTotalCount}</span>
+                              <span className="text-sm text-muted">عميل</span>
+                            </div>
+                          </td>
+                        </tr>
+                      </tfoot>
                     </table>
                   </div>
                 </div>
@@ -308,6 +433,17 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                           </tr>
                         ))}
                       </tbody>
+                      <tfoot className="bg-blue-500/10 border-t-2 border-blue-500">
+                        <tr>
+                          <td colSpan={15} className="px-4 py-4">
+                            <div className="flex justify-center items-center gap-3">
+                              <span className="text-lg font-bold text-blue-600">إجمالي – مشروع موبايلي:</span>
+                              <span className="text-2xl font-bold text-blue-700">{mobilyTotalCount}</span>
+                              <span className="text-sm text-muted">عميل</span>
+                            </div>
+                          </td>
+                        </tr>
+                      </tfoot>
                     </table>
                   </div>
                 </div>
