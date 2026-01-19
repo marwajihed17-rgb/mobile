@@ -534,11 +534,15 @@ export function AdminClient({
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">رقم الهوية</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">الجنسية</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">الجوال</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3">الشريحة</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3">الجهاز</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3">السجل</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">تاريخ الميلاد</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">انتهاء الهوية</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">الباقة</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">الإيميل</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">المدينة</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3">الحي</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">المدخل</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">التاريخ</th>
                     </tr>
@@ -551,11 +555,15 @@ export function AdminClient({
                           <td className="px-4 py-3 text-muted">{customer.identity_number}</td>
                           <td className="px-4 py-3 text-muted">{customer.nationality}</td>
                           <td className="px-4 py-3 text-muted">{customer.phone_number}</td>
+                          <td className="px-4 py-3 text-muted">{customer.sim_number}</td>
+                          <td className="px-4 py-3 text-muted">{customer.device_number}</td>
+                          <td className="px-4 py-3 text-muted">{customer.register_number}</td>
                           <td className="px-4 py-3 text-muted">{customer.birth_date}</td>
                           <td className="px-4 py-3 text-muted">{customer.identity_expiry_date}</td>
                           <td className="px-4 py-3 text-muted">{customer.package}</td>
                           <td className="px-4 py-3 text-muted">{customer.email}</td>
                           <td className="px-4 py-3 text-muted">{customer.city}</td>
+                          <td className="px-4 py-3 text-muted">{customer.district}</td>
                           <td className="px-4 py-3 text-muted">
                             {customer.created_by_username || customer.profiles?.username || customer.profiles?.full_name || 'غير محدد'}
                           </td>
@@ -564,7 +572,7 @@ export function AdminClient({
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={11} className="px-4 py-8 text-center text-muted">
+                        <td colSpan={15} className="px-4 py-8 text-center text-muted">
                           لا توجد نتائج
                         </td>
                       </tr>
