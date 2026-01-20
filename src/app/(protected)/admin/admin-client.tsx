@@ -16,7 +16,8 @@ import {
   Lock,
   CheckCircle,
   AlertCircle,
-  User
+  User,
+  Mail
 } from 'lucide-react';
 import { Header } from '@/components/layout/header';
 import { Card } from '@/components/ui/card';
@@ -101,6 +102,7 @@ export function AdminClient({
   const [showAddUser, setShowAddUser] = useState(false);
   const [newUserData, setNewUserData] = useState({
     username: '',
+    email: '',
     supervisor_name: '',
     password: '',
   });
@@ -162,23 +164,37 @@ export function AdminClient({
     try {
       const supabase = getSupabaseClient();
 
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(newUserData.email)) {
+        throw new Error('البريد الإلكتروني غير صحيح');
+      }
+
       // Check if username already exists
-      const { data: existingUser, error: checkError } = await supabase
+      const { data: existingUsername } = await supabase
         .from('profiles')
         .select('username')
         .eq('username', newUserData.username)
         .single();
 
-      if (existingUser) {
+      if (existingUsername) {
         throw new Error('إسم المستخدم موجود بالفعل. الرجاء اختيار إسم آخر');
       }
 
-      // Generate email from username for authentication
-      const email = `${newUserData.username.toLowerCase().replace(/\s+/g, '_')}@system.local`;
+      // Check if email already exists
+      const { data: existingEmail } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('email', newUserData.email)
+        .single();
 
-      // Create auth user
+      if (existingEmail) {
+        throw new Error('البريد الإلكتروني مستخدم بالفعل. الرجاء اختيار بريد آخر');
+      }
+
+      // Create auth user with real email
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: email,
+        email: newUserData.email,
         password: newUserData.password,
         options: {
           data: {
@@ -191,7 +207,7 @@ export function AdminClient({
       if (authError) throw authError;
 
       setSuccess('تم إضافة المستخدم بنجاح');
-      setNewUserData({ username: '', supervisor_name: '', password: '' });
+      setNewUserData({ username: '', email: '', supervisor_name: '', password: '' });
       setShowAddUser(false);
       router.refresh();
     } catch (err) {
@@ -650,6 +666,15 @@ export function AdminClient({
                     required
                   />
                   <Input
+                    type="email"
+                    label="البريد الإلكتروني"
+                    placeholder="أدخل البريد الإلكتروني"
+                    value={newUserData.email}
+                    onChange={(e) => setNewUserData(prev => ({ ...prev, email: e.target.value }))}
+                    icon={<Mail className="w-5 h-5" />}
+                    required
+                  />
+                  <Input
                     type="text"
                     label="إسم المشرف"
                     placeholder="أدخل إسم المشرف"
@@ -661,11 +686,12 @@ export function AdminClient({
                   <Input
                     type="password"
                     label="كلمة المرور"
-                    placeholder="أدخل كلمة المرور"
+                    placeholder="أدخل كلمة المرور (8 أحرف على الأقل)"
                     value={newUserData.password}
                     onChange={(e) => setNewUserData(prev => ({ ...prev, password: e.target.value }))}
                     icon={<Lock className="w-5 h-5" />}
                     required
+                    minLength={8}
                   />
                   <div className="flex gap-4 pt-4">
                     <Button type="submit" isLoading={isLoading}>
