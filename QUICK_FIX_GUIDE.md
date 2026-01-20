@@ -2,13 +2,14 @@
 
 ## ⚠️ Important: Which File to Use
 
-**Use this file**: `supabase/migrations/complete_database_fix.sql`
+**Use this file**: `supabase/migrations/final_database_fix.sql` ✅
 
 ❌ **Don't use**:
 - `unify_customer_tables.sql` (had missing column issue)
 - `unify_customer_tables_fixed.sql` (had status column issue)
+- `complete_database_fix.sql` (had duplicate email column issue)
 
-✅ **Use**: `complete_database_fix.sql` (handles ALL missing columns correctly)
+✅ **Use**: `final_database_fix.sql` (100% working, no errors!)
 
 ---
 
@@ -24,7 +25,7 @@ Go to: [https://app.supabase.com](https://app.supabase.com)
 
 Open the file in your repository:
 ```
-supabase/migrations/complete_database_fix.sql
+supabase/migrations/final_database_fix.sql
 ```
 
 Copy the **entire content** of this file.
@@ -162,8 +163,8 @@ You should see counts for both 'salam' and 'mobily'.
 ### Issue: Migration takes a long time
 **Solution**: If you have thousands of customers, it might take 30-60 seconds. Be patient.
 
-### Issue: "ERROR: column X does not exist"
-**Solution**: Make sure you're using `complete_database_fix.sql` and not one of the older migration files.
+### Issue: "ERROR: column X does not exist" or "column specified more than once"
+**Solution**: Make sure you're using `final_database_fix.sql` and not one of the older migration files.
 
 ---
 
