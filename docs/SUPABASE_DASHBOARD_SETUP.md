@@ -25,24 +25,43 @@ Before starting, ensure you have:
 
 ## Step 1: Set Up the Database
 
-### Option A: Complete Fresh Setup
+### ⚠️ IMPORTANT: Choose the Right File
 
-If you're setting up a new database, run the complete schema:
+**If you're getting an error like "relation 'public.profiles' does not exist"**, it means your database is empty. Follow **Option A**.
 
-1. Go to your Supabase Dashboard → SQL Editor
-2. Open and run `/supabase/schema.sql`
-3. This will create all tables, views, functions, and RLS policies
+### Option A: Fresh/Empty Database (RECOMMENDED - START HERE)
 
-### Option B: Update Existing Database
-
-If you have an existing database, run the migration file:
+If you have a **new or empty** Supabase project with no tables yet:
 
 1. Go to your Supabase Dashboard → SQL Editor
-2. Open and run `/supabase/migrations/dashboard_integration_complete.sql`
-3. This will:
-   - Add missing columns (username, supervisor_name, created_by_username)
-   - Create/update statistics views and functions
-   - Set up proper permissions
+2. Click "New Query"
+3. Copy and paste the contents of `/supabase/init_database.sql`
+4. Click "Run" or press `Ctrl+Enter`
+5. Wait for completion (should take 5-10 seconds)
+6. Verify by checking Table Editor - you should see `profiles`, `salam_customers`, `mobily_customers` tables
+
+**This file creates:**
+- ✅ All tables (profiles, salam_customers, mobily_customers, etc.)
+- ✅ All functions (get_salam_daily_count, get_mobily_daily_count, etc.)
+- ✅ All views (salam_daily_stats, mobily_daily_stats, daily_stats_summary)
+- ✅ All RLS policies
+- ✅ All triggers and indexes
+
+### Option B: Update Existing Database (Advanced)
+
+**Only use this if you already have tables and just need updates:**
+
+1. Go to your Supabase Dashboard → SQL Editor
+2. Run `/supabase/migrations/dashboard_integration_complete.sql`
+3. This adds missing columns and updates existing structure
+
+### Option C: Complete Schema (Alternative)
+
+You can also use the complete schema file:
+
+1. Go to your Supabase Dashboard → SQL Editor
+2. Run `/supabase/schema.sql`
+3. This is comprehensive but includes extra tables you might not need
 
 ## Step 2: Verify Database Setup
 
