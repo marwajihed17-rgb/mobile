@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Mail, Lock } from 'lucide-react';
+import { User, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert } from '@/components/ui/alert';
@@ -12,7 +12,7 @@ import { getSupabaseClient } from '@/lib/supabase/client';
 export default function LoginPage() {
   const router = useRouter();
 
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -25,6 +25,9 @@ export default function LoginPage() {
 
     try {
       const supabase = getSupabaseClient();
+
+      // Convert username to email format for Supabase auth
+      const email = `${username.toLowerCase().replace(/\s+/g, '_')}@system.local`;
 
       // Sign in with Supabase
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
@@ -100,14 +103,14 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <Input
-            type="email"
-            label="البريد الإلكتروني"
-            placeholder="أدخل بريدك الإلكتروني"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            icon={<Mail className="w-5 h-5" />}
+            type="text"
+            label="إسم المستخدم"
+            placeholder="أدخل إسم المستخدم"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            icon={<User className="w-5 h-5" />}
             required
-            autoComplete="email"
+            autoComplete="username"
           />
 
           <Input

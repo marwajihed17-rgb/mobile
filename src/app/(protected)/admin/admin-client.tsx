@@ -162,6 +162,17 @@ export function AdminClient({
     try {
       const supabase = getSupabaseClient();
 
+      // Check if username already exists
+      const { data: existingUser, error: checkError } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('username', newUserData.username)
+        .single();
+
+      if (existingUser) {
+        throw new Error('إسم المستخدم موجود بالفعل. الرجاء اختيار إسم آخر');
+      }
+
       // Generate email from username for authentication
       const email = `${newUserData.username.toLowerCase().replace(/\s+/g, '_')}@system.local`;
 

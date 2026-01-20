@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     email TEXT NOT NULL,
     full_name TEXT,
-    username TEXT,
+    username TEXT NOT NULL UNIQUE,
     supervisor_name TEXT,
     avatar_url TEXT,
     role user_role DEFAULT 'user' NOT NULL,

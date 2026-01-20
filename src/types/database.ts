@@ -6,7 +6,7 @@ export interface Profile {
   id: string;
   email: string;
   full_name: string | null;
-  username: string | null;
+  username: string; // Now required - primary identifier
   supervisor_name: string | null;
   avatar_url: string | null;
   role: UserRole;
