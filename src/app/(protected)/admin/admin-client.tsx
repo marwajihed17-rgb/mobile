@@ -162,49 +162,20 @@ export function AdminClient({
     setSuccess('');
 
     try {
-      const supabase = getSupabaseClient();
-
-      // Validate email format
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(newUserData.email)) {
-        throw new Error('البريد الإلكتروني غير صحيح');
-      }
-
-      // Check if username already exists
-      const { data: existingUsername } = await supabase
-        .from('profiles')
-        .select('username')
-        .eq('username', newUserData.username)
-        .single();
-
-      if (existingUsername) {
-        throw new Error('إسم المستخدم موجود بالفعل. الرجاء اختيار إسم آخر');
-      }
-
-      // Check if email already exists
-      const { data: existingEmail } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('email', newUserData.email)
-        .single();
-
-      if (existingEmail) {
-        throw new Error('البريد الإلكتروني مستخدم بالفعل. الرجاء اختيار بريد آخر');
-      }
-
-      // Create auth user with real email
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: newUserData.email,
-        password: newUserData.password,
-        options: {
-          data: {
-            username: newUserData.username,
-            supervisor_name: newUserData.supervisor_name,
-          },
+      // Call server API to create user with admin privileges
+      const response = await fetch('/api/admin/create-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify(newUserData),
       });
 
-      if (authError) throw authError;
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'حدث خطأ في إنشاء المستخدم');
+      }
 
       setSuccess('تم إضافة المستخدم بنجاح');
       setNewUserData({ username: '', email: '', supervisor_name: '', password: '' });
