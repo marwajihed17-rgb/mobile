@@ -78,11 +78,24 @@ DROP TYPE IF EXISTS public.user_role CASCADE;
 DO $$
 DECLARE
     r RECORD;
+    storage_policies_exist BOOLEAN;
 BEGIN
-    FOR r IN (SELECT * FROM storage.policies)
-    LOOP
-        EXECUTE 'DROP POLICY IF EXISTS "' || r.name || '" ON storage.objects';
-    END LOOP;
+    -- Check if storage.policies table exists
+    SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'storage'
+        AND table_name = 'policies'
+    ) INTO storage_policies_exist;
+
+    -- Only try to drop policies if the table exists
+    IF storage_policies_exist THEN
+        FOR r IN (SELECT * FROM storage.policies)
+        LOOP
+            EXECUTE 'DROP POLICY IF EXISTS "' || r.name || '" ON storage.objects';
+        END LOOP;
+    ELSE
+        RAISE NOTICE 'Storage policies table does not exist, skipping...';
+    END IF;
 END $$;
 
 -- Step 8: Drop storage buckets (optional - uncomment if you want to delete uploaded files too)

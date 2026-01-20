@@ -5,28 +5,28 @@
 -- ============================================
 
 -- Check existing tables
-SELECT 'TABLES' as object_type, COUNT(*) as count
+SELECT 'TABLES' as object_type, COUNT(*)::text as count
 FROM information_schema.tables
 WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
 
 UNION ALL
 
 -- Check existing functions
-SELECT 'FUNCTIONS', COUNT(*)
+SELECT 'FUNCTIONS', COUNT(*)::text
 FROM information_schema.routines
 WHERE routine_schema = 'public' AND routine_type = 'FUNCTION'
 
 UNION ALL
 
 -- Check existing views
-SELECT 'VIEWS', COUNT(*)
+SELECT 'VIEWS', COUNT(*)::text
 FROM information_schema.views
 WHERE table_schema = 'public'
 
 UNION ALL
 
 -- Check existing triggers
-SELECT 'TRIGGERS', COUNT(*)
+SELECT 'TRIGGERS', COUNT(*)::text
 FROM information_schema.triggers
 WHERE trigger_schema = 'public'
 
