@@ -84,6 +84,40 @@ export async function signIn(email: string, password: string) {
   return data;
 }
 
+// Sign in with email or username
+export async function signInWithEmailOrUsername(emailOrUsername: string, password: string) {
+  const supabase = getSupabaseClient();
+  let email = emailOrUsername;
+
+  // Check if input is an email (contains @) or username
+  if (!emailOrUsername.includes('@')) {
+    // It's a username, look it up in profiles table to get the email
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('username', emailOrUsername)
+      .single();
+
+    if (profileError || !profile) {
+      throw new Error('Invalid login credentials');
+    }
+
+    email = profile.email;
+  }
+
+  // Sign in with email
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) {
+    throw new Error('Invalid login credentials');
+  }
+
+  return data;
+}
+
 // Sign up with email and password
 export async function signUp(email: string, password: string, fullName?: string) {
   const supabase = getSupabaseClient();

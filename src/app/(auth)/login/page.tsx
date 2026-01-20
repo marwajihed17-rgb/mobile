@@ -8,11 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert } from '@/components/ui/alert';
 import { getSupabaseClient } from '@/lib/supabase/client';
+import { signInWithEmailOrUsername } from '@/lib/auth';
 
 export default function LoginPage() {
   const router = useRouter();
 
-  const [username, setUsername] = useState('');
+  const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -26,24 +27,14 @@ export default function LoginPage() {
     try {
       const supabase = getSupabaseClient();
 
-      // Convert username to email format for Supabase auth
-      const email = `${username.toLowerCase().replace(/\s+/g, '_')}@system.local`;
-
-      // Sign in with Supabase
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (authError) {
-        throw new Error(authError.message);
-      }
+      // Sign in with email or username
+      const authData = await signInWithEmailOrUsername(emailOrUsername, password);
 
       if (!authData.user) {
         throw new Error('Login failed');
       }
 
-      // Get user profile to check role
+      // Get user profile to check role and status
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('role, status')
@@ -104,10 +95,10 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <Input
             type="text"
-            label="إسم المستخدم"
-            placeholder="أدخل إسم المستخدم"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            label="البريد الإلكتروني أو إسم المستخدم"
+            placeholder="أدخل البريد الإلكتروني أو إسم المستخدم"
+            value={emailOrUsername}
+            onChange={(e) => setEmailOrUsername(e.target.value)}
             icon={<User className="w-5 h-5" />}
             required
             autoComplete="username"
