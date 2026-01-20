@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { User, Lock } from 'lucide-react';
@@ -10,7 +10,7 @@ import { Alert } from '@/components/ui/alert';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import { signInWithEmailOrUsername } from '@/lib/auth';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -138,5 +138,13 @@ export default function LoginPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="w-full max-w-md"></div>}>
+      <LoginForm />
+    </Suspense>
   );
 }
