@@ -1,6 +1,7 @@
 // Database types for Supabase tables
 export type UserRole = 'user' | 'admin' | 'super_admin';
 export type UserStatus = 'active' | 'inactive' | 'suspended';
+export type ProjectType = 'salam' | 'mobily';
 
 export interface Profile {
   id: string;
@@ -69,6 +70,74 @@ export interface MobilyCustomer {
 export interface SalamEntry extends SalamCustomer {}
 export interface MobilyEntry extends MobilyCustomer {}
 
+// ============================================
+// NEW UNIFIED STRUCTURE
+// ============================================
+
+// Unified Customer (combines Salam and Mobily)
+export interface Customer {
+  id: string;
+  user_id: string;
+  created_by_username: string | null;
+
+  // Common fields (required for all projects)
+  full_name: string;
+  identity_number: string;
+  phone_number: string;
+  sim_number: string;
+  device_number: string;
+  nationality: string;
+  register_number: string;
+
+  // Project identification
+  project: ProjectType;
+  supervisor_name: string | null;
+  status: string;
+
+  // Mobily-specific fields (nullable for Salam customers)
+  birth_date: string | null;
+  identity_expiry_date: string | null;
+  package: string | null;
+  email: string | null;
+  city: string | null;
+  district: string | null;
+
+  // System fields
+  created_at: string;
+  updated_at: string;
+}
+
+// Project
+export interface Project {
+  id: string;
+  name: string;
+  code: ProjectType;
+  description: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// Daily Customer Totals
+export interface DailyCustomerTotal {
+  id: string;
+  date: string;
+  project: ProjectType;
+  total_customers: number;
+  unique_users: number;
+  created_at: string;
+  updated_at: string;
+}
+
+// Customer with user details (from view)
+export interface CustomerWithUser extends Customer {
+  username: string | null;
+  email_address: string | null;
+  user_full_name: string | null;
+  user_role: UserRole | null;
+  user_status: UserStatus | null;
+}
+
 // Database type for Supabase client
 export interface Database {
   public: {
@@ -104,8 +173,38 @@ export interface Database {
         Insert: Omit<MobilyEntry, 'id' | 'created_at' | 'updated_at'>;
         Update: Partial<Omit<MobilyEntry, 'id' | 'created_at'>>;
       };
+      // New unified tables
+      customers: {
+        Row: Customer;
+        Insert: Omit<Customer, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<Customer, 'id' | 'created_at'>>;
+      };
+      projects: {
+        Row: Project;
+        Insert: Omit<Project, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<Project, 'id' | 'created_at'>>;
+      };
+      daily_customer_totals: {
+        Row: DailyCustomerTotal;
+        Insert: Omit<DailyCustomerTotal, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<DailyCustomerTotal, 'id' | 'created_at'>>;
+      };
     };
-    Views: Record<string, never>;
+    Views: {
+      customers_with_users: {
+        Row: CustomerWithUser;
+      };
+      daily_stats: {
+        Row: {
+          date: string;
+          salam_count: number;
+          mobily_count: number;
+          salam_users: number;
+          mobily_users: number;
+          total_count: number;
+        };
+      };
+    };
     Functions: {
       is_admin: {
         Args: { user_id: string };
@@ -147,10 +246,24 @@ export interface Database {
         Args: { p_start_date: string; p_end_date?: string };
         Returns: { date: string; salam_count: number; mobily_count: number; total_count: number }[];
       };
+      // New unified functions
+      check_customer_exists: {
+        Args: { p_identity_number: string; p_project: ProjectType };
+        Returns: boolean;
+      };
+      get_daily_customer_count: {
+        Args: { p_project: ProjectType };
+        Returns: number;
+      };
+      get_customer_stats_by_date_range: {
+        Args: { p_start_date: string; p_end_date?: string };
+        Returns: { date: string; salam_count: number; mobily_count: number; total_count: number }[];
+      };
     };
     Enums: {
       user_role: UserRole;
       user_status: UserStatus;
+      project_type: ProjectType;
     };
   };
 }
