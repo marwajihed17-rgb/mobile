@@ -74,6 +74,24 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Check if authenticated user is active (for protected routes)
+  if (isProtectedRoute && user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('status')
+      .eq('id', user.id)
+      .single();
+
+    // If user is not active, sign them out and redirect to login
+    if (profile && profile.status !== 'active') {
+      await supabase.auth.signOut();
+      const url = request.nextUrl.clone();
+      url.pathname = '/login';
+      url.searchParams.set('error', 'حسابك معطل.');
+      return NextResponse.redirect(url);
+    }
+  }
+
   // Redirect authenticated users away from auth pages
   if (isAuthRoute && user) {
     const url = request.nextUrl.clone();
