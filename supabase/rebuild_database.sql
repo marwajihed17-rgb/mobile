@@ -765,7 +765,7 @@ CREATE OR REPLACE VIEW public.customers_with_users AS
 SELECT
     c.*,
     p.username,
-    p.email,
+    p.email as email_address,
     p.full_name as user_full_name,
     p.role as user_role,
     p.status as user_status
