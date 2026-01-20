@@ -16,8 +16,7 @@ import {
   Lock,
   CheckCircle,
   AlertCircle,
-  User,
-  Mail
+  User
 } from 'lucide-react';
 import { Header } from '@/components/layout/header';
 import { Card } from '@/components/ui/card';
@@ -102,9 +101,9 @@ export function AdminClient({
   const [showAddUser, setShowAddUser] = useState(false);
   const [newUserData, setNewUserData] = useState({
     username: '',
-    email: '',
     supervisor_name: '',
     password: '',
+    role: 'user' as UserRole,
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -178,7 +177,7 @@ export function AdminClient({
       }
 
       setSuccess('تم إضافة المستخدم بنجاح');
-      setNewUserData({ username: '', email: '', supervisor_name: '', password: '' });
+      setNewUserData({ username: '', supervisor_name: '', password: '', role: 'user' as UserRole });
       setShowAddUser(false);
       router.refresh();
     } catch (err) {
@@ -288,11 +287,11 @@ export function AdminClient({
           </Card>
           <Card className="p-4 text-center">
             <p className="text-3xl font-bold text-green-600">{stats.salamDailyCount}</p>
-            <p className="text-sm text-muted">عدد المستخدمين اليومي - سلام</p>
+            <p className="text-sm text-muted">سلام اليومي - إجمالي</p>
           </Card>
           <Card className="p-4 text-center">
             <p className="text-3xl font-bold text-blue-600">{stats.mobilyDailyCount}</p>
-            <p className="text-sm text-muted">عدد المستخدمين اليومي - موبايلي</p>
+            <p className="text-sm text-muted">إجمالي اليومي - موبايلي</p>
           </Card>
         </div>
 
@@ -643,17 +642,8 @@ export function AdminClient({
                     required
                   />
                   <Input
-                    type="email"
-                    label="البريد الإلكتروني"
-                    placeholder="أدخل البريد الإلكتروني"
-                    value={newUserData.email}
-                    onChange={(e) => setNewUserData(prev => ({ ...prev, email: e.target.value }))}
-                    icon={<Mail className="w-5 h-5" />}
-                    required
-                  />
-                  <Input
                     type="text"
-                    label="إسم المشرف"
+                    label="مشرف"
                     placeholder="أدخل إسم المشرف"
                     value={newUserData.supervisor_name}
                     onChange={(e) => setNewUserData(prev => ({ ...prev, supervisor_name: e.target.value }))}
@@ -670,6 +660,21 @@ export function AdminClient({
                     required
                     minLength={8}
                   />
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      الدور
+                    </label>
+                    <select
+                      value={newUserData.role}
+                      onChange={(e) => setNewUserData(prev => ({ ...prev, role: e.target.value as UserRole }))}
+                      className="w-full px-4 py-2 bg-card border border-card-border rounded-lg text-foreground focus:outline-none focus:border-primary"
+                      required
+                    >
+                      <option value="user">مستخدم</option>
+                      <option value="admin">مسؤول</option>
+                      <option value="super_admin">مشرف</option>
+                    </select>
+                  </div>
                   <div className="flex gap-4 pt-4">
                     <Button type="submit" isLoading={isLoading}>
                       إضافة المستخدم
@@ -691,6 +696,7 @@ export function AdminClient({
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">إسم المستخدم</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">إسم المشرف</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">الحالة</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3">أضيف بواسطة</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">تاريخ الإنشاء</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">الإجراءات</th>
                     </tr>
@@ -712,6 +718,7 @@ export function AdminClient({
                               <option value="inactive">غير مفعل</option>
                             </select>
                           </td>
+                          <td className="px-4 py-3 text-muted">{profile.created_by_username || 'النظام'}</td>
                           <td className="px-4 py-3 text-muted text-sm">{formatDate(profile.created_at)}</td>
                           <td className="px-4 py-3">
                             {profile.id !== currentProfile.id && (
@@ -728,7 +735,7 @@ export function AdminClient({
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={5} className="px-4 py-8 text-center text-muted">
+                        <td colSpan={6} className="px-4 py-8 text-center text-muted">
                           لا توجد نتائج
                         </td>
                       </tr>

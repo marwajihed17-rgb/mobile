@@ -11,6 +11,8 @@ export interface Profile {
   avatar_url: string | null;
   role: UserRole;
   status: UserStatus;
+  created_by_id: string | null;
+  created_by_username: string | null;
   created_at: string;
   updated_at: string;
 }

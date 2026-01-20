@@ -15,10 +15,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user is admin
+    // Check if user is admin and get their username
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('role')
+      .select('role, username')
       .eq('id', user.id)
       .single();
 
@@ -29,23 +29,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const createdByUsername = profile.username;
+
     // Get request body
     const body = await request.json();
-    const { username, email, supervisor_name, password } = body;
+    const { username, supervisor_name, password, role } = body;
 
     // Validate required fields
-    if (!username || !email || !supervisor_name || !password) {
+    if (!username || !supervisor_name || !password || !role) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       );
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    // Validate role
+    if (!['user', 'admin', 'super_admin'].includes(role)) {
       return NextResponse.json(
-        { error: 'البريد الإلكتروني غير صحيح' },
+        { error: 'الدور غير صحيح' },
         { status: 400 }
       );
     }
@@ -72,19 +73,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if email already exists
-    const { data: existingEmail } = await supabase
-      .from('profiles')
-      .select('email')
-      .eq('email', email)
-      .single();
-
-    if (existingEmail) {
-      return NextResponse.json(
-        { error: 'البريد الإلكتروني مستخدم بالفعل. الرجاء اختيار بريد آخر' },
-        { status: 400 }
-      );
-    }
+    // Generate a unique email for Supabase auth (internal use only)
+    const email = `${username.toLowerCase().replace(/\s+/g, '')}@design-cellular.local`;
 
     // Create admin client with service role key
     const supabaseAdmin = createClient(
@@ -106,6 +96,9 @@ export async function POST(request: NextRequest) {
       user_metadata: {
         username,
         supervisor_name,
+        role,
+        created_by_id: user.id,
+        created_by_username: createdByUsername,
       },
     });
 
