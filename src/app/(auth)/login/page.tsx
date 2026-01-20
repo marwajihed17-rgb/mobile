@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { User, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,12 +12,23 @@ import { signInWithEmailOrUsername } from '@/lib/auth';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [shake, setShake] = useState(false);
+
+  // Check for error message in URL params (from middleware redirect)
+  useEffect(() => {
+    const errorParam = searchParams.get('error');
+    if (errorParam) {
+      setError(errorParam);
+      setShake(true);
+      setTimeout(() => setShake(false), 500);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,7 +60,7 @@ export default function LoginPage() {
 
       if (userProfile.status !== 'active') {
         await supabase.auth.signOut();
-        throw new Error('Your account is not active. Please contact administrator.');
+        throw new Error('حسابك معطل.');
       }
 
       // Role-based redirection
