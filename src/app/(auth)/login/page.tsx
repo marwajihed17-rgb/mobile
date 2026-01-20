@@ -22,11 +22,13 @@ export default function LoginPage() {
 
   // Check for error message in URL params (from middleware redirect)
   useEffect(() => {
-    const errorParam = searchParams.get('error');
-    if (errorParam) {
-      setError(errorParam);
-      setShake(true);
-      setTimeout(() => setShake(false), 500);
+    if (searchParams) {
+      const errorParam = searchParams.get('error');
+      if (errorParam) {
+        setError(errorParam);
+        setShake(true);
+        setTimeout(() => setShake(false), 500);
+      }
     }
   }, [searchParams]);
 
