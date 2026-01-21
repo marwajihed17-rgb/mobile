@@ -2,6 +2,7 @@
 export type UserRole = 'user' | 'admin' | 'super_admin';
 export type UserStatus = 'active' | 'inactive' | 'suspended';
 export type ProjectType = 'salam' | 'mobily';
+export type CalendarType = 'gregorian' | 'hijri';
 
 export interface Profile {
   id: string;
@@ -55,7 +56,9 @@ export interface MobilyCustomer {
   nationality: string;
   register_number: string;
   birth_date: string;
+  birth_date_calendar_type: CalendarType;
   identity_expiry_date: string;
+  identity_expiry_date_calendar_type: CalendarType;
   package: string;
   email: string;
   city: string;
@@ -94,7 +97,9 @@ export interface Customer {
 
   // Mobily-specific fields (nullable for Salam customers)
   birth_date: string | null;
+  birth_date_calendar_type: CalendarType | null;
   identity_expiry_date: string | null;
+  identity_expiry_date_calendar_type: CalendarType | null;
   package: string | null;
   email: string | null;
   city: string | null;
@@ -262,6 +267,7 @@ export interface Database {
       user_role: UserRole;
       user_status: UserStatus;
       project_type: ProjectType;
+      calendar_type: CalendarType;
     };
   };
 }
