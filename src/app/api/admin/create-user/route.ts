@@ -110,11 +110,56 @@ export async function POST(request: NextRequest) {
     });
 
     if (authError) {
-      console.error('Error creating user:', authError);
+      console.error('Error creating auth user:', authError);
       return NextResponse.json(
         { error: authError.message },
         { status: 500 }
       );
+    }
+
+    if (!authData.user) {
+      return NextResponse.json(
+        { error: 'Failed to create user' },
+        { status: 500 }
+      );
+    }
+
+    // Explicitly create profile entry (don't rely on trigger)
+    const { error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .insert({
+        id: authData.user.id,
+        email: email,
+        username: username,
+        supervisor_name: supervisor_name,
+        role: 'user',
+        status: 'active',
+      });
+
+    if (profileError) {
+      console.error('Error creating profile:', profileError);
+
+      // If profile creation fails, delete the auth user to keep consistency
+      await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
+
+      return NextResponse.json(
+        { error: `خطأ في إنشاء الملف الشخصي: ${profileError.message}` },
+        { status: 500 }
+      );
+    }
+
+    // Create default user settings
+    const { error: settingsError } = await supabaseAdmin
+      .from('user_settings')
+      .insert({
+        user_id: authData.user.id,
+        dashboard_access: true,
+        admin_privileges: false,
+      });
+
+    if (settingsError) {
+      console.error('Warning: Failed to create user settings:', settingsError);
+      // Don't fail the request if settings creation fails
     }
 
     return NextResponse.json(
@@ -124,6 +169,7 @@ export async function POST(request: NextRequest) {
         user: {
           id: authData.user.id,
           email: authData.user.email,
+          username: username,
         }
       },
       { status: 201 }
