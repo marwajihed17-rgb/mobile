@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0a0e1a">
+  <title>Modules - PAA Solutions</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="../styles/design-system.css">
+  <link rel="stylesheet" href="../styles/animations.css">
+  <link rel="stylesheet" href="../styles/components.css">
+
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    /* Modules Page Specific Styles */
+    .modules-page {
+      min-height: 100vh;
+      padding-bottom: var(--space-16);
+    }
+
+    .modules-content {
+      max-width: var(--max-width-6xl);
+      margin: 0 auto;
+      padding: var(--space-8) var(--space-6);
+    }
+
+    .modules-header {
+      margin-bottom: var(--space-10);
+      animation: fadeInUp 0.4s var(--ease-out);
+    }
+
+    .modules-welcome {
+      font-size: var(--font-size-sm);
+      color: var(--muted);
+      margin-bottom: var(--space-2);
+    }
+
+    .modules-title {
+      font-size: var(--font-size-3xl);
+      font-weight: var(--font-weight-bold);
+      color: var(--foreground);
+      margin-bottom: var(--space-2);
+    }
+
+    .modules-subtitle {
+      font-size: var(--font-size-base);
+      color: var(--muted);
+    }
+
+    /* Module Grid */
+    .modules-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--space-4);
+    }
+
+    @media (min-width: 640px) {
+      .modules-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .modules-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    /* Module Card Enhancements */
+    .module-card {
+      min-height: 200px;
+    }
+
+    /* Admin Card Special Styling */
+    .module-card.admin-card {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(234, 88, 12, 0.1) 100%);
+      border-color: rgba(245, 158, 11, 0.3);
+    }
+
+    .module-card.admin-card:hover {
+      border-color: var(--warning);
+      box-shadow: 0 20px 40px -10px rgba(245, 158, 11, 0.15);
+    }
+
+    .module-card.admin-card::before {
+      background: radial-gradient(
+        circle at top right,
+        rgba(245, 158, 11, 0.15) 0%,
+        transparent 60%
+      );
+    }
+
+    /* Header User Info */
+    .header-user-info {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .header-username {
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-medium);
+      color: var(--foreground);
+    }
+
+    .header-role {
+      font-size: var(--font-size-xs);
+      color: var(--muted);
+    }
+
+    /* Online Status Indicator */
+    .online-indicator {
+      width: 8px;
+      height: 8px;
+      background: var(--success);
+      border-radius: 50%;
+      animation: pulseSoft 2s var(--ease-in-out) infinite;
+    }
+
+    /* Logout Button */
+    .logout-btn {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-3);
+      font-size: var(--font-size-sm);
+      color: var(--muted);
+      background: transparent;
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: all var(--transition-normal) var(--ease-default);
+    }
+
+    .logout-btn:hover {
+      color: var(--error);
+      border-color: rgba(239, 68, 68, 0.3);
+      background: var(--error-bg);
+    }
+  </style>
+</head>
+<body>
+  <!-- Animated Background -->
+  <div class="background-container">
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+  </div>
+
+  <!-- Modules Page -->
+  <div class="modules-page">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-content">
+        <div class="header-left">
+          <img src="../assets/logo-placeholder.svg" alt="PAA Solutions" class="header-logo">
+        </div>
+        <div class="header-right">
+          <div class="header-user-info">
+            <div class="online-indicator"></div>
+            <div>
+              <div class="header-username" id="userName">Loading...</div>
+              <div class="header-role" id="userRole">User</div>
+            </div>
+            <div class="avatar" id="userAvatar">--</div>
+          </div>
+          <button class="logout-btn" id="logoutBtn">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16,17 21,12 16,7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            Logout
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="modules-content">
+      <!-- Header Section -->
+      <div class="modules-header">
+        <p class="modules-welcome" id="welcomeMessage">Welcome back!</p>
+        <h1 class="modules-title">Select a Module</h1>
+        <p class="modules-subtitle">Choose a module to start your conversation</p>
+      </div>
+
+      <!-- Module Grid -->
+      <div class="modules-grid stagger-children" id="moduleGrid">
+        <!-- Invoice Processing -->
+        <div class="module-card" onclick="navigateToChat('invoice')">
+          <div class="module-status active">
+            <span class="status-dot"></span>
+            Active
+          </div>
+          <div class="module-icon invoice">
+            <span>🧾</span>
+          </div>
+          <h3 class="module-title">Invoice Processing</h3>
+          <p class="module-description">Dedicated general invoice Chat for processing and managing your invoices efficiently</p>
+          <div class="module-arrow">
+            <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12,5 19,12 12,19"></polyline>
+            </svg>
+          </div>
+        </div>
+
+        <!-- KDR Report Generator -->
+        <div class="module-card" onclick="navigateToChat('kdr')">
+          <div class="module-status active">
+            <span class="status-dot"></span>
+            Active
+          </div>
+          <div class="module-icon kdr">
+            <span>📈</span>
+          </div>
+          <h3 class="module-title">KDR Report Generator</h3>
+          <p class="module-description">KDR Report Creation and Analysis with advanced data processing capabilities</p>
+          <div class="module-arrow">
+            <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12,5 19,12 12,19"></polyline>
+            </svg>
+          </div>
+        </div>
+
+        <!-- GA Processing -->
+        <div class="module-card" onclick="navigateToChat('ga')">
+          <div class="module-status active">
+            <span class="status-dot"></span>
+            Active
+          </div>
+          <div class="module-icon ga">
+            <span>📊</span>
+          </div>
+          <h3 class="module-title">GA Processing</h3>
+          <p class="module-description">Analytics and reporting automation for comprehensive data insights</p>
+          <div class="module-arrow">
+            <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12,5 19,12 12,19"></polyline>
+            </svg>
+          </div>
+        </div>
+
+        <!-- KDRs Invoice Processing -->
+        <div class="module-card" onclick="navigateToChat('kdr_inv')">
+          <div class="module-status active">
+            <span class="status-dot"></span>
+            Active
+          </div>
+          <div class="module-icon kdr-inv">
+            <span>📋</span>
+          </div>
+          <h3 class="module-title">KDRs Invoice Processing</h3>
+          <p class="module-description">Dedicated KDR invoice chat for specialized invoice handling</p>
+          <div class="module-arrow">
+            <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12,5 19,12 12,19"></polyline>
+            </svg>
+          </div>
+        </div>
+
+        <!-- KDRs Sellout Processing -->
+        <div class="module-card" onclick="navigateToChat('kdr_sellout')">
+          <div class="module-status active">
+            <span class="status-dot"></span>
+            Active
+          </div>
+          <div class="module-icon kdr-sellout">
+            <span>💰</span>
+          </div>
+          <h3 class="module-title">KDRs Sellout Processing</h3>
+          <p class="module-description">Dedicated KDR sellout chat for sales data processing</p>
+          <div class="module-arrow">
+            <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12,5 19,12 12,19"></polyline>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Locked Module Example -->
+        <div class="module-card disabled" onclick="showLockedMessage()">
+          <div class="module-status locked">
+            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            Locked
+          </div>
+          <div class="module-icon" style="background: var(--card-border);">
+            <span>🔒</span>
+          </div>
+          <h3 class="module-title">Premium Module</h3>
+          <p class="module-description">Contact your administrator to gain access to this module</p>
+        </div>
+
+        <!-- Admin Panel (Only visible to admins) -->
+        <div class="module-card admin-card" onclick="openAdminPanel()">
+          <div class="module-status" style="background: var(--warning-bg); color: var(--warning);">
+            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            Admin
+          </div>
+          <div class="module-icon admin">
+            <span>⚙️</span>
+          </div>
+          <h3 class="module-title">Admin Panel</h3>
+          <p class="module-description">Manage users, permissions, and system settings</p>
+          <div class="module-arrow">
+            <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12,5 19,12 12,19"></polyline>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Brand Footer -->
+  <div class="brand-footer">
+    <a href="https://www.paa-solutions.com" target="_blank" rel="noopener">PAA Solutions</a>
+  </div>
+
+  <!-- Admin Panel Modal (Include from separate file or inline) -->
+  <div class="modal-backdrop" id="adminModal" style="display: none;">
+    <div class="modal-container">
+      <!-- Modal content will be loaded here -->
+    </div>
+  </div>
+
+  <!-- Supabase Config and Auth -->
+  <script src="../js/supabase-config.js"></script>
+  <script src="../js/auth.js"></script>
+
+  <script>
+    // Require authentication - redirect to login if not authenticated
+    (async function() {
+      const isAuth = await Auth.requireAuth('login.html');
+      if (isAuth) {
+        // Load user display info
+        const userInfo = await Auth.getUserDisplayInfo();
+        document.getElementById('userName').textContent = userInfo.name;
+        document.getElementById('userRole').textContent = userInfo.role;
+        document.getElementById('userAvatar').textContent = userInfo.initials;
+
+        // Update welcome message with first name
+        const firstName = userInfo.name.split(' ')[0];
+        document.getElementById('welcomeMessage').textContent = `Welcome back, ${firstName}!`;
+      }
+    })();
+
+    // Logout handler
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await Auth.handleLogout('login.html');
+    });
+
+    function navigateToChat(module) {
+      window.location.href = `chat.html?module=${module}`;
+    }
+
+    function showLockedMessage() {
+      alert('This module is locked. Please contact your administrator to gain access.');
+    }
+
+    function openAdminPanel() {
+      window.location.href = 'admin.html';
+    }
+  </script>
+</body>
+</html>
