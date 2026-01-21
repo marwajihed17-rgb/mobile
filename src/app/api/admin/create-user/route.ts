@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Explicitly create profile entry (don't rely on trigger)
-    const { error: profileError } = await supabaseAdmin
+    const { error: createProfileError } = await supabaseAdmin
       .from('profiles')
       .insert({
         id: authData.user.id,
@@ -136,14 +136,14 @@ export async function POST(request: NextRequest) {
         status: 'active',
       });
 
-    if (profileError) {
-      console.error('Error creating profile:', profileError);
+    if (createProfileError) {
+      console.error('Error creating profile:', createProfileError);
 
       // If profile creation fails, delete the auth user to keep consistency
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
 
       return NextResponse.json(
-        { error: `خطأ في إنشاء الملف الشخصي: ${profileError.message}` },
+        { error: `خطأ في إنشاء الملف الشخصي: ${createProfileError.message}` },
         { status: 500 }
       );
     }
