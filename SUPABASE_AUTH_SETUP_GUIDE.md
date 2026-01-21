@@ -2,6 +2,23 @@
 
 Complete guide for setting up email/password authentication with manual user creation via Supabase Dashboard that redirects to the admin dashboard.
 
+---
+
+## ⚠️ IMPORTANT: Read This First!
+
+**If you're getting the error "relation public.profiles does not exist"**, you need to initialize the database first!
+
+👉 **Go to `QUICK_START.md` for step-by-step setup instructions.**
+
+The quick start guide will walk you through:
+1. **Initializing the database** (running `init_database.sql`)
+2. **Creating your first admin user**
+3. **Testing the login**
+
+**Don't skip Step 1** - the database must be initialized before creating users!
+
+---
+
 ## 🎯 Overview
 
 This application uses Supabase for authentication with the following features:
@@ -19,7 +36,26 @@ This application uses Supabase for authentication with the following features:
 Before you begin, ensure you have:
 1. Access to your Supabase project dashboard
 2. Your Supabase project URL and keys configured in `.env.local`
-3. Database initialized with the schema (run `supabase/init_database.sql` if not done)
+3. **✅ CRITICAL**: Database initialized with the schema
+
+### Initialize Database (If Not Done)
+
+**Before creating any users, you MUST run the database initialization script:**
+
+1. Go to Supabase Dashboard → **SQL Editor** → **New query**
+2. Open `supabase/init_database.sql` from your project
+3. Copy **ALL contents** (590 lines) and paste into SQL Editor
+4. Click **"Run"**
+5. Verify tables were created:
+   ```sql
+   SELECT table_name FROM information_schema.tables
+   WHERE table_schema = 'public' AND table_name = 'profiles';
+   ```
+   Should return: `profiles`
+
+**If you skip this step**, you'll get: `ERROR: relation "public.profiles" does not exist`
+
+✅ **See `QUICK_START.md` for detailed initialization instructions.**
 
 ---
 
