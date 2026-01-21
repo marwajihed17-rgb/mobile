@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0a0e1a">
+  <title>PAA Solutions - Design System & UI Clone</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="styles/design-system.css">
+  <link rel="stylesheet" href="styles/animations.css">
+  <link rel="stylesheet" href="styles/components.css">
+
+  <style>
+    /* Index Page Specific Styles */
+    .index-page {
+      min-height: 100vh;
+      padding: var(--space-8) var(--space-6);
+    }
+
+    .index-container {
+      max-width: var(--max-width-6xl);
+      margin: 0 auto;
+    }
+
+    /* Hero Section */
+    .hero {
+      text-align: center;
+      padding: var(--space-16) 0;
+      animation: fadeInUp 0.5s var(--ease-out);
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-4);
+      background: rgba(74, 144, 245, 0.1);
+      border: 1px solid rgba(74, 144, 245, 0.3);
+      border-radius: var(--radius-full);
+      font-size: var(--font-size-sm);
+      color: var(--primary);
+      margin-bottom: var(--space-6);
+    }
+
+    .hero-title {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: var(--font-weight-bold);
+      color: var(--foreground);
+      margin-bottom: var(--space-4);
+      line-height: 1.1;
+    }
+
+    .hero-title .gradient-text {
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-description {
+      font-size: var(--font-size-lg);
+      color: var(--muted);
+      max-width: 600px;
+      margin: 0 auto var(--space-8);
+      line-height: var(--line-height-relaxed);
+    }
+
+    .hero-actions {
+      display: flex;
+      justify-content: center;
+      gap: var(--space-4);
+      flex-wrap: wrap;
+    }
+
+    /* Screens Section */
+    .screens-section {
+      margin-top: var(--space-16);
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: var(--space-10);
+    }
+
+    .section-title {
+      font-size: var(--font-size-2xl);
+      font-weight: var(--font-weight-bold);
+      color: var(--foreground);
+      margin-bottom: var(--space-2);
+    }
+
+    .section-subtitle {
+      font-size: var(--font-size-base);
+      color: var(--muted);
+    }
+
+    /* Screen Cards Grid */
+    .screens-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: var(--space-6);
+    }
+
+    .screen-card {
+      position: relative;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-2xl);
+      overflow: hidden;
+      transition: all var(--transition-slow) var(--ease-default);
+      cursor: pointer;
+    }
+
+    .screen-card:hover {
+      border-color: var(--primary);
+      box-shadow: 0 20px 40px -10px rgba(74, 144, 245, 0.15);
+      transform: translateY(-4px);
+    }
+
+    .screen-preview {
+      height: 200px;
+      background: var(--background);
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .screen-preview-icon {
+      font-size: 4rem;
+      opacity: 0.3;
+    }
+
+    .screen-preview::after {
+      content: 'Click to view';
+      position: absolute;
+      inset: 0;
+      background: rgba(74, 144, 245, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: var(--font-weight-semibold);
+      opacity: 0;
+      transition: opacity var(--transition-normal) var(--ease-default);
+    }
+
+    .screen-card:hover .screen-preview::after {
+      opacity: 1;
+    }
+
+    .screen-info {
+      padding: var(--space-5);
+    }
+
+    .screen-name {
+      font-size: var(--font-size-lg);
+      font-weight: var(--font-weight-semibold);
+      color: var(--foreground);
+      margin-bottom: var(--space-2);
+    }
+
+    .screen-description {
+      font-size: var(--font-size-sm);
+      color: var(--muted);
+      line-height: var(--line-height-relaxed);
+    }
+
+    /* Documentation Section */
+    .docs-section {
+      margin-top: var(--space-16);
+    }
+
+    .docs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: var(--space-4);
+    }
+
+    .doc-card {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-4);
+      padding: var(--space-5);
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-xl);
+      text-decoration: none;
+      transition: all var(--transition-normal) var(--ease-default);
+    }
+
+    .doc-card:hover {
+      background: var(--card-hover);
+      border-color: var(--card-border-hover);
+    }
+
+    .doc-icon {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(74, 144, 245, 0.1);
+      border-radius: var(--radius-lg);
+      color: var(--primary);
+      flex-shrink: 0;
+    }
+
+    .doc-info {
+      flex: 1;
+    }
+
+    .doc-name {
+      font-size: var(--font-size-base);
+      font-weight: var(--font-weight-semibold);
+      color: var(--foreground);
+      margin-bottom: var(--space-1);
+    }
+
+    .doc-description {
+      font-size: var(--font-size-sm);
+      color: var(--muted);
+    }
+
+    /* Features Grid */
+    .features-section {
+      margin-top: var(--space-16);
+      padding: var(--space-10);
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-2xl);
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--space-6);
+      margin-top: var(--space-8);
+    }
+
+    .feature-item {
+      text-align: center;
+    }
+
+    .feature-icon {
+      width: 56px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--gradient-primary);
+      border-radius: var(--radius-xl);
+      font-size: var(--font-size-2xl);
+      margin: 0 auto var(--space-4);
+    }
+
+    .feature-name {
+      font-size: var(--font-size-base);
+      font-weight: var(--font-weight-semibold);
+      color: var(--foreground);
+      margin-bottom: var(--space-2);
+    }
+
+    .feature-description {
+      font-size: var(--font-size-sm);
+      color: var(--muted);
+    }
+
+    /* Footer */
+    .index-footer {
+      margin-top: var(--space-16);
+      padding-top: var(--space-8);
+      border-top: 1px solid var(--card-border);
+      text-align: center;
+    }
+
+    .footer-text {
+      font-size: var(--font-size-sm);
+      color: var(--muted);
+    }
+
+    .footer-link {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .footer-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Stagger Animation */
+    .stagger-animation > * {
+      opacity: 0;
+      animation: fadeInUp 0.4s var(--ease-out) forwards;
+    }
+
+    .stagger-animation > *:nth-child(1) { animation-delay: 0.1s; }
+    .stagger-animation > *:nth-child(2) { animation-delay: 0.15s; }
+    .stagger-animation > *:nth-child(3) { animation-delay: 0.2s; }
+    .stagger-animation > *:nth-child(4) { animation-delay: 0.25s; }
+    .stagger-animation > *:nth-child(5) { animation-delay: 0.3s; }
+    .stagger-animation > *:nth-child(6) { animation-delay: 0.35s; }
+  </style>
+</head>
+<body>
+  <!-- Animated Background -->
+  <div class="background-container">
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+  </div>
+
+  <!-- Index Page -->
+  <div class="index-page">
+    <div class="index-container">
+      <!-- Hero Section -->
+      <section class="hero">
+        <div class="hero-badge">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+            <path d="M2 17l10 5 10-5"></path>
+            <path d="M2 12l10 5 10-5"></path>
+          </svg>
+          Design System & UI Clone
+        </div>
+        <h1 class="hero-title">
+          <span class="gradient-text">PAA Solutions</span><br>
+          Chat Application
+        </h1>
+        <p class="hero-description">
+          A comprehensive design-only clone showcasing all visual elements,
+          components, animations, and user interactions of the PAA Solutions
+          n8n Chat Application.
+        </p>
+        <div class="hero-actions">
+          <a href="pages/login.html" class="btn btn-primary">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            Launch Prototype
+          </a>
+          <a href="docs/style-guide.html" class="btn btn-secondary">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+            View Documentation
+          </a>
+        </div>
+      </section>
+
+      <!-- Screens Section -->
+      <section class="screens-section">
+        <div class="section-header">
+          <h2 class="section-title">Application Screens</h2>
+          <p class="section-subtitle">Click on any screen to view the interactive prototype</p>
+        </div>
+        <div class="screens-grid stagger-animation">
+          <a href="pages/login.html" class="screen-card">
+            <div class="screen-preview">
+              <span class="screen-preview-icon">🔐</span>
+            </div>
+            <div class="screen-info">
+              <h3 class="screen-name">Login</h3>
+              <p class="screen-description">
+                Authentication screen with username/password form, error states,
+                and animated transitions.
+              </p>
+            </div>
+          </a>
+          <a href="pages/modules.html" class="screen-card">
+            <div class="screen-preview">
+              <span class="screen-preview-icon">📱</span>
+            </div>
+            <div class="screen-info">
+              <h3 class="screen-name">Modules Dashboard</h3>
+              <p class="screen-description">
+                Module selection grid with 5 chat modules, admin panel access,
+                and status indicators.
+              </p>
+            </div>
+          </a>
+          <a href="pages/chat.html" class="screen-card">
+            <div class="screen-preview">
+              <span class="screen-preview-icon">💬</span>
+            </div>
+            <div class="screen-info">
+              <h3 class="screen-name">Chat Interface</h3>
+              <p class="screen-description">
+                WhatsApp-style chat with message bubbles, file attachments,
+                typing indicators, and real-time interactions.
+              </p>
+            </div>
+          </a>
+          <a href="pages/admin.html" class="screen-card">
+            <div class="screen-preview">
+              <span class="screen-preview-icon">⚙️</span>
+            </div>
+            <div class="screen-info">
+              <h3 class="screen-name">Admin Panel</h3>
+              <p class="screen-description">
+                User management interface with expandable rows, permission toggles,
+                and module access controls.
+              </p>
+            </div>
+          </a>
+        </div>
+      </section>
+
+      <!-- Documentation Section -->
+      <section class="docs-section">
+        <div class="section-header">
+          <h2 class="section-title">Documentation</h2>
+          <p class="section-subtitle">Design system guidelines and component specifications</p>
+        </div>
+        <div class="docs-grid stagger-animation">
+          <a href="docs/style-guide.html" class="doc-card">
+            <div class="doc-icon">
+              <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 16v-4"></path>
+                <path d="M12 8h.01"></path>
+              </svg>
+            </div>
+            <div class="doc-info">
+              <h3 class="doc-name">Style Guide</h3>
+              <p class="doc-description">Colors, typography, spacing, and visual guidelines</p>
+            </div>
+          </a>
+          <a href="docs/components.html" class="doc-card">
+            <div class="doc-icon">
+              <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="3" y1="9" x2="21" y2="9"></line>
+                <line x1="9" y1="21" x2="9" y2="9"></line>
+              </svg>
+            </div>
+            <div class="doc-info">
+              <h3 class="doc-name">Components</h3>
+              <p class="doc-description">UI component library with states and variants</p>
+            </div>
+          </a>
+          <a href="docs/animations.html" class="doc-card">
+            <div class="doc-icon">
+              <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+            </div>
+            <div class="doc-info">
+              <h3 class="doc-name">Animations</h3>
+              <p class="doc-description">Keyframe animations and transition effects</p>
+            </div>
+          </a>
+          <a href="docs/user-flows.html" class="doc-card">
+            <div class="doc-icon">
+              <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+            </div>
+            <div class="doc-info">
+              <h3 class="doc-name">User Flows</h3>
+              <p class="doc-description">Navigation patterns and interaction flows</p>
+            </div>
+          </a>
+        </div>
+      </section>
+
+      <!-- Features Section -->
+      <section class="features-section">
+        <div class="section-header">
+          <h2 class="section-title">Design Clone Features</h2>
+          <p class="section-subtitle">Everything included in this comprehensive UI clone</p>
+        </div>
+        <div class="features-grid stagger-animation">
+          <div class="feature-item">
+            <div class="feature-icon">🎨</div>
+            <h3 class="feature-name">Pixel-Perfect</h3>
+            <p class="feature-description">Accurate recreation of all visual elements</p>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">✨</div>
+            <h3 class="feature-name">Animations</h3>
+            <p class="feature-description">All transitions and micro-interactions</p>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">📱</div>
+            <h3 class="feature-name">Responsive</h3>
+            <p class="feature-description">Works on all screen sizes</p>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">🔧</div>
+            <h3 class="feature-name">Interactive</h3>
+            <p class="feature-description">Functional prototype navigation</p>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">📚</div>
+            <h3 class="feature-name">Documented</h3>
+            <p class="feature-description">Complete style guide included</p>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">🚀</div>
+            <h3 class="feature-name">No Backend</h3>
+            <p class="feature-description">Pure frontend, no dependencies</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer class="index-footer">
+        <p class="footer-text">
+          Design-only clone of PAA Solutions Chat Application<br>
+          Built with HTML, CSS, and JavaScript
+        </p>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Brand Footer -->
+  <div class="brand-footer">
+    <a href="https://www.paa-solutions.com" target="_blank" rel="noopener">PAA Solutions</a>
+  </div>
+</body>
+</html>
