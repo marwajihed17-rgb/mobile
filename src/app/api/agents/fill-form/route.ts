@@ -41,6 +41,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!user.username) {
+      return NextResponse.json(
+        { success: false, message: 'خطأ في بيانات المستخدم - اسم المستخدم مفقود' },
+        { status: 400 }
+      );
+    }
+
+    // Store username (guaranteed to be non-null after check)
+    const username = user.username;
+
     // Parse request body
     const body = await request.json();
     const { projectType, formData, options = {} } = body;
@@ -73,7 +83,7 @@ export async function POST(request: NextRequest) {
       formData,
       {
         userId: user.id,
-        username: user.username,
+        username: username,
         skipValidation: options.skipValidation || false,
         allowDuplicates: options.allowDuplicates || false,
       }
