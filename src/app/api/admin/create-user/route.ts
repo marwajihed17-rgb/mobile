@@ -124,42 +124,63 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Explicitly create profile entry (don't rely on trigger)
-    const { error: createProfileError } = await supabaseAdmin
+    // Wait a moment for trigger to complete
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Check if profile was created by trigger, if not create it
+    const { data: existingProfile } = await supabaseAdmin
       .from('profiles')
-      .insert({
-        id: authData.user.id,
-        email: email,
-        username: username,
-        supervisor_name: supervisor_name,
-        role: 'user',
-        status: 'active',
-      });
+      .select('id')
+      .eq('id', authData.user.id)
+      .single();
 
-    if (createProfileError) {
-      console.error('Error creating profile:', createProfileError);
+    if (!existingProfile) {
+      // Trigger didn't create profile, create it manually
+      const { error: createProfileError } = await supabaseAdmin
+        .from('profiles')
+        .insert({
+          id: authData.user.id,
+          email: email,
+          username: username,
+          supervisor_name: supervisor_name,
+          role: 'user',
+          status: 'active',
+        });
 
-      // If profile creation fails, delete the auth user to keep consistency
-      await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
+      if (createProfileError) {
+        console.error('Error creating profile:', createProfileError);
 
-      return NextResponse.json(
-        { error: `خطأ في إنشاء الملف الشخصي: ${createProfileError.message}` },
-        { status: 500 }
-      );
-    }
+        // If profile creation fails, delete the auth user to keep consistency
+        await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
 
-    // Create default user settings
-    const { error: settingsError } = await supabaseAdmin
-      .from('user_settings')
-      .insert({
-        user_id: authData.user.id,
-        dashboard_access: true,
-        admin_privileges: false,
-      });
+        return NextResponse.json(
+          { error: `خطأ في إنشاء الملف الشخصي: ${createProfileError.message}` },
+          { status: 500 }
+        );
+      }
 
-    if (settingsError) {
-      console.error('Warning: Failed to create user settings:', settingsError);
-      // Don't fail the request if settings creation fails
+      // Create user settings
+      await supabaseAdmin
+        .from('user_settings')
+        .insert({
+          user_id: authData.user.id,
+          dashboard_access: true,
+          admin_privileges: false,
+        });
+    } else {
+      // Profile exists (created by trigger), update it with correct username/supervisor
+      const { error: updateError } = await supabaseAdmin
+        .from('profiles')
+        .update({
+          username: username,
+          supervisor_name: supervisor_name,
+        })
+        .eq('id', authData.user.id);
+
+      if (updateError) {
+        console.error('Warning: Failed to update profile:', updateError);
+        // Don't fail if update fails, profile exists
+      }
     }
 
     return NextResponse.json(
