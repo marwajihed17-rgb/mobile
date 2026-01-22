@@ -47,7 +47,6 @@ export function MobilyFormClient({ profile }: MobilyFormClientProps) {
     birth_date: '',
     birth_date_calendar_type: 'gregorian' as CalendarType,
     identity_expiry_date: '',
-    identity_expiry_date_calendar_type: 'gregorian' as CalendarType,
     package: '',
     email: '',
     sim_number: '',
@@ -220,7 +219,6 @@ export function MobilyFormClient({ profile }: MobilyFormClientProps) {
           birth_date: formData.birth_date,
           birth_date_calendar_type: formData.birth_date_calendar_type,
           identity_expiry_date: formData.identity_expiry_date,
-          identity_expiry_date_calendar_type: formData.identity_expiry_date_calendar_type,
           package: formData.package.trim(),
           email: formData.email.trim(),
           city: formData.city.trim(),
@@ -258,7 +256,6 @@ export function MobilyFormClient({ profile }: MobilyFormClientProps) {
         birth_date: '',
         birth_date_calendar_type: 'gregorian',
         identity_expiry_date: '',
-        identity_expiry_date_calendar_type: 'gregorian',
         package: '',
         email: '',
         sim_number: '',
@@ -372,14 +369,16 @@ export function MobilyFormClient({ profile }: MobilyFormClientProps) {
                 required
               />
 
-              <CalendarDatePicker
+              <Input
+                type="date"
                 name="identity_expiry_date"
                 label="تاريخ انتهاء الهوية"
+                placeholder="أدخل تاريخ انتهاء الهوية"
                 value={formData.identity_expiry_date}
-                calendarType={formData.identity_expiry_date_calendar_type}
-                onChange={(value) => setFormData(prev => ({ ...prev, identity_expiry_date: value }))}
-                onCalendarTypeChange={(type) => setFormData(prev => ({ ...prev, identity_expiry_date_calendar_type: type }))}
+                onChange={handleChange}
+                icon={<Calendar className="w-5 h-5" />}
                 required
+                dir="ltr"
               />
 
               <Input
