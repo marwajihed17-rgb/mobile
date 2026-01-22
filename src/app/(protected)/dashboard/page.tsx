@@ -29,17 +29,19 @@ export default async function DashboardPage() {
     redirect('/admin');
   }
 
-  // Get recent customers from Salam project (last 5)
+  // Get recent customers from Salam project (last 5 for current user)
   const { data: salamCustomers } = await supabase
     .from('salam_customers')
     .select('*')
+    .eq('user_id', user.id)
     .order('created_at', { ascending: false })
     .limit(5);
 
-  // Get recent customers from Mobily project (last 5)
+  // Get recent customers from Mobily project (last 5 for current user)
   const { data: mobilyCustomers } = await supabase
     .from('mobily_customers')
     .select('*')
+    .eq('user_id', user.id)
     .order('created_at', { ascending: false })
     .limit(5);
 
