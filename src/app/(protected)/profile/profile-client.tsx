@@ -148,7 +148,7 @@ export function ProfileClient({ profile, settings }: ProfileClientProps) {
               {/* Role (read-only) */}
               <Input
                 label="Role"
-                value={profile.role === 'super_admin' ? 'Super Admin' : profile.role === 'admin' ? 'Admin' : 'User'}
+                value={profile.role === 'admin' ? 'Admin' : 'User'}
                 disabled
                 icon={<User className="w-5 h-5" />}
               />
