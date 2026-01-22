@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useCallback, memo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Phone,
@@ -17,7 +17,9 @@ import {
   CheckCircle,
   AlertCircle,
   User,
-  Mail
+  Mail,
+  Wifi,
+  WifiOff
 } from 'lucide-react';
 import { Header } from '@/components/layout/header';
 import { Card } from '@/components/ui/card';
@@ -26,6 +28,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert } from '@/components/ui/alert';
 import { getSupabaseClient } from '@/lib/supabase/client';
+import { useRealtimeSalamCustomers, useRealtimeMobilyCustomers } from '@/hooks/useRealtimeCustomers';
+import { useRealtimeProfiles } from '@/hooks/useRealtimeProfiles';
+import { useRealtimeStats } from '@/hooks/useRealtimeStats';
 import type { Profile, UserRole, UserStatus } from '@/types/database';
 
 interface Customer {
@@ -83,9 +88,12 @@ export function AdminClient({
   const [activeView, setActiveView] = useState<ActiveView>('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState('');
-  const [profiles, setProfiles] = useState(initialProfiles);
-  const [salamCustomers] = useState(initialSalamCustomers || []);
-  const [mobilyCustomers] = useState(initialMobilyCustomers || []);
+
+  // Real-time subscriptions for all data
+  const { profiles, isConnected: profilesConnected } = useRealtimeProfiles(initialProfiles);
+  const { customers: salamCustomers, isConnected: salamConnected } = useRealtimeSalamCustomers(initialSalamCustomers || []);
+  const { customers: mobilyCustomers, isConnected: mobilyConnected } = useRealtimeMobilyCustomers(initialMobilyCustomers || []);
+  const realtimeStats = useRealtimeStats(stats);
 
   // User Management Filters
   const [usernameFilter, setUsernameFilter] = useState('');
@@ -134,16 +142,17 @@ export function AdminClient({
     isSuperAdmin: currentProfile.role === 'super_admin',
   };
 
-  const formatDate = (dateString: string) => {
+  // Memoized date formatter for better performance
+  const formatDate = useCallback((dateString: string) => {
     const date = new Date(dateString);
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}/${month}/${day}`;
-  };
+  }, []);
 
-  // Filter Salam customers
-  const filteredSalamCustomers = salamCustomers.filter(customer => {
+  // Memoized filtered customers for better performance
+  const filteredSalamCustomers = useMemo(() => salamCustomers.filter(customer => {
     if (!salamSearchQuery) return true;
 
     const query = salamSearchQuery.toLowerCase();
@@ -162,10 +171,10 @@ export function AdminClient({
     return searchableFields.some(field =>
       field.toLowerCase().includes(query)
     );
-  });
+  }), [salamCustomers, salamSearchQuery]);
 
-  // Filter Mobily customers
-  const filteredMobilyCustomers = mobilyCustomers.filter(customer => {
+  // Memoized filtered Mobily customers
+  const filteredMobilyCustomers = useMemo(() => mobilyCustomers.filter(customer => {
     if (!mobilySearchQuery) return true;
 
     const query = mobilySearchQuery.toLowerCase();
@@ -190,10 +199,10 @@ export function AdminClient({
     return searchableFields.some(field =>
       field.toLowerCase().includes(query)
     );
-  });
+  }), [mobilyCustomers, mobilySearchQuery]);
 
-  // Advanced filtering for user management
-  const filteredProfiles = profiles.filter(profile => {
+  // Memoized filtered profiles
+  const filteredProfiles = useMemo(() => profiles.filter(profile => {
     // Username filter
     const matchesUsername = !usernameFilter ||
       (profile.username?.toLowerCase() || '').includes(usernameFilter.toLowerCase());
@@ -219,10 +228,10 @@ export function AdminClient({
 
     return matchesUsername && matchesSupervisor && matchesRole &&
            matchesStatus && matchesCreationDate && matchesSearch;
-  });
+  }), [profiles, usernameFilter, supervisorFilter, roleFilter, statusFilter, creationDateFilter, searchQuery]);
 
-  // Add new user
-  const handleAddUser = async (e: React.FormEvent) => {
+  // Memoized callback for adding users
+  const handleAddUser = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
@@ -247,16 +256,16 @@ export function AdminClient({
       setSuccess('تم إضافة المستخدم بنجاح');
       setNewUserData({ username: '', supervisor_name: '', password: '', role: 'user' });
       setShowAddUser(false);
-      router.refresh();
+      // Real-time subscription will automatically update the profiles list
     } catch (err) {
       setError(err instanceof Error ? err.message : 'حدث خطأ');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [newUserData]);
 
-  // Delete user
-  const handleDeleteUser = async (userId: string) => {
+  // Memoized callback for deleting users
+  const handleDeleteUser = useCallback(async (userId: string) => {
     if (!confirm('هل أنت متأكد من حذف هذا المستخدم؟')) return;
 
     try {
@@ -274,16 +283,15 @@ export function AdminClient({
         throw new Error(data.error || 'Failed to delete user');
       }
 
-      // Update local state to remove deleted user immediately
-      setProfiles(prev => prev.filter(p => p.id !== userId));
+      // Real-time subscription will automatically update the profiles list
       setSuccess('تم حذف المستخدم بنجاح');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'حدث خطأ');
     }
-  };
+  }, []);
 
-  // Update user status
-  const handleUpdateStatus = async (userId: string, status: UserStatus) => {
+  // Memoized callback for updating user status
+  const handleUpdateStatus = useCallback(async (userId: string, status: UserStatus) => {
     try {
       const supabase = getSupabaseClient();
 
@@ -294,14 +302,15 @@ export function AdminClient({
 
       if (error) throw error;
 
-      setProfiles(prev => prev.map(p =>
-        p.id === userId ? { ...p, status } : p
-      ) as Profile[]);
+      // Real-time subscription will automatically update the profiles list
       setSuccess('تم تحديث الحالة بنجاح');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'حدث خطأ');
     }
-  };
+  }, []);
+
+  // Connection status
+  const isFullyConnected = profilesConnected && salamConnected && mobilyConnected;
 
   return (
     <div className="min-h-screen pb-16">
@@ -324,13 +333,29 @@ export function AdminClient({
 
         {/* Header */}
         <div className="mb-10 animate-fade-in-up">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-              <Shield className="w-7 h-7 text-white" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+                <Shield className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-foreground">لوحة التحكم</h1>
+                <p className="text-muted">إدارة النظام والمستخدمين</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">لوحة التحكم</h1>
-              <p className="text-muted">إدارة النظام والمستخدمين</p>
+            {/* Real-time connection indicator */}
+            <div className="flex items-center gap-2 text-sm">
+              {isFullyConnected ? (
+                <>
+                  <Wifi className="w-5 h-5 text-green-500" />
+                  <span className="text-green-500 font-medium">متصل بالوقت الفعلي</span>
+                </>
+              ) : (
+                <>
+                  <WifiOff className="w-5 h-5 text-amber-500 animate-pulse" />
+                  <span className="text-amber-500">جاري الاتصال...</span>
+                </>
+              )}
             </div>
           </div>
 
@@ -343,23 +368,27 @@ export function AdminClient({
           )}
         </div>
 
-        {/* Stats Cards */}
+        {/* Stats Cards - Real-time updated */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <Card className="p-4 text-center">
-            <p className="text-3xl font-bold text-foreground">{stats.salamCount}</p>
+          <Card className="p-4 text-center relative overflow-hidden">
+            <p className="text-3xl font-bold text-foreground">{realtimeStats.salamCount}</p>
             <p className="text-sm text-muted">إجمالي - مشروع سلام</p>
+            {salamConnected && <div className="absolute top-2 right-2"><Wifi className="w-3 h-3 text-green-500" /></div>}
           </Card>
-          <Card className="p-4 text-center">
-            <p className="text-3xl font-bold text-foreground">{stats.mobilyCount}</p>
+          <Card className="p-4 text-center relative overflow-hidden">
+            <p className="text-3xl font-bold text-foreground">{realtimeStats.mobilyCount}</p>
             <p className="text-sm text-muted">إجمالي - مشروع موبايلي</p>
+            {mobilyConnected && <div className="absolute top-2 right-2"><Wifi className="w-3 h-3 text-blue-500" /></div>}
           </Card>
-          <Card className="p-4 text-center">
-            <p className="text-3xl font-bold text-green-600">{stats.salamDailyCount}</p>
+          <Card className="p-4 text-center relative overflow-hidden">
+            <p className="text-3xl font-bold text-green-600">{realtimeStats.salamDailyCount}</p>
             <p className="text-sm text-muted">عدد المستخدمين اليومي - سلام</p>
+            {salamConnected && <div className="absolute top-2 right-2"><Wifi className="w-3 h-3 text-green-500" /></div>}
           </Card>
-          <Card className="p-4 text-center">
-            <p className="text-3xl font-bold text-blue-600">{stats.mobilyDailyCount}</p>
+          <Card className="p-4 text-center relative overflow-hidden">
+            <p className="text-3xl font-bold text-blue-600">{realtimeStats.mobilyDailyCount}</p>
             <p className="text-sm text-muted">عدد المستخدمين اليومي - موبايلي</p>
+            {mobilyConnected && <div className="absolute top-2 right-2"><Wifi className="w-3 h-3 text-blue-500" /></div>}
           </Card>
         </div>
 
