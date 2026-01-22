@@ -458,32 +458,34 @@ export function AdminClient({
                 <table className="w-full">
                   <thead className="bg-card-hover border-b border-card-border">
                     <tr>
-                      <th className="text-right text-sm font-medium text-muted px-4 py-3">الإسم</th>
-                      <th className="text-right text-sm font-medium text-muted px-4 py-3">رقم الهوية</th>
-                      <th className="text-right text-sm font-medium text-muted px-4 py-3">الجوال</th>
-                      <th className="text-right text-sm font-medium text-muted px-4 py-3">الشريحة</th>
-                      <th className="text-right text-sm font-medium text-muted px-4 py-3">الجهاز</th>
-                      <th className="text-right text-sm font-medium text-muted px-4 py-3">الجنسية</th>
-                      <th className="text-right text-sm font-medium text-muted px-4 py-3">السجل</th>
-                      <th className="text-right text-sm font-medium text-muted px-4 py-3">المدخل</th>
-                      <th className="text-right text-sm font-medium text-muted px-4 py-3">التاريخ</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الإسم</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">المدخل</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">رقم الهوية</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الجوال</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الشريحة</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الجهاز</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الجنسية</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">السجل</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">التاريخ</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredSalamCustomers.length > 0 ? (
                       filteredSalamCustomers.map((customer) => (
                         <tr key={customer.id} className="border-b border-card-border last:border-0 hover:bg-card-hover transition-colors">
-                          <td className="px-4 py-3 text-foreground">{customer.name}</td>
-                          <td className="px-4 py-3 text-muted">{customer.identity_number}</td>
-                          <td className="px-4 py-3 text-muted">{customer.phone_number}</td>
-                          <td className="px-4 py-3 text-muted">{customer.sim_number}</td>
-                          <td className="px-4 py-3 text-muted">{customer.device_number}</td>
-                          <td className="px-4 py-3 text-muted">{customer.nationality}</td>
-                          <td className="px-4 py-3 text-muted">{customer.register_number}</td>
-                          <td className="px-4 py-3 text-muted">
-                            {customer.created_by_username || customer.profiles?.username || customer.profiles?.full_name || 'غير محدد'}
+                          <td className="px-4 py-3 text-foreground whitespace-nowrap">{customer.name}</td>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-green-500/20 to-emerald-600/20 text-green-600 border border-green-500/30">
+                              {customer.created_by_username || customer.profiles?.username || customer.profiles?.full_name || 'غير محدد'}
+                            </span>
                           </td>
-                          <td className="px-4 py-3 text-muted text-sm">{formatDate(customer.created_at)}</td>
+                          <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.identity_number}</td>
+                          <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.phone_number}</td>
+                          <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.sim_number}</td>
+                          <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.device_number}</td>
+                          <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.nationality}</td>
+                          <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.register_number}</td>
+                          <td className="px-4 py-3 text-muted text-sm whitespace-nowrap">{formatDate(customer.created_at)}</td>
                         </tr>
                       ))
                     ) : (
@@ -541,44 +543,46 @@ export function AdminClient({
                 <table className="w-full">
                   <thead className="bg-card-hover border-b border-card-border">
                     <tr>
-                      <th className="text-right text-sm font-medium text-muted px-4 py-3">الإسم</th>
-                      <th className="text-right text-sm font-medium text-muted px-4 py-3">رقم الهوية</th>
-                      <th className="text-right text-sm font-medium text-muted px-4 py-3">الجنسية</th>
-                      <th className="text-right text-sm font-medium text-muted px-4 py-3">الجوال</th>
-                      <th className="text-right text-sm font-medium text-muted px-4 py-3">الشريحة</th>
-                      <th className="text-right text-sm font-medium text-muted px-4 py-3">الجهاز</th>
-                      <th className="text-right text-sm font-medium text-muted px-4 py-3">السجل</th>
-                      <th className="text-right text-sm font-medium text-muted px-4 py-3">تاريخ الميلاد</th>
-                      <th className="text-right text-sm font-medium text-muted px-4 py-3">انتهاء الهوية</th>
-                      <th className="text-right text-sm font-medium text-muted px-4 py-3">الباقة</th>
-                      <th className="text-right text-sm font-medium text-muted px-4 py-3">الإيميل</th>
-                      <th className="text-right text-sm font-medium text-muted px-4 py-3">المدينة</th>
-                      <th className="text-right text-sm font-medium text-muted px-4 py-3">الحي</th>
-                      <th className="text-right text-sm font-medium text-muted px-4 py-3">المدخل</th>
-                      <th className="text-right text-sm font-medium text-muted px-4 py-3">التاريخ</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الإسم</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">المدخل</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">رقم الهوية</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الجنسية</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الجوال</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الشريحة</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الجهاز</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">السجل</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">تاريخ الميلاد</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">انتهاء الهوية</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الباقة</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الإيميل</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">المدينة</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الحي</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">التاريخ</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredMobilyCustomers.length > 0 ? (
                       filteredMobilyCustomers.map((customer) => (
                         <tr key={customer.id} className="border-b border-card-border last:border-0 hover:bg-card-hover transition-colors">
-                          <td className="px-4 py-3 text-foreground">{customer.name}</td>
-                          <td className="px-4 py-3 text-muted">{customer.identity_number}</td>
-                          <td className="px-4 py-3 text-muted">{customer.nationality}</td>
-                          <td className="px-4 py-3 text-muted">{customer.phone_number}</td>
-                          <td className="px-4 py-3 text-muted">{customer.sim_number}</td>
-                          <td className="px-4 py-3 text-muted">{customer.device_number}</td>
-                          <td className="px-4 py-3 text-muted">{customer.register_number}</td>
-                          <td className="px-4 py-3 text-muted">{customer.birth_date}</td>
-                          <td className="px-4 py-3 text-muted">{customer.identity_expiry_date}</td>
-                          <td className="px-4 py-3 text-muted">{customer.package}</td>
-                          <td className="px-4 py-3 text-muted">{customer.email}</td>
-                          <td className="px-4 py-3 text-muted">{customer.city}</td>
-                          <td className="px-4 py-3 text-muted">{customer.district}</td>
-                          <td className="px-4 py-3 text-muted">
-                            {customer.created_by_username || customer.profiles?.username || customer.profiles?.full_name || 'غير محدد'}
+                          <td className="px-4 py-3 text-foreground whitespace-nowrap">{customer.name}</td>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-blue-600 border border-blue-500/30">
+                              {customer.created_by_username || customer.profiles?.username || customer.profiles?.full_name || 'غير محدد'}
+                            </span>
                           </td>
-                          <td className="px-4 py-3 text-muted text-sm">{formatDate(customer.created_at)}</td>
+                          <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.identity_number}</td>
+                          <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.nationality}</td>
+                          <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.phone_number}</td>
+                          <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.sim_number}</td>
+                          <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.device_number}</td>
+                          <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.register_number}</td>
+                          <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.birth_date}</td>
+                          <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.identity_expiry_date}</td>
+                          <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.package}</td>
+                          <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.email}</td>
+                          <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.city}</td>
+                          <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.district}</td>
+                          <td className="px-4 py-3 text-muted text-sm whitespace-nowrap">{formatDate(customer.created_at)}</td>
                         </tr>
                       ))
                     ) : (
