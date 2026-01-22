@@ -102,9 +102,9 @@ export function AdminClient({
   const [showAddUser, setShowAddUser] = useState(false);
   const [newUserData, setNewUserData] = useState({
     username: '',
-    email: '',
     supervisor_name: '',
     password: '',
+    role: 'user' as UserRole,
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -151,7 +151,7 @@ export function AdminClient({
 
   const filteredProfiles = profiles.filter(profile =>
     (profile.full_name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-    profile.email.toLowerCase().includes(searchQuery.toLowerCase())
+    (profile.username?.toLowerCase() || '').includes(searchQuery.toLowerCase())
   );
 
   // Add new user
@@ -178,7 +178,7 @@ export function AdminClient({
       }
 
       setSuccess('تم إضافة المستخدم بنجاح');
-      setNewUserData({ username: '', email: '', supervisor_name: '', password: '' });
+      setNewUserData({ username: '', supervisor_name: '', password: '', role: 'user' });
       setShowAddUser(false);
       router.refresh();
     } catch (err) {
@@ -608,7 +608,7 @@ export function AdminClient({
                 <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
                 <input
                   type="text"
-                  placeholder="بحث بالاسم أو البريد الإلكتروني..."
+                  placeholder="بحث بالاسم أو إسم المستخدم..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pr-10 pl-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
@@ -646,23 +646,37 @@ export function AdminClient({
                     icon={<User className="w-5 h-5" />}
                     required
                   />
-                  <Input
-                    type="email"
-                    label="البريد الإلكتروني"
-                    placeholder="أدخل البريد الإلكتروني"
-                    value={newUserData.email}
-                    onChange={(e) => setNewUserData(prev => ({ ...prev, email: e.target.value }))}
-                    icon={<Mail className="w-5 h-5" />}
-                    required
-                  />
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-foreground">
+                      البريد الإلكتروني
+                    </label>
+                    <div className="px-4 py-2.5 bg-card border border-card-border rounded-lg text-muted">
+                      {newUserData.username ? `${newUserData.username}@retaam.app` : 'سيتم توليده تلقائياً...'}
+                    </div>
+                    <p className="text-xs text-muted">سيتم توليد البريد الإلكتروني تلقائياً بناءً على إسم المستخدم</p>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-foreground">
+                      دور المستخدم
+                    </label>
+                    <select
+                      value={newUserData.role}
+                      onChange={(e) => setNewUserData(prev => ({ ...prev, role: e.target.value as UserRole }))}
+                      className="w-full px-4 py-2.5 bg-card border border-card-border rounded-lg text-foreground focus:outline-none focus:border-primary"
+                      required
+                    >
+                      <option value="user">مستخدم</option>
+                      <option value="admin">مشرف</option>
+                      <option value="super_admin">مشرف رئيسي</option>
+                    </select>
+                  </div>
                   <Input
                     type="text"
-                    label="إسم المشرف"
+                    label="إسم المشرف (إختياري)"
                     placeholder="أدخل إسم المشرف"
                     value={newUserData.supervisor_name}
                     onChange={(e) => setNewUserData(prev => ({ ...prev, supervisor_name: e.target.value }))}
                     icon={<User className="w-5 h-5" />}
-                    required
                   />
                   <Input
                     type="password"
@@ -694,6 +708,7 @@ export function AdminClient({
                     <tr>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">إسم المستخدم</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">إسم المشرف</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3">الدور</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">الحالة</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">تاريخ الإنشاء</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">الإجراءات</th>
@@ -705,6 +720,11 @@ export function AdminClient({
                         <tr key={profile.id} className="border-b border-card-border last:border-0 hover:bg-card-hover transition-colors">
                           <td className="px-4 py-3 text-foreground">{profile.username || '-'}</td>
                           <td className="px-4 py-3 text-muted">{profile.supervisor_name || '-'}</td>
+                          <td className="px-4 py-3">
+                            <Badge variant={profile.role === 'super_admin' ? 'error' : profile.role === 'admin' ? 'warning' : 'default'}>
+                              {profile.role === 'super_admin' ? 'مشرف رئيسي' : profile.role === 'admin' ? 'مشرف' : 'مستخدم'}
+                            </Badge>
+                          </td>
                           <td className="px-4 py-3">
                             <select
                               value={profile.status}
@@ -732,7 +752,7 @@ export function AdminClient({
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={5} className="px-4 py-8 text-center text-muted">
+                        <td colSpan={6} className="px-4 py-8 text-center text-muted">
                           لا توجد نتائج
                         </td>
                       </tr>

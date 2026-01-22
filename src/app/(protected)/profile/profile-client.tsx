@@ -108,12 +108,13 @@ export function ProfileClient({ profile, settings }: ProfileClientProps) {
               {/* Avatar Section */}
               <div className="flex items-center gap-6">
                 <Avatar
-                  name={fullName || profile.email}
+                  name={fullName || profile.username || 'User'}
                   imageUrl={profile.avatar_url}
                   size="lg"
                 />
                 <div>
-                  <p className="font-medium text-foreground">{fullName || profile.email}</p>
+                  <p className="font-medium text-foreground">{fullName || profile.username || 'User'}</p>
+                  <p className="text-sm text-muted">@{profile.username || 'unknown'}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <Badge
                       variant={profile.status === 'active' ? 'success' : 'error'}
@@ -136,12 +137,28 @@ export function ProfileClient({ profile, settings }: ProfileClientProps) {
                 icon={<User className="w-5 h-5" />}
               />
 
-              {/* Email (read-only) */}
+              {/* Username (read-only) */}
               <Input
-                label="Email"
-                value={profile.email}
+                label="Username"
+                value={profile.username || '-'}
                 disabled
-                icon={<Mail className="w-5 h-5" />}
+                icon={<User className="w-5 h-5" />}
+              />
+
+              {/* Role (read-only) */}
+              <Input
+                label="Role"
+                value={profile.role === 'super_admin' ? 'Super Admin' : profile.role === 'admin' ? 'Admin' : 'User'}
+                disabled
+                icon={<User className="w-5 h-5" />}
+              />
+
+              {/* Status (read-only) */}
+              <Input
+                label="Status"
+                value={profile.status === 'active' ? 'Active' : profile.status === 'inactive' ? 'Inactive' : 'Suspended'}
+                disabled
+                icon={<User className="w-5 h-5" />}
               />
             </CardContent>
           </Card>
