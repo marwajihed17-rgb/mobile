@@ -94,6 +94,34 @@ export function AdminClient({
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [creationDateFilter, setCreationDateFilter] = useState('');
 
+  // Salam Customer Filters
+  const [salamNameFilter, setSalamNameFilter] = useState('');
+  const [salamEnteredByFilter, setSalamEnteredByFilter] = useState('');
+  const [salamIdentityFilter, setSalamIdentityFilter] = useState('');
+  const [salamPhoneFilter, setSalamPhoneFilter] = useState('');
+  const [salamSimFilter, setSalamSimFilter] = useState('');
+  const [salamDeviceFilter, setSalamDeviceFilter] = useState('');
+  const [salamNationalityFilter, setSalamNationalityFilter] = useState('');
+  const [salamRegisterFilter, setSalamRegisterFilter] = useState('');
+  const [salamDateFilter, setSalamDateFilter] = useState('');
+
+  // Mobily Customer Filters
+  const [mobilyNameFilter, setMobilyNameFilter] = useState('');
+  const [mobilyEnteredByFilter, setMobilyEnteredByFilter] = useState('');
+  const [mobilyIdentityFilter, setMobilyIdentityFilter] = useState('');
+  const [mobilyNationalityFilter, setMobilyNationalityFilter] = useState('');
+  const [mobilyPhoneFilter, setMobilyPhoneFilter] = useState('');
+  const [mobilySimFilter, setMobilySimFilter] = useState('');
+  const [mobilyDeviceFilter, setMobilyDeviceFilter] = useState('');
+  const [mobilyRegisterFilter, setMobilyRegisterFilter] = useState('');
+  const [mobilyBirthDateFilter, setMobilyBirthDateFilter] = useState('');
+  const [mobilyIdentityExpiryFilter, setMobilyIdentityExpiryFilter] = useState('');
+  const [mobilyPackageFilter, setMobilyPackageFilter] = useState('');
+  const [mobilyEmailFilter, setMobilyEmailFilter] = useState('');
+  const [mobilyCityFilter, setMobilyCityFilter] = useState('');
+  const [mobilyDistrictFilter, setMobilyDistrictFilter] = useState('');
+  const [mobilyDateFilter, setMobilyDateFilter] = useState('');
+
   // Debug logging
   console.log('AdminClient received data:', {
     salamCustomersCount: salamCustomers?.length || 0,
@@ -136,25 +164,91 @@ export function AdminClient({
     return `${year}/${month}/${day}`;
   };
 
-  // Filter customers based on search and date
-  const filterCustomers = <T extends Customer>(customers: T[]): T[] => {
-    return customers.filter(customer => {
-      // Search filter
-      const matchesSearch = !searchQuery ||
-        customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        customer.identity_number.includes(searchQuery) ||
-        customer.phone_number.includes(searchQuery);
+  // Filter Salam customers
+  const filteredSalamCustomers = salamCustomers.filter(customer => {
+    const matchesName = !salamNameFilter ||
+      customer.name.toLowerCase().includes(salamNameFilter.toLowerCase());
 
-      // Date filter
-      const matchesDate = !dateFilter ||
-        customer.created_at.startsWith(dateFilter);
+    const matchesEnteredBy = !salamEnteredByFilter ||
+      (customer.created_by_username?.toLowerCase() || '').includes(salamEnteredByFilter.toLowerCase());
 
-      return matchesSearch && matchesDate;
-    });
-  };
+    const matchesIdentity = !salamIdentityFilter ||
+      customer.identity_number.includes(salamIdentityFilter);
 
-  const filteredSalamCustomers = filterCustomers(salamCustomers);
-  const filteredMobilyCustomers = filterCustomers(mobilyCustomers);
+    const matchesPhone = !salamPhoneFilter ||
+      customer.phone_number.includes(salamPhoneFilter);
+
+    const matchesSim = !salamSimFilter ||
+      customer.sim_number.includes(salamSimFilter);
+
+    const matchesDevice = !salamDeviceFilter ||
+      customer.device_number.includes(salamDeviceFilter);
+
+    const matchesNationality = !salamNationalityFilter ||
+      customer.nationality.toLowerCase().includes(salamNationalityFilter.toLowerCase());
+
+    const matchesRegister = !salamRegisterFilter ||
+      customer.register_number.includes(salamRegisterFilter);
+
+    const matchesDate = !salamDateFilter ||
+      customer.created_at.startsWith(salamDateFilter);
+
+    return matchesName && matchesEnteredBy && matchesIdentity && matchesPhone &&
+           matchesSim && matchesDevice && matchesNationality && matchesRegister && matchesDate;
+  });
+
+  // Filter Mobily customers
+  const filteredMobilyCustomers = mobilyCustomers.filter(customer => {
+    const matchesName = !mobilyNameFilter ||
+      customer.name.toLowerCase().includes(mobilyNameFilter.toLowerCase());
+
+    const matchesEnteredBy = !mobilyEnteredByFilter ||
+      (customer.created_by_username?.toLowerCase() || '').includes(mobilyEnteredByFilter.toLowerCase());
+
+    const matchesIdentity = !mobilyIdentityFilter ||
+      customer.identity_number.includes(mobilyIdentityFilter);
+
+    const matchesNationality = !mobilyNationalityFilter ||
+      customer.nationality.toLowerCase().includes(mobilyNationalityFilter.toLowerCase());
+
+    const matchesPhone = !mobilyPhoneFilter ||
+      customer.phone_number.includes(mobilyPhoneFilter);
+
+    const matchesSim = !mobilySimFilter ||
+      customer.sim_number.includes(mobilySimFilter);
+
+    const matchesDevice = !mobilyDeviceFilter ||
+      customer.device_number.includes(mobilyDeviceFilter);
+
+    const matchesRegister = !mobilyRegisterFilter ||
+      customer.register_number.includes(mobilyRegisterFilter);
+
+    const matchesBirthDate = !mobilyBirthDateFilter ||
+      customer.birth_date?.startsWith(mobilyBirthDateFilter);
+
+    const matchesIdentityExpiry = !mobilyIdentityExpiryFilter ||
+      customer.identity_expiry_date?.startsWith(mobilyIdentityExpiryFilter);
+
+    const matchesPackage = !mobilyPackageFilter ||
+      customer.package?.toLowerCase().includes(mobilyPackageFilter.toLowerCase());
+
+    const matchesEmail = !mobilyEmailFilter ||
+      customer.email?.toLowerCase().includes(mobilyEmailFilter.toLowerCase());
+
+    const matchesCity = !mobilyCityFilter ||
+      customer.city?.toLowerCase().includes(mobilyCityFilter.toLowerCase());
+
+    const matchesDistrict = !mobilyDistrictFilter ||
+      customer.district?.toLowerCase().includes(mobilyDistrictFilter.toLowerCase());
+
+    const matchesDate = !mobilyDateFilter ||
+      customer.created_at.startsWith(mobilyDateFilter);
+
+    return matchesName && matchesEnteredBy && matchesIdentity && matchesNationality &&
+           matchesPhone && matchesSim && matchesDevice && matchesRegister &&
+           matchesBirthDate && matchesIdentityExpiry && matchesPackage && matchesEmail &&
+           matchesCity && matchesDistrict && matchesDate;
+  });
 
   // Advanced filtering for user management
   const filteredProfiles = profiles.filter(profile => {
@@ -451,37 +545,142 @@ export function AdminClient({
         {/* Salam List View */}
         {activeView === 'salam' && (
           <div className="space-y-6">
-            {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
-                <input
-                  type="text"
-                  placeholder="بحث بالاسم أو رقم الهوية أو الجوال..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pr-10 pl-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
-                />
+            {/* Advanced Filters */}
+            <Card className="p-4">
+              <h3 className="text-sm font-semibold text-foreground mb-4">تصفية العملاء - مشروع سلام</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Name Filter */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted">الإسم</label>
+                  <input
+                    type="text"
+                    placeholder="الإسم"
+                    value={salamNameFilter}
+                    onChange={(e) => setSalamNameFilter(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                {/* Entered By Filter */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted">المدخل</label>
+                  <input
+                    type="text"
+                    placeholder="المدخل"
+                    value={salamEnteredByFilter}
+                    onChange={(e) => setSalamEnteredByFilter(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                {/* Identity Number Filter */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted">رقم الهوية</label>
+                  <input
+                    type="text"
+                    placeholder="رقم الهوية"
+                    value={salamIdentityFilter}
+                    onChange={(e) => setSalamIdentityFilter(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                {/* Phone Number Filter */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted">الجوال</label>
+                  <input
+                    type="text"
+                    placeholder="الجوال"
+                    value={salamPhoneFilter}
+                    onChange={(e) => setSalamPhoneFilter(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                {/* SIM Number Filter */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted">الشريحة</label>
+                  <input
+                    type="text"
+                    placeholder="الشريحة"
+                    value={salamSimFilter}
+                    onChange={(e) => setSalamSimFilter(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                {/* Device Number Filter */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted">الجهاز</label>
+                  <input
+                    type="text"
+                    placeholder="الجهاز"
+                    value={salamDeviceFilter}
+                    onChange={(e) => setSalamDeviceFilter(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                {/* Nationality Filter */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted">الجنسية</label>
+                  <input
+                    type="text"
+                    placeholder="الجنسية"
+                    value={salamNationalityFilter}
+                    onChange={(e) => setSalamNationalityFilter(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                {/* Register Number Filter */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted">السجل</label>
+                  <input
+                    type="text"
+                    placeholder="السجل"
+                    value={salamRegisterFilter}
+                    onChange={(e) => setSalamRegisterFilter(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                {/* Creation Date Filter */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted">التاريخ</label>
+                  <input
+                    type="date"
+                    value={salamDateFilter}
+                    onChange={(e) => setSalamDateFilter(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground focus:outline-none focus:border-primary"
+                  />
+                </div>
               </div>
-              <div className="flex-1 max-w-xs">
-                <input
-                  type="date"
-                  value={dateFilter}
-                  onChange={(e) => setDateFilter(e.target.value)}
-                  placeholder="تصفية حسب التاريخ"
-                  className="w-full px-4 py-2 bg-card border border-card-border rounded-lg text-foreground focus:outline-none focus:border-primary"
-                />
-              </div>
-              {dateFilter && (
-                <Button
-                  variant="secondary"
-                  onClick={() => setDateFilter('')}
-                  className="self-start"
-                >
-                  إلغاء الفلتر
-                </Button>
+
+              {/* Clear Filters Button */}
+              {(salamNameFilter || salamEnteredByFilter || salamIdentityFilter || salamPhoneFilter ||
+                salamSimFilter || salamDeviceFilter || salamNationalityFilter || salamRegisterFilter || salamDateFilter) && (
+                <div className="mt-4">
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setSalamNameFilter('');
+                      setSalamEnteredByFilter('');
+                      setSalamIdentityFilter('');
+                      setSalamPhoneFilter('');
+                      setSalamSimFilter('');
+                      setSalamDeviceFilter('');
+                      setSalamNationalityFilter('');
+                      setSalamRegisterFilter('');
+                      setSalamDateFilter('');
+                    }}
+                    className="text-sm"
+                  >
+                    مسح جميع الفلاتر
+                  </Button>
+                </div>
               )}
-            </div>
+            </Card>
 
             {/* Table */}
             <Card className="overflow-hidden">
@@ -536,37 +735,220 @@ export function AdminClient({
         {/* Mobily List View */}
         {activeView === 'mobily' && (
           <div className="space-y-6">
-            {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
-                <input
-                  type="text"
-                  placeholder="بحث بالاسم أو رقم الهوية أو الجوال..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pr-10 pl-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
-                />
+            {/* Advanced Filters */}
+            <Card className="p-4">
+              <h3 className="text-sm font-semibold text-foreground mb-4">تصفية العملاء - مشروع موبايلي</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                {/* Name Filter */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted">الإسم</label>
+                  <input
+                    type="text"
+                    placeholder="الإسم"
+                    value={mobilyNameFilter}
+                    onChange={(e) => setMobilyNameFilter(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                {/* Entered By Filter */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted">المدخل</label>
+                  <input
+                    type="text"
+                    placeholder="المدخل"
+                    value={mobilyEnteredByFilter}
+                    onChange={(e) => setMobilyEnteredByFilter(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                {/* Identity Number Filter */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted">رقم الهوية</label>
+                  <input
+                    type="text"
+                    placeholder="رقم الهوية"
+                    value={mobilyIdentityFilter}
+                    onChange={(e) => setMobilyIdentityFilter(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                {/* Nationality Filter */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted">الجنسية</label>
+                  <input
+                    type="text"
+                    placeholder="الجنسية"
+                    value={mobilyNationalityFilter}
+                    onChange={(e) => setMobilyNationalityFilter(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                {/* Phone Number Filter */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted">الجوال</label>
+                  <input
+                    type="text"
+                    placeholder="الجوال"
+                    value={mobilyPhoneFilter}
+                    onChange={(e) => setMobilyPhoneFilter(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                {/* SIM Number Filter */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted">الشريحة</label>
+                  <input
+                    type="text"
+                    placeholder="الشريحة"
+                    value={mobilySimFilter}
+                    onChange={(e) => setMobilySimFilter(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                {/* Device Number Filter */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted">الجهاز</label>
+                  <input
+                    type="text"
+                    placeholder="الجهاز"
+                    value={mobilyDeviceFilter}
+                    onChange={(e) => setMobilyDeviceFilter(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                {/* Register Number Filter */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted">السجل</label>
+                  <input
+                    type="text"
+                    placeholder="السجل"
+                    value={mobilyRegisterFilter}
+                    onChange={(e) => setMobilyRegisterFilter(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                {/* Birth Date Filter */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted">تاريخ الميلاد</label>
+                  <input
+                    type="date"
+                    value={mobilyBirthDateFilter}
+                    onChange={(e) => setMobilyBirthDateFilter(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                {/* Identity Expiry Filter */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted">انتهاء الهوية</label>
+                  <input
+                    type="date"
+                    value={mobilyIdentityExpiryFilter}
+                    onChange={(e) => setMobilyIdentityExpiryFilter(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                {/* Package Filter */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted">الباقة</label>
+                  <input
+                    type="text"
+                    placeholder="الباقة"
+                    value={mobilyPackageFilter}
+                    onChange={(e) => setMobilyPackageFilter(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                {/* Email Filter */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted">الإيميل</label>
+                  <input
+                    type="text"
+                    placeholder="الإيميل"
+                    value={mobilyEmailFilter}
+                    onChange={(e) => setMobilyEmailFilter(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                {/* City Filter */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted">المدينة</label>
+                  <input
+                    type="text"
+                    placeholder="المدينة"
+                    value={mobilyCityFilter}
+                    onChange={(e) => setMobilyCityFilter(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                {/* District Filter */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted">الحي</label>
+                  <input
+                    type="text"
+                    placeholder="الحي"
+                    value={mobilyDistrictFilter}
+                    onChange={(e) => setMobilyDistrictFilter(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                {/* Creation Date Filter */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted">التاريخ</label>
+                  <input
+                    type="date"
+                    value={mobilyDateFilter}
+                    onChange={(e) => setMobilyDateFilter(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground focus:outline-none focus:border-primary"
+                  />
+                </div>
               </div>
-              <div className="flex-1 max-w-xs">
-                <input
-                  type="date"
-                  value={dateFilter}
-                  onChange={(e) => setDateFilter(e.target.value)}
-                  placeholder="تصفية حسب التاريخ"
-                  className="w-full px-4 py-2 bg-card border border-card-border rounded-lg text-foreground focus:outline-none focus:border-primary"
-                />
-              </div>
-              {dateFilter && (
-                <Button
-                  variant="secondary"
-                  onClick={() => setDateFilter('')}
-                  className="self-start"
-                >
-                  إلغاء الفلتر
-                </Button>
+
+              {/* Clear Filters Button */}
+              {(mobilyNameFilter || mobilyEnteredByFilter || mobilyIdentityFilter || mobilyNationalityFilter ||
+                mobilyPhoneFilter || mobilySimFilter || mobilyDeviceFilter || mobilyRegisterFilter ||
+                mobilyBirthDateFilter || mobilyIdentityExpiryFilter || mobilyPackageFilter || mobilyEmailFilter ||
+                mobilyCityFilter || mobilyDistrictFilter || mobilyDateFilter) && (
+                <div className="mt-4">
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setMobilyNameFilter('');
+                      setMobilyEnteredByFilter('');
+                      setMobilyIdentityFilter('');
+                      setMobilyNationalityFilter('');
+                      setMobilyPhoneFilter('');
+                      setMobilySimFilter('');
+                      setMobilyDeviceFilter('');
+                      setMobilyRegisterFilter('');
+                      setMobilyBirthDateFilter('');
+                      setMobilyIdentityExpiryFilter('');
+                      setMobilyPackageFilter('');
+                      setMobilyEmailFilter('');
+                      setMobilyCityFilter('');
+                      setMobilyDistrictFilter('');
+                      setMobilyDateFilter('');
+                    }}
+                    className="text-sm"
+                  >
+                    مسح جميع الفلاتر
+                  </Button>
+                </div>
               )}
-            </div>
+            </Card>
 
             {/* Table */}
             <Card className="overflow-hidden">
