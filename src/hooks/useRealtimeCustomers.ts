@@ -7,9 +7,10 @@ import type { SalamCustomer, MobilyCustomer } from '@/types/database';
 /**
  * Real-time hook for Salam customers
  * Automatically syncs with database changes (INSERT, UPDATE, DELETE)
+ * Generic to support extended types with additional properties (like profiles)
  */
-export function useRealtimeSalamCustomers(initialData: SalamCustomer[]) {
-  const [customers, setCustomers] = useState<SalamCustomer[]>(initialData);
+export function useRealtimeSalamCustomers<T extends SalamCustomer>(initialData: T[]) {
+  const [customers, setCustomers] = useState<T[]>(initialData);
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
@@ -29,12 +30,12 @@ export function useRealtimeSalamCustomers(initialData: SalamCustomer[]) {
           console.log('Salam customer change received:', payload);
 
           if (payload.eventType === 'INSERT') {
-            // Add new customer to the list
-            const newCustomer = payload.new as SalamCustomer;
+            // Add new customer to the list (without profiles as it's raw DB data)
+            const newCustomer = payload.new as T;
             setCustomers((prev) => [newCustomer, ...prev]);
           } else if (payload.eventType === 'UPDATE') {
             // Update existing customer
-            const updatedCustomer = payload.new as SalamCustomer;
+            const updatedCustomer = payload.new as T;
             setCustomers((prev) =>
               prev.map((customer) =>
                 customer.id === updatedCustomer.id ? updatedCustomer : customer
@@ -42,7 +43,7 @@ export function useRealtimeSalamCustomers(initialData: SalamCustomer[]) {
             );
           } else if (payload.eventType === 'DELETE') {
             // Remove deleted customer
-            const deletedCustomer = payload.old as SalamCustomer;
+            const deletedCustomer = payload.old as T;
             setCustomers((prev) =>
               prev.filter((customer) => customer.id !== deletedCustomer.id)
             );
@@ -67,9 +68,10 @@ export function useRealtimeSalamCustomers(initialData: SalamCustomer[]) {
 /**
  * Real-time hook for Mobily customers
  * Automatically syncs with database changes (INSERT, UPDATE, DELETE)
+ * Generic to support extended types with additional properties (like profiles)
  */
-export function useRealtimeMobilyCustomers(initialData: MobilyCustomer[]) {
-  const [customers, setCustomers] = useState<MobilyCustomer[]>(initialData);
+export function useRealtimeMobilyCustomers<T extends MobilyCustomer>(initialData: T[]) {
+  const [customers, setCustomers] = useState<T[]>(initialData);
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
@@ -89,12 +91,12 @@ export function useRealtimeMobilyCustomers(initialData: MobilyCustomer[]) {
           console.log('Mobily customer change received:', payload);
 
           if (payload.eventType === 'INSERT') {
-            // Add new customer to the list
-            const newCustomer = payload.new as MobilyCustomer;
+            // Add new customer to the list (without profiles as it's raw DB data)
+            const newCustomer = payload.new as T;
             setCustomers((prev) => [newCustomer, ...prev]);
           } else if (payload.eventType === 'UPDATE') {
             // Update existing customer
-            const updatedCustomer = payload.new as MobilyCustomer;
+            const updatedCustomer = payload.new as T;
             setCustomers((prev) =>
               prev.map((customer) =>
                 customer.id === updatedCustomer.id ? updatedCustomer : customer
@@ -102,7 +104,7 @@ export function useRealtimeMobilyCustomers(initialData: MobilyCustomer[]) {
             );
           } else if (payload.eventType === 'DELETE') {
             // Remove deleted customer
-            const deletedCustomer = payload.old as MobilyCustomer;
+            const deletedCustomer = payload.old as T;
             setCustomers((prev) =>
               prev.filter((customer) => customer.id !== deletedCustomer.id)
             );

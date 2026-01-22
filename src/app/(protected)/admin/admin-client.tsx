@@ -31,21 +31,9 @@ import { getSupabaseClient } from '@/lib/supabase/client';
 import { useRealtimeSalamCustomers, useRealtimeMobilyCustomers } from '@/hooks/useRealtimeCustomers';
 import { useRealtimeProfiles } from '@/hooks/useRealtimeProfiles';
 import { useRealtimeStats } from '@/hooks/useRealtimeStats';
-import type { Profile, UserRole, UserStatus } from '@/types/database';
+import type { Profile, UserRole, UserStatus, SalamCustomer, MobilyCustomer } from '@/types/database';
 
-interface Customer {
-  id: string;
-  user_id: string;
-  created_by_username: string | null;
-  name: string;
-  identity_number: string;
-  phone_number: string;
-  sim_number: string;
-  device_number: string;
-  nationality: string;
-  register_number: string;
-  created_at: string;
-  updated_at: string;
+interface CustomerWithProfile extends SalamCustomer {
   profiles?: {
     username: string | null;
     full_name: string | null;
@@ -53,20 +41,19 @@ interface Customer {
   } | null;
 }
 
-interface MobilyCustomer extends Customer {
-  birth_date: string;
-  identity_expiry_date: string;
-  package: string;
-  email: string;
-  city: string;
-  district: string;
+interface MobilyCustomerWithProfile extends MobilyCustomer {
+  profiles?: {
+    username: string | null;
+    full_name: string | null;
+    email: string;
+  } | null;
 }
 
 interface AdminClientProps {
   currentProfile: Profile;
   profiles: Profile[];
-  salamCustomers: Customer[];
-  mobilyCustomers: MobilyCustomer[];
+  salamCustomers: CustomerWithProfile[];
+  mobilyCustomers: MobilyCustomerWithProfile[];
   stats: {
     salamCount: number;
     mobilyCount: number;
