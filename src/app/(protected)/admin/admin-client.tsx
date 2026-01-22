@@ -545,142 +545,94 @@ export function AdminClient({
         {/* Salam List View */}
         {activeView === 'salam' && (
           <div className="space-y-6">
-            {/* Advanced Filters */}
-            <Card className="p-4">
-              <h3 className="text-sm font-semibold text-foreground mb-4">تصفية العملاء - مشروع سلام</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {/* Name Filter */}
-                <div className="space-y-1">
-                  <label className="text-xs text-muted">الإسم</label>
-                  <input
-                    type="text"
-                    placeholder="الإسم"
-                    value={salamNameFilter}
-                    onChange={(e) => setSalamNameFilter(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
-                  />
-                </div>
+            {/* Filters */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              <input
+                type="text"
+                placeholder="الإسم"
+                value={salamNameFilter}
+                onChange={(e) => setSalamNameFilter(e.target.value)}
+                className="px-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+              />
+              <input
+                type="text"
+                placeholder="المدخل"
+                value={salamEnteredByFilter}
+                onChange={(e) => setSalamEnteredByFilter(e.target.value)}
+                className="px-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+              />
+              <input
+                type="text"
+                placeholder="رقم الهوية"
+                value={salamIdentityFilter}
+                onChange={(e) => setSalamIdentityFilter(e.target.value)}
+                className="px-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+              />
+              <input
+                type="text"
+                placeholder="الجوال"
+                value={salamPhoneFilter}
+                onChange={(e) => setSalamPhoneFilter(e.target.value)}
+                className="px-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+              />
+              <input
+                type="text"
+                placeholder="الشريحة"
+                value={salamSimFilter}
+                onChange={(e) => setSalamSimFilter(e.target.value)}
+                className="px-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+              />
+              <input
+                type="text"
+                placeholder="الجهاز"
+                value={salamDeviceFilter}
+                onChange={(e) => setSalamDeviceFilter(e.target.value)}
+                className="px-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+              />
+              <input
+                type="text"
+                placeholder="الجنسية"
+                value={salamNationalityFilter}
+                onChange={(e) => setSalamNationalityFilter(e.target.value)}
+                className="px-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+              />
+              <input
+                type="text"
+                placeholder="السجل"
+                value={salamRegisterFilter}
+                onChange={(e) => setSalamRegisterFilter(e.target.value)}
+                className="px-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+              />
+              <input
+                type="date"
+                placeholder="التاريخ"
+                value={salamDateFilter}
+                onChange={(e) => setSalamDateFilter(e.target.value)}
+                className="px-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+              />
+            </div>
 
-                {/* Entered By Filter */}
-                <div className="space-y-1">
-                  <label className="text-xs text-muted">المدخل</label>
-                  <input
-                    type="text"
-                    placeholder="المدخل"
-                    value={salamEnteredByFilter}
-                    onChange={(e) => setSalamEnteredByFilter(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
-                  />
-                </div>
-
-                {/* Identity Number Filter */}
-                <div className="space-y-1">
-                  <label className="text-xs text-muted">رقم الهوية</label>
-                  <input
-                    type="text"
-                    placeholder="رقم الهوية"
-                    value={salamIdentityFilter}
-                    onChange={(e) => setSalamIdentityFilter(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
-                  />
-                </div>
-
-                {/* Phone Number Filter */}
-                <div className="space-y-1">
-                  <label className="text-xs text-muted">الجوال</label>
-                  <input
-                    type="text"
-                    placeholder="الجوال"
-                    value={salamPhoneFilter}
-                    onChange={(e) => setSalamPhoneFilter(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
-                  />
-                </div>
-
-                {/* SIM Number Filter */}
-                <div className="space-y-1">
-                  <label className="text-xs text-muted">الشريحة</label>
-                  <input
-                    type="text"
-                    placeholder="الشريحة"
-                    value={salamSimFilter}
-                    onChange={(e) => setSalamSimFilter(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
-                  />
-                </div>
-
-                {/* Device Number Filter */}
-                <div className="space-y-1">
-                  <label className="text-xs text-muted">الجهاز</label>
-                  <input
-                    type="text"
-                    placeholder="الجهاز"
-                    value={salamDeviceFilter}
-                    onChange={(e) => setSalamDeviceFilter(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
-                  />
-                </div>
-
-                {/* Nationality Filter */}
-                <div className="space-y-1">
-                  <label className="text-xs text-muted">الجنسية</label>
-                  <input
-                    type="text"
-                    placeholder="الجنسية"
-                    value={salamNationalityFilter}
-                    onChange={(e) => setSalamNationalityFilter(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
-                  />
-                </div>
-
-                {/* Register Number Filter */}
-                <div className="space-y-1">
-                  <label className="text-xs text-muted">السجل</label>
-                  <input
-                    type="text"
-                    placeholder="السجل"
-                    value={salamRegisterFilter}
-                    onChange={(e) => setSalamRegisterFilter(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
-                  />
-                </div>
-
-                {/* Creation Date Filter */}
-                <div className="space-y-1">
-                  <label className="text-xs text-muted">التاريخ</label>
-                  <input
-                    type="date"
-                    value={salamDateFilter}
-                    onChange={(e) => setSalamDateFilter(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground focus:outline-none focus:border-primary"
-                  />
-                </div>
-              </div>
-
-              {/* Clear Filters Button */}
-              {(salamNameFilter || salamEnteredByFilter || salamIdentityFilter || salamPhoneFilter ||
-                salamSimFilter || salamDeviceFilter || salamNationalityFilter || salamRegisterFilter || salamDateFilter) && (
-                <div className="mt-4">
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      setSalamNameFilter('');
-                      setSalamEnteredByFilter('');
-                      setSalamIdentityFilter('');
-                      setSalamPhoneFilter('');
-                      setSalamSimFilter('');
-                      setSalamDeviceFilter('');
-                      setSalamNationalityFilter('');
-                      setSalamRegisterFilter('');
-                      setSalamDateFilter('');
-                    }}
-                    className="text-sm"
-                  >
-                    مسح جميع الفلاتر
-                  </Button>
-                </div>
-              )}
-            </Card>
+            {/* Clear Filters */}
+            {(salamNameFilter || salamEnteredByFilter || salamIdentityFilter || salamPhoneFilter ||
+              salamSimFilter || salamDeviceFilter || salamNationalityFilter || salamRegisterFilter || salamDateFilter) && (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setSalamNameFilter('');
+                  setSalamEnteredByFilter('');
+                  setSalamIdentityFilter('');
+                  setSalamPhoneFilter('');
+                  setSalamSimFilter('');
+                  setSalamDeviceFilter('');
+                  setSalamNationalityFilter('');
+                  setSalamRegisterFilter('');
+                  setSalamDateFilter('');
+                }}
+                className="text-sm"
+              >
+                مسح جميع الفلاتر
+              </Button>
+            )}
 
             {/* Table */}
             <Card className="overflow-hidden">
@@ -735,220 +687,144 @@ export function AdminClient({
         {/* Mobily List View */}
         {activeView === 'mobily' && (
           <div className="space-y-6">
-            {/* Advanced Filters */}
-            <Card className="p-4">
-              <h3 className="text-sm font-semibold text-foreground mb-4">تصفية العملاء - مشروع موبايلي</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-                {/* Name Filter */}
-                <div className="space-y-1">
-                  <label className="text-xs text-muted">الإسم</label>
-                  <input
-                    type="text"
-                    placeholder="الإسم"
-                    value={mobilyNameFilter}
-                    onChange={(e) => setMobilyNameFilter(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
-                  />
-                </div>
+            {/* Filters */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+              <input
+                type="text"
+                placeholder="الإسم"
+                value={mobilyNameFilter}
+                onChange={(e) => setMobilyNameFilter(e.target.value)}
+                className="px-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+              />
+              <input
+                type="text"
+                placeholder="المدخل"
+                value={mobilyEnteredByFilter}
+                onChange={(e) => setMobilyEnteredByFilter(e.target.value)}
+                className="px-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+              />
+              <input
+                type="text"
+                placeholder="رقم الهوية"
+                value={mobilyIdentityFilter}
+                onChange={(e) => setMobilyIdentityFilter(e.target.value)}
+                className="px-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+              />
+              <input
+                type="text"
+                placeholder="الجنسية"
+                value={mobilyNationalityFilter}
+                onChange={(e) => setMobilyNationalityFilter(e.target.value)}
+                className="px-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+              />
+              <input
+                type="text"
+                placeholder="الجوال"
+                value={mobilyPhoneFilter}
+                onChange={(e) => setMobilyPhoneFilter(e.target.value)}
+                className="px-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+              />
+              <input
+                type="text"
+                placeholder="الشريحة"
+                value={mobilySimFilter}
+                onChange={(e) => setMobilySimFilter(e.target.value)}
+                className="px-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+              />
+              <input
+                type="text"
+                placeholder="الجهاز"
+                value={mobilyDeviceFilter}
+                onChange={(e) => setMobilyDeviceFilter(e.target.value)}
+                className="px-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+              />
+              <input
+                type="text"
+                placeholder="السجل"
+                value={mobilyRegisterFilter}
+                onChange={(e) => setMobilyRegisterFilter(e.target.value)}
+                className="px-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+              />
+              <input
+                type="date"
+                placeholder="تاريخ الميلاد"
+                value={mobilyBirthDateFilter}
+                onChange={(e) => setMobilyBirthDateFilter(e.target.value)}
+                className="px-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+              />
+              <input
+                type="date"
+                placeholder="انتهاء الهوية"
+                value={mobilyIdentityExpiryFilter}
+                onChange={(e) => setMobilyIdentityExpiryFilter(e.target.value)}
+                className="px-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+              />
+              <input
+                type="text"
+                placeholder="الباقة"
+                value={mobilyPackageFilter}
+                onChange={(e) => setMobilyPackageFilter(e.target.value)}
+                className="px-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+              />
+              <input
+                type="text"
+                placeholder="الإيميل"
+                value={mobilyEmailFilter}
+                onChange={(e) => setMobilyEmailFilter(e.target.value)}
+                className="px-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+              />
+              <input
+                type="text"
+                placeholder="المدينة"
+                value={mobilyCityFilter}
+                onChange={(e) => setMobilyCityFilter(e.target.value)}
+                className="px-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+              />
+              <input
+                type="text"
+                placeholder="الحي"
+                value={mobilyDistrictFilter}
+                onChange={(e) => setMobilyDistrictFilter(e.target.value)}
+                className="px-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+              />
+              <input
+                type="date"
+                placeholder="التاريخ"
+                value={mobilyDateFilter}
+                onChange={(e) => setMobilyDateFilter(e.target.value)}
+                className="px-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+              />
+            </div>
 
-                {/* Entered By Filter */}
-                <div className="space-y-1">
-                  <label className="text-xs text-muted">المدخل</label>
-                  <input
-                    type="text"
-                    placeholder="المدخل"
-                    value={mobilyEnteredByFilter}
-                    onChange={(e) => setMobilyEnteredByFilter(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
-                  />
-                </div>
-
-                {/* Identity Number Filter */}
-                <div className="space-y-1">
-                  <label className="text-xs text-muted">رقم الهوية</label>
-                  <input
-                    type="text"
-                    placeholder="رقم الهوية"
-                    value={mobilyIdentityFilter}
-                    onChange={(e) => setMobilyIdentityFilter(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
-                  />
-                </div>
-
-                {/* Nationality Filter */}
-                <div className="space-y-1">
-                  <label className="text-xs text-muted">الجنسية</label>
-                  <input
-                    type="text"
-                    placeholder="الجنسية"
-                    value={mobilyNationalityFilter}
-                    onChange={(e) => setMobilyNationalityFilter(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
-                  />
-                </div>
-
-                {/* Phone Number Filter */}
-                <div className="space-y-1">
-                  <label className="text-xs text-muted">الجوال</label>
-                  <input
-                    type="text"
-                    placeholder="الجوال"
-                    value={mobilyPhoneFilter}
-                    onChange={(e) => setMobilyPhoneFilter(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
-                  />
-                </div>
-
-                {/* SIM Number Filter */}
-                <div className="space-y-1">
-                  <label className="text-xs text-muted">الشريحة</label>
-                  <input
-                    type="text"
-                    placeholder="الشريحة"
-                    value={mobilySimFilter}
-                    onChange={(e) => setMobilySimFilter(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
-                  />
-                </div>
-
-                {/* Device Number Filter */}
-                <div className="space-y-1">
-                  <label className="text-xs text-muted">الجهاز</label>
-                  <input
-                    type="text"
-                    placeholder="الجهاز"
-                    value={mobilyDeviceFilter}
-                    onChange={(e) => setMobilyDeviceFilter(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
-                  />
-                </div>
-
-                {/* Register Number Filter */}
-                <div className="space-y-1">
-                  <label className="text-xs text-muted">السجل</label>
-                  <input
-                    type="text"
-                    placeholder="السجل"
-                    value={mobilyRegisterFilter}
-                    onChange={(e) => setMobilyRegisterFilter(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
-                  />
-                </div>
-
-                {/* Birth Date Filter */}
-                <div className="space-y-1">
-                  <label className="text-xs text-muted">تاريخ الميلاد</label>
-                  <input
-                    type="date"
-                    value={mobilyBirthDateFilter}
-                    onChange={(e) => setMobilyBirthDateFilter(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground focus:outline-none focus:border-primary"
-                  />
-                </div>
-
-                {/* Identity Expiry Filter */}
-                <div className="space-y-1">
-                  <label className="text-xs text-muted">انتهاء الهوية</label>
-                  <input
-                    type="date"
-                    value={mobilyIdentityExpiryFilter}
-                    onChange={(e) => setMobilyIdentityExpiryFilter(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground focus:outline-none focus:border-primary"
-                  />
-                </div>
-
-                {/* Package Filter */}
-                <div className="space-y-1">
-                  <label className="text-xs text-muted">الباقة</label>
-                  <input
-                    type="text"
-                    placeholder="الباقة"
-                    value={mobilyPackageFilter}
-                    onChange={(e) => setMobilyPackageFilter(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
-                  />
-                </div>
-
-                {/* Email Filter */}
-                <div className="space-y-1">
-                  <label className="text-xs text-muted">الإيميل</label>
-                  <input
-                    type="text"
-                    placeholder="الإيميل"
-                    value={mobilyEmailFilter}
-                    onChange={(e) => setMobilyEmailFilter(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
-                  />
-                </div>
-
-                {/* City Filter */}
-                <div className="space-y-1">
-                  <label className="text-xs text-muted">المدينة</label>
-                  <input
-                    type="text"
-                    placeholder="المدينة"
-                    value={mobilyCityFilter}
-                    onChange={(e) => setMobilyCityFilter(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
-                  />
-                </div>
-
-                {/* District Filter */}
-                <div className="space-y-1">
-                  <label className="text-xs text-muted">الحي</label>
-                  <input
-                    type="text"
-                    placeholder="الحي"
-                    value={mobilyDistrictFilter}
-                    onChange={(e) => setMobilyDistrictFilter(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
-                  />
-                </div>
-
-                {/* Creation Date Filter */}
-                <div className="space-y-1">
-                  <label className="text-xs text-muted">التاريخ</label>
-                  <input
-                    type="date"
-                    value={mobilyDateFilter}
-                    onChange={(e) => setMobilyDateFilter(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground focus:outline-none focus:border-primary"
-                  />
-                </div>
-              </div>
-
-              {/* Clear Filters Button */}
-              {(mobilyNameFilter || mobilyEnteredByFilter || mobilyIdentityFilter || mobilyNationalityFilter ||
-                mobilyPhoneFilter || mobilySimFilter || mobilyDeviceFilter || mobilyRegisterFilter ||
-                mobilyBirthDateFilter || mobilyIdentityExpiryFilter || mobilyPackageFilter || mobilyEmailFilter ||
-                mobilyCityFilter || mobilyDistrictFilter || mobilyDateFilter) && (
-                <div className="mt-4">
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      setMobilyNameFilter('');
-                      setMobilyEnteredByFilter('');
-                      setMobilyIdentityFilter('');
-                      setMobilyNationalityFilter('');
-                      setMobilyPhoneFilter('');
-                      setMobilySimFilter('');
-                      setMobilyDeviceFilter('');
-                      setMobilyRegisterFilter('');
-                      setMobilyBirthDateFilter('');
-                      setMobilyIdentityExpiryFilter('');
-                      setMobilyPackageFilter('');
-                      setMobilyEmailFilter('');
-                      setMobilyCityFilter('');
-                      setMobilyDistrictFilter('');
-                      setMobilyDateFilter('');
-                    }}
-                    className="text-sm"
-                  >
-                    مسح جميع الفلاتر
-                  </Button>
-                </div>
-              )}
-            </Card>
+            {/* Clear Filters */}
+            {(mobilyNameFilter || mobilyEnteredByFilter || mobilyIdentityFilter || mobilyNationalityFilter ||
+              mobilyPhoneFilter || mobilySimFilter || mobilyDeviceFilter || mobilyRegisterFilter ||
+              mobilyBirthDateFilter || mobilyIdentityExpiryFilter || mobilyPackageFilter || mobilyEmailFilter ||
+              mobilyCityFilter || mobilyDistrictFilter || mobilyDateFilter) && (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setMobilyNameFilter('');
+                  setMobilyEnteredByFilter('');
+                  setMobilyIdentityFilter('');
+                  setMobilyNationalityFilter('');
+                  setMobilyPhoneFilter('');
+                  setMobilySimFilter('');
+                  setMobilyDeviceFilter('');
+                  setMobilyRegisterFilter('');
+                  setMobilyBirthDateFilter('');
+                  setMobilyIdentityExpiryFilter('');
+                  setMobilyPackageFilter('');
+                  setMobilyEmailFilter('');
+                  setMobilyCityFilter('');
+                  setMobilyDistrictFilter('');
+                  setMobilyDateFilter('');
+                }}
+                className="text-sm"
+              >
+                مسح جميع الفلاتر
+              </Button>
+            )}
 
             {/* Table */}
             <Card className="overflow-hidden">
