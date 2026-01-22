@@ -25,6 +25,7 @@ import { Input } from '@/components/ui/input';
 import { Alert } from '@/components/ui/alert';
 import { CalendarDatePicker, type CalendarType } from '@/components/ui/calendar-date-picker';
 import { getSupabaseClient } from '@/lib/supabase/client';
+import { scrollToTop } from '@/utils/scroll';
 import type { Profile } from '@/types/database';
 
 interface MobilyFormClientProps {
@@ -264,6 +265,9 @@ export function MobilyFormClient({ profile }: MobilyFormClientProps) {
         district: '',
         register_number: '',
       });
+
+      // Scroll to top to show success message
+      scrollToTop();
 
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(''), 3000);
