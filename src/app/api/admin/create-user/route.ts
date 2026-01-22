@@ -31,21 +31,32 @@ export async function POST(request: NextRequest) {
 
     // Get request body
     const body = await request.json();
-    const { username, email, supervisor_name, password } = body;
+    const { username, supervisor_name, password, role } = body;
 
     // Validate required fields
-    if (!username || !email || !supervisor_name || !password) {
+    if (!username || !password || !role) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       );
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    // Validate username format (alphanumeric, dots, hyphens, underscores only)
+    const usernameRegex = /^[a-zA-Z0-9._-]+$/;
+    if (!usernameRegex.test(username)) {
       return NextResponse.json(
-        { error: 'البريد الإلكتروني غير صحيح' },
+        { error: 'إسم المستخدم يجب أن يحتوي على أحرف وأرقام فقط' },
+        { status: 400 }
+      );
+    }
+
+    // Auto-generate email as username@retaam.app
+    const email = `${username}@retaam.app`;
+
+    // Validate role
+    if (!['user', 'admin', 'super_admin'].includes(role)) {
+      return NextResponse.json(
+        { error: 'دور المستخدم غير صحيح' },
         { status: 400 }
       );
     }
@@ -142,8 +153,8 @@ export async function POST(request: NextRequest) {
           id: authData.user.id,
           email: email,
           username: username,
-          supervisor_name: supervisor_name,
-          role: 'user',
+          supervisor_name: supervisor_name || null,
+          role: role,
           status: 'active',
         });
 
@@ -168,12 +179,13 @@ export async function POST(request: NextRequest) {
           admin_privileges: false,
         });
     } else {
-      // Profile exists (created by trigger), update it with correct username/supervisor
+      // Profile exists (created by trigger), update it with correct username/supervisor/role
       const { error: updateError } = await supabaseAdmin
         .from('profiles')
         .update({
           username: username,
-          supervisor_name: supervisor_name,
+          supervisor_name: supervisor_name || null,
+          role: role,
         })
         .eq('id', authData.user.id);
 
