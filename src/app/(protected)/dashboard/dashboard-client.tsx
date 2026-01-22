@@ -302,8 +302,8 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">رقم الهوية</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الجنسية</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">رقم الجوال</th>
-                          <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">تاريخ الميلاد</th>
-                          <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">انتهاء الهوية</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap w-24 md:w-32">تاريخ الميلاد</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap w-24 md:w-32">انتهاء الهوية</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الباقة</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الإيميل</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">رقم الشريحة</th>
@@ -322,8 +322,8 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                             <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.identity_number}</td>
                             <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.nationality}</td>
                             <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.phone_number}</td>
-                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.birth_date}</td>
-                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.identity_expiry_date}</td>
+                            <td className="px-4 py-3 text-muted whitespace-nowrap w-24 md:w-32">{customer.birth_date}</td>
+                            <td className="px-4 py-3 text-muted whitespace-nowrap w-24 md:w-32">{customer.identity_expiry_date}</td>
                             <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.package}</td>
                             <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.email}</td>
                             <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.sim_number}</td>
