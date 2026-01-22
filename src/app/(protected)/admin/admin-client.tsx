@@ -87,6 +87,13 @@ export function AdminClient({
   const [salamCustomers] = useState(initialSalamCustomers || []);
   const [mobilyCustomers] = useState(initialMobilyCustomers || []);
 
+  // User Management Filters
+  const [usernameFilter, setUsernameFilter] = useState('');
+  const [supervisorFilter, setSupervisorFilter] = useState('');
+  const [roleFilter, setRoleFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [creationDateFilter, setCreationDateFilter] = useState('');
+
   // Debug logging
   console.log('AdminClient received data:', {
     salamCustomersCount: salamCustomers?.length || 0,
@@ -149,10 +156,34 @@ export function AdminClient({
   const filteredSalamCustomers = filterCustomers(salamCustomers);
   const filteredMobilyCustomers = filterCustomers(mobilyCustomers);
 
-  const filteredProfiles = profiles.filter(profile =>
-    (profile.full_name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-    (profile.username?.toLowerCase() || '').includes(searchQuery.toLowerCase())
-  );
+  // Advanced filtering for user management
+  const filteredProfiles = profiles.filter(profile => {
+    // Username filter
+    const matchesUsername = !usernameFilter ||
+      (profile.username?.toLowerCase() || '').includes(usernameFilter.toLowerCase());
+
+    // Supervisor filter
+    const matchesSupervisor = !supervisorFilter ||
+      (profile.supervisor_name?.toLowerCase() || '').includes(supervisorFilter.toLowerCase());
+
+    // Role filter
+    const matchesRole = !roleFilter || profile.role === roleFilter;
+
+    // Status filter
+    const matchesStatus = !statusFilter || profile.status === statusFilter;
+
+    // Creation date filter
+    const matchesCreationDate = !creationDateFilter ||
+      profile.created_at.startsWith(creationDateFilter);
+
+    // General search filter (searches in username and full name)
+    const matchesSearch = !searchQuery ||
+      (profile.full_name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+      (profile.username?.toLowerCase() || '').includes(searchQuery.toLowerCase());
+
+    return matchesUsername && matchesSupervisor && matchesRole &&
+           matchesStatus && matchesCreationDate && matchesSearch;
+  });
 
   // Add new user
   const handleAddUser = async (e: React.FormEvent) => {
@@ -623,6 +654,95 @@ export function AdminClient({
               </Button>
             </div>
 
+            {/* Advanced Filters */}
+            <Card className="p-4">
+              <h3 className="text-sm font-semibold text-foreground mb-4">تصفية متقدمة</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                {/* Username Filter */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted">إسم المستخدم</label>
+                  <input
+                    type="text"
+                    placeholder="إسم المستخدم"
+                    value={usernameFilter}
+                    onChange={(e) => setUsernameFilter(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                {/* Supervisor Filter */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted">إسم المشرف</label>
+                  <input
+                    type="text"
+                    placeholder="إسم المشرف"
+                    value={supervisorFilter}
+                    onChange={(e) => setSupervisorFilter(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                {/* Role Filter */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted">الدور</label>
+                  <select
+                    value={roleFilter}
+                    onChange={(e) => setRoleFilter(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground focus:outline-none focus:border-primary"
+                  >
+                    <option value="">الكل</option>
+                    <option value="user">مستخدم</option>
+                    <option value="admin">مشرف</option>
+                  </select>
+                </div>
+
+                {/* Status Filter */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted">الحالة</label>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground focus:outline-none focus:border-primary"
+                  >
+                    <option value="">الكل</option>
+                    <option value="active">مفعل</option>
+                    <option value="inactive">غير مفعل</option>
+                    <option value="suspended">معلق</option>
+                  </select>
+                </div>
+
+                {/* Creation Date Filter */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted">تاريخ الإنشاء</label>
+                  <input
+                    type="date"
+                    value={creationDateFilter}
+                    onChange={(e) => setCreationDateFilter(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground focus:outline-none focus:border-primary"
+                  />
+                </div>
+              </div>
+
+              {/* Clear Filters Button */}
+              {(usernameFilter || supervisorFilter || roleFilter || statusFilter || creationDateFilter) && (
+                <div className="mt-4">
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setUsernameFilter('');
+                      setSupervisorFilter('');
+                      setRoleFilter('');
+                      setStatusFilter('');
+                      setCreationDateFilter('');
+                    }}
+                    className="text-sm"
+                  >
+                    مسح جميع الفلاتر
+                  </Button>
+                </div>
+              )}
+            </Card>
+
             {/* Add User Modal */}
             {showAddUser && (
               <Card className="p-6">
@@ -667,12 +787,11 @@ export function AdminClient({
                     >
                       <option value="user">مستخدم</option>
                       <option value="admin">مشرف</option>
-                      <option value="super_admin">مشرف رئيسي</option>
                     </select>
                   </div>
                   <Input
                     type="text"
-                    label="إسم المشرف (إختياري)"
+                    label="إسم المشرف"
                     placeholder="أدخل إسم المشرف"
                     value={newUserData.supervisor_name}
                     onChange={(e) => setNewUserData(prev => ({ ...prev, supervisor_name: e.target.value }))}
@@ -721,8 +840,8 @@ export function AdminClient({
                           <td className="px-4 py-3 text-foreground">{profile.username || '-'}</td>
                           <td className="px-4 py-3 text-muted">{profile.supervisor_name || '-'}</td>
                           <td className="px-4 py-3">
-                            <Badge variant={profile.role === 'super_admin' ? 'error' : profile.role === 'admin' ? 'warning' : 'default'}>
-                              {profile.role === 'super_admin' ? 'مشرف رئيسي' : profile.role === 'admin' ? 'مشرف' : 'مستخدم'}
+                            <Badge variant={profile.role === 'admin' ? 'warning' : 'default'}>
+                              {profile.role === 'admin' ? 'مشرف' : 'مستخدم'}
                             </Badge>
                           </td>
                           <td className="px-4 py-3">

@@ -53,8 +53,8 @@ export async function POST(request: NextRequest) {
     // Auto-generate email as username@retaam.app
     const email = `${username}@retaam.app`;
 
-    // Validate role
-    if (!['user', 'admin', 'super_admin'].includes(role)) {
+    // Validate role (only 'user' and 'admin' allowed)
+    if (!['user', 'admin'].includes(role)) {
       return NextResponse.json(
         { error: 'دور المستخدم غير صحيح' },
         { status: 400 }
