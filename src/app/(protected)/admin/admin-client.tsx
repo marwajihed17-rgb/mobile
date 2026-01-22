@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, memo } from 'react';
+import { useState, useMemo, useCallback, memo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Phone,
@@ -118,6 +118,7 @@ export function AdminClient({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const addUserFormRef = useRef<HTMLDivElement>(null);
 
   const authUser = {
     id: currentProfile.id,
@@ -382,7 +383,6 @@ export function AdminClient({
           <Card className="p-4 text-center relative overflow-hidden">
             <p className="text-3xl font-bold text-blue-600">{realtimeStats.mobilyDailyCount}</p>
             <p className="text-sm text-muted">عدد المستخدمين اليومي - موبايلي</p>
-            {mobilyConnected && <div className="absolute top-2 right-2"><Wifi className="w-3 h-3 text-blue-500" /></div>}
           </Card>
         </div>
 
@@ -687,7 +687,12 @@ export function AdminClient({
                 />
               </div>
               <Button
-                onClick={() => setShowAddUser(true)}
+                onClick={() => {
+                  setShowAddUser(true);
+                  setTimeout(() => {
+                    addUserFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }, 100);
+                }}
                 className="flex items-center gap-2"
               >
                 <UserPlus className="w-4 h-4" />
@@ -786,6 +791,7 @@ export function AdminClient({
 
             {/* Add User Modal */}
             {showAddUser && (
+              <div ref={addUserFormRef}>
               <Card className="p-6">
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-lg font-semibold text-foreground">إضافة مستخدم جديد</h3>
@@ -858,6 +864,7 @@ export function AdminClient({
                   </div>
                 </form>
               </Card>
+              </div>
             )}
 
             {/* Users Table */}
@@ -870,7 +877,7 @@ export function AdminClient({
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">إسم المشرف</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">الدور</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">الحالة</th>
-                      <th className="text-right text-sm font-medium text-muted px-4 py-3">تاريخ الإنشاء</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3 w-24 md:w-32">تاريخ الإنشاء</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">الإجراءات</th>
                     </tr>
                   </thead>
@@ -896,7 +903,7 @@ export function AdminClient({
                               <option value="inactive">غير مفعل</option>
                             </select>
                           </td>
-                          <td className="px-4 py-3 text-muted text-sm">{formatDate(profile.created_at)}</td>
+                          <td className="px-4 py-3 text-muted text-sm w-24 md:w-32">{formatDate(profile.created_at)}</td>
                           <td className="px-4 py-3">
                             {profile.id !== currentProfile.id && (
                               <button
