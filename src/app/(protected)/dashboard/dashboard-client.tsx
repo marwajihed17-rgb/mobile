@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
 import { getSupabaseClient } from '@/lib/supabase/client';
+import { scrollToTop } from '@/utils/scroll';
 import { useRealtimeSalamCustomers, useRealtimeMobilyCustomers } from '@/hooks/useRealtimeCustomers';
 import type { Profile, SalamCustomer, MobilyCustomer } from '@/types/database';
 
@@ -80,6 +81,8 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
       // Real-time subscription will automatically update the list
       setSuccess('تم حذف العميل بنجاح');
       setTimeout(() => setSuccess(''), 3000);
+      // Scroll to top to show success message and updated list
+      scrollToTop();
     } catch (err) {
       console.error('Delete error:', err);
       setError(err instanceof Error ? `خطأ: ${err.message}` : 'حدث خطأ أثناء الحذف');

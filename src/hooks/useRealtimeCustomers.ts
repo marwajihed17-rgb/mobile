@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { getSupabaseClient } from '@/lib/supabase/client';
+import { scrollToTop } from '@/utils/scroll';
 import type { SalamCustomer, MobilyCustomer } from '@/types/database';
 
 /**
@@ -33,6 +34,8 @@ export function useRealtimeSalamCustomers<T extends SalamCustomer>(initialData: 
             // Add new customer to the list (without profiles as it's raw DB data)
             const newCustomer = payload.new as T;
             setCustomers((prev) => [newCustomer, ...prev]);
+            // Scroll to top to show the new entry
+            scrollToTop();
           } else if (payload.eventType === 'UPDATE') {
             // Update existing customer
             const updatedCustomer = payload.new as T;
@@ -41,12 +44,16 @@ export function useRealtimeSalamCustomers<T extends SalamCustomer>(initialData: 
                 customer.id === updatedCustomer.id ? updatedCustomer : customer
               )
             );
+            // Scroll to top to show the updated entry
+            scrollToTop();
           } else if (payload.eventType === 'DELETE') {
             // Remove deleted customer
             const deletedCustomer = payload.old as T;
             setCustomers((prev) =>
               prev.filter((customer) => customer.id !== deletedCustomer.id)
             );
+            // Scroll to top to show the updated list
+            scrollToTop();
           }
         }
       )
@@ -94,6 +101,8 @@ export function useRealtimeMobilyCustomers<T extends MobilyCustomer>(initialData
             // Add new customer to the list (without profiles as it's raw DB data)
             const newCustomer = payload.new as T;
             setCustomers((prev) => [newCustomer, ...prev]);
+            // Scroll to top to show the new entry
+            scrollToTop();
           } else if (payload.eventType === 'UPDATE') {
             // Update existing customer
             const updatedCustomer = payload.new as T;
@@ -102,12 +111,16 @@ export function useRealtimeMobilyCustomers<T extends MobilyCustomer>(initialData
                 customer.id === updatedCustomer.id ? updatedCustomer : customer
               )
             );
+            // Scroll to top to show the updated entry
+            scrollToTop();
           } else if (payload.eventType === 'DELETE') {
             // Remove deleted customer
             const deletedCustomer = payload.old as T;
             setCustomers((prev) =>
               prev.filter((customer) => customer.id !== deletedCustomer.id)
             );
+            // Scroll to top to show the updated list
+            scrollToTop();
           }
         }
       )

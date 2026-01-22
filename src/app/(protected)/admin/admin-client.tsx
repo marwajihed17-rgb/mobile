@@ -28,6 +28,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert } from '@/components/ui/alert';
 import { getSupabaseClient } from '@/lib/supabase/client';
+import { scrollToTop } from '@/utils/scroll';
 import { useRealtimeSalamCustomers, useRealtimeMobilyCustomers } from '@/hooks/useRealtimeCustomers';
 import { useRealtimeProfiles } from '@/hooks/useRealtimeProfiles';
 import { useRealtimeStats } from '@/hooks/useRealtimeStats';
@@ -244,6 +245,8 @@ export function AdminClient({
       setNewUserData({ username: '', supervisor_name: '', password: '', role: 'user' });
       setShowAddUser(false);
       // Real-time subscription will automatically update the profiles list
+      // Scroll to top to show success message and new user
+      scrollToTop();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'حدث خطأ');
     } finally {
@@ -272,6 +275,8 @@ export function AdminClient({
 
       // Real-time subscription will automatically update the profiles list
       setSuccess('تم حذف المستخدم بنجاح');
+      // Scroll to top to show success message and updated list
+      scrollToTop();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'حدث خطأ');
     }
@@ -291,6 +296,8 @@ export function AdminClient({
 
       // Real-time subscription will automatically update the profiles list
       setSuccess('تم تحديث الحالة بنجاح');
+      // Scroll to top to show success message and updated status
+      scrollToTop();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'حدث خطأ');
     }

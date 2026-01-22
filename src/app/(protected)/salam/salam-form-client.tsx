@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert } from '@/components/ui/alert';
 import { getSupabaseClient } from '@/lib/supabase/client';
+import { scrollToTop } from '@/utils/scroll';
 import type { Profile } from '@/types/database';
 
 interface SalamFormClientProps {
@@ -235,6 +236,9 @@ export function SalamFormClient({ profile }: SalamFormClientProps) {
         nationality: '',
         register_number: '',
       });
+
+      // Scroll to top to show success message
+      scrollToTop();
 
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(''), 3000);

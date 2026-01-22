@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { getSupabaseClient } from '@/lib/supabase/client';
+import { scrollToTop } from '@/utils/scroll';
 import type { Profile } from '@/types/database';
 
 /**
@@ -32,20 +33,26 @@ export function useRealtimeProfiles(initialData: Profile[]) {
             // Add new profile to the list
             const newProfile = payload.new as Profile;
             setProfiles((prev) => [newProfile, ...prev]);
+            // Scroll to top to show the new user
+            scrollToTop();
           } else if (payload.eventType === 'UPDATE') {
-            // Update existing profile
+            // Update existing profile (including status changes)
             const updatedProfile = payload.new as Profile;
             setProfiles((prev) =>
               prev.map((profile) =>
                 profile.id === updatedProfile.id ? updatedProfile : profile
               )
             );
+            // Scroll to top to show the updated profile
+            scrollToTop();
           } else if (payload.eventType === 'DELETE') {
             // Remove deleted profile
             const deletedProfile = payload.old as Profile;
             setProfiles((prev) =>
               prev.filter((profile) => profile.id !== deletedProfile.id)
             );
+            // Scroll to top to show the updated list
+            scrollToTop();
           }
         }
       )
