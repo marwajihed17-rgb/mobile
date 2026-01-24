@@ -40,7 +40,7 @@ function LoginForm() {
     try {
       const supabase = getSupabaseClient();
 
-      // Sign in with email or username
+      // Sign in with username (converts to username@retaam.app internally)
       const authData = await signInWithEmailOrUsername(emailOrUsername, password);
 
       if (!authData.user) {
@@ -108,8 +108,8 @@ function LoginForm() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <Input
             type="text"
-            label="البريد الإلكتروني أو إسم المستخدم"
-            placeholder="أدخل البريد الإلكتروني أو إسم المستخدم"
+            label="إسم المستخدم"
+            placeholder="أدخل إسم المستخدم"
             value={emailOrUsername}
             onChange={(e) => setEmailOrUsername(e.target.value)}
             icon={<User className="w-5 h-5" />}

@@ -84,35 +84,22 @@ export async function signIn(email: string, password: string) {
   return data;
 }
 
-// Sign in with email or username
-export async function signInWithEmailOrUsername(emailOrUsername: string, password: string) {
+// Sign in with username (converts to username@retaam.app internally)
+export async function signInWithEmailOrUsername(username: string, password: string) {
   const supabase = getSupabaseClient();
-  let email = emailOrUsername;
 
-  // Check if input is an email (contains @) or username
-  if (!emailOrUsername.includes('@')) {
-    // It's a username, look it up in profiles table to get the email
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('email')
-      .eq('username', emailOrUsername)
-      .single();
+  // Convert username to internal email format
+  // All users have auto-generated emails as username@retaam.app
+  const email = `${username.toLowerCase().trim()}@retaam.app`;
 
-    if (profileError || !profile) {
-      throw new Error('Invalid login credentials');
-    }
-
-    email = profile.email;
-  }
-
-  // Sign in with email
+  // Sign in with the generated email
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
 
   if (error) {
-    throw new Error('Invalid login credentials');
+    throw new Error('بيانات الدخول غير صحيحة');
   }
 
   return data;
@@ -150,9 +137,25 @@ export async function signOut() {
   }
 }
 
-// Reset password request
+// Reset password request by email
 export async function requestPasswordReset(email: string) {
   const supabase = getSupabaseClient();
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/reset-password`,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
+// Reset password request by username (converts to username@retaam.app internally)
+export async function requestPasswordResetByUsername(username: string) {
+  const supabase = getSupabaseClient();
+
+  // Convert username to internal email format
+  const email = `${username.toLowerCase().trim()}@retaam.app`;
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/reset-password`,
