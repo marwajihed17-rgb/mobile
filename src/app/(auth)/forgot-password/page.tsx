@@ -2,14 +2,14 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Mail, ArrowLeft } from 'lucide-react';
+import { User, ArrowLeft, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert } from '@/components/ui/alert';
-import { requestPasswordReset } from '@/lib/auth';
+import { requestPasswordResetByUsername } from '@/lib/auth';
 
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -20,10 +20,10 @@ export default function ForgotPasswordPage() {
     setIsLoading(true);
 
     try {
-      await requestPasswordReset(email);
+      await requestPasswordResetByUsername(username);
       setSuccess(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : 'حدث خطأ');
     } finally {
       setIsLoading(false);
     }
@@ -34,16 +34,16 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-md">
         <div className="bg-card border border-card-border rounded-2xl p-8 text-center animate-fade-in">
           <div className="w-16 h-16 mx-auto rounded-full bg-success/10 flex items-center justify-center mb-4">
-            <Mail className="w-8 h-8 text-success" />
+            <CheckCircle className="w-8 h-8 text-success" />
           </div>
-          <h2 className="text-xl font-bold text-foreground mb-2">Check your email</h2>
+          <h2 className="text-xl font-bold text-foreground mb-2">تم إرسال رابط إعادة التعيين</h2>
           <p className="text-muted mb-6">
-            If an account exists for <strong className="text-foreground">{email}</strong>,
-            we&apos;ve sent password reset instructions.
+            إذا كان الحساب <strong className="text-foreground">{username}</strong> موجوداً،
+            فقد تم إرسال تعليمات إعادة تعيين كلمة المرور.
           </p>
           <Link href="/login">
             <Button fullWidth variant="secondary">
-              Back to Login
+              العودة لتسجيل الدخول
             </Button>
           </Link>
         </div>
@@ -59,14 +59,14 @@ export default function ForgotPasswordPage() {
         className="inline-flex items-center gap-2 text-muted hover:text-foreground transition-colors mb-8 animate-fade-in"
       >
         <ArrowLeft className="w-4 h-4" />
-        Back to login
+        العودة لتسجيل الدخول
       </Link>
 
       {/* Form */}
       <div className="bg-card border border-card-border rounded-2xl p-8 animate-fade-in-up">
-        <h1 className="text-xl font-bold text-foreground mb-2">Reset Password</h1>
+        <h1 className="text-xl font-bold text-foreground mb-2">إعادة تعيين كلمة المرور</h1>
         <p className="text-muted text-sm mb-6">
-          Enter your email address and we&apos;ll send you instructions to reset your password.
+          أدخل إسم المستخدم الخاص بك وسنرسل لك تعليمات إعادة تعيين كلمة المرور.
         </p>
 
         {error && (
@@ -77,14 +77,14 @@ export default function ForgotPasswordPage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <Input
-            type="email"
-            label="Email"
-            placeholder="Enter your email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            icon={<Mail className="w-5 h-5" />}
+            type="text"
+            label="إسم المستخدم"
+            placeholder="أدخل إسم المستخدم"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            icon={<User className="w-5 h-5" />}
             required
-            autoComplete="email"
+            autoComplete="username"
           />
 
           <Button
@@ -92,7 +92,7 @@ export default function ForgotPasswordPage() {
             fullWidth
             isLoading={isLoading}
           >
-            Send Reset Link
+            إرسال رابط إعادة التعيين
           </Button>
         </form>
       </div>

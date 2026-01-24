@@ -17,7 +17,6 @@ import {
   CheckCircle,
   AlertCircle,
   User,
-  Mail,
   Wifi,
   WifiOff
 } from 'lucide-react';
@@ -813,15 +812,6 @@ export function AdminClient({
                     icon={<User className="w-5 h-5" />}
                     required
                   />
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-foreground">
-                      البريد الإلكتروني
-                    </label>
-                    <div className="px-4 py-2.5 bg-card border border-card-border rounded-lg text-muted">
-                      {newUserData.username ? `${newUserData.username}@retaam.app` : 'سيتم توليده تلقائياً...'}
-                    </div>
-                    <p className="text-xs text-muted">سيتم توليد البريد الإلكتروني تلقائياً بناءً على إسم المستخدم</p>
-                  </div>
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-foreground">
                       دور المستخدم
