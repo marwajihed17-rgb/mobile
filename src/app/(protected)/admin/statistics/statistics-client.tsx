@@ -223,7 +223,6 @@ export function StatisticsClient({
 
   // Render table card
   const renderTableCard = (
-    title: string,
     arabicTitle: string,
     icon: React.ReactNode,
     color: string,
@@ -244,10 +243,10 @@ export function StatisticsClient({
       </div>
 
       <h3 className="text-lg font-semibold text-foreground mb-1">{arabicTitle}</h3>
-      <p className="text-sm text-muted">{title}</p>
+      <p className="text-sm text-muted">اضغط للعرض</p>
 
       <div className="absolute bottom-4 left-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity">
-        <ArrowRight className="w-5 h-5 rotate-180" />
+        <ArrowRight className="w-5 h-5" />
       </div>
     </Card>
   );
@@ -275,7 +274,6 @@ export function StatisticsClient({
                   </div>
                   <div>
                     <h2 className="text-lg font-semibold text-foreground">ملخص المشرف اليومي</h2>
-                    <p className="text-sm text-muted">Supervisor Daily Summary</p>
                   </div>
                 </>
               )}
@@ -286,7 +284,6 @@ export function StatisticsClient({
                   </div>
                   <div>
                     <h2 className="text-lg font-semibold text-foreground">ملخص المستخدمين اليومي</h2>
-                    <p className="text-sm text-muted">Users Daily Summary</p>
                   </div>
                 </>
               )}
@@ -297,7 +294,6 @@ export function StatisticsClient({
                   </div>
                   <div>
                     <h2 className="text-lg font-semibold text-foreground">إضافة جدول جديد</h2>
-                    <p className="text-sm text-muted">Add New Table</p>
                   </div>
                 </>
               )}
@@ -321,7 +317,6 @@ export function StatisticsClient({
                 <p className="text-muted max-w-md">
                   للحصول على جداول إضافية، يرجى التواصل مع الدعم الفني أو إضافة المزيد من البيانات إلى النظام.
                 </p>
-                <p className="text-sm text-muted mt-4">Need more data to display additional tables.</p>
                 <Button
                   variant="secondary"
                   onClick={closeModal}
@@ -447,17 +442,11 @@ export function StatisticsClient({
                 </div>
 
                 {/* Summary Footer */}
-                <div className="mt-4 flex justify-between items-center text-sm text-muted">
+                <div className="mt-4 text-sm text-muted">
                   <span>
                     {activeModal === 'supervisor'
                       ? `إجمالي السجلات: ${filteredSupervisorSummary.length}`
                       : `إجمالي السجلات: ${filteredUserSummary.length}`
-                    }
-                  </span>
-                  <span>
-                    {activeModal === 'supervisor'
-                      ? `Total Records: ${filteredSupervisorSummary.length}`
-                      : `Total Records: ${filteredUserSummary.length}`
                     }
                   </span>
                 </div>
@@ -489,43 +478,21 @@ export function StatisticsClient({
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-foreground">الإحصائيات</h1>
-                <p className="text-muted">ملخص البيانات اليومية للمشرفين والمستخدمين</p>
+                <p className="text-muted">اضغط على أي جدول لعرض التفاصيل الكاملة</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Stats Overview */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <Card className="p-4 text-center">
-            <p className="text-3xl font-bold text-foreground">{salamCustomers.length + mobilyCustomers.length}</p>
-            <p className="text-sm text-muted">إجمالي السجلات</p>
-          </Card>
-          <Card className="p-4 text-center">
-            <p className="text-3xl font-bold text-green-600">{salamCustomers.length}</p>
-            <p className="text-sm text-muted">سجلات سلام</p>
-          </Card>
-          <Card className="p-4 text-center">
-            <p className="text-3xl font-bold text-blue-600">{mobilyCustomers.length}</p>
-            <p className="text-sm text-muted">سجلات موبايلي</p>
-          </Card>
-          <Card className="p-4 text-center">
-            <p className="text-3xl font-bold text-purple-600">{profiles.length}</p>
-            <p className="text-sm text-muted">المستخدمين</p>
-          </Card>
-        </div>
-
         {/* Tables Section */}
         <div className="mb-6">
           <h2 className="text-lg font-semibold text-foreground mb-4">جداول الإحصائيات</h2>
-          <p className="text-sm text-muted mb-6">اضغط على أي جدول لعرض التفاصيل الكاملة</p>
         </div>
 
         {/* Table Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children">
           {/* Supervisor Daily Summary Card */}
           {renderTableCard(
-            'Supervisor Daily Summary',
             'ملخص المشرف اليومي',
             <UserCheck className="w-6 h-6 text-white" />,
             'from-green-500/10 to-emerald-600/10 border-green-500/30 hover:border-green-500',
@@ -535,7 +502,6 @@ export function StatisticsClient({
 
           {/* Users Daily Summary Card */}
           {renderTableCard(
-            'Users Daily Summary',
             'ملخص المستخدمين اليومي',
             <Users className="w-6 h-6 text-white" />,
             'from-blue-500/10 to-cyan-500/10 border-blue-500/30 hover:border-blue-500',
@@ -553,7 +519,6 @@ export function StatisticsClient({
               <Plus className="w-6 h-6 text-muted group-hover:text-foreground transition-colors" />
             </div>
             <h3 className="text-base font-medium text-muted group-hover:text-foreground transition-colors">إضافة جدول</h3>
-            <p className="text-sm text-muted mt-1">Add Table</p>
           </Card>
         </div>
 

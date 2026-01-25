@@ -421,6 +421,13 @@ export function AdminClient({
             مشروع موبايلي
           </button>
           <button
+            onClick={() => router.push('/admin/statistics')}
+            className="px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 bg-card text-muted hover:text-foreground"
+          >
+            <BarChart3 className="w-4 h-4" />
+            الإحصائيات
+          </button>
+          <button
             onClick={() => { setActiveView('settings'); setSearchQuery(''); }}
             className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
               activeView === 'settings'
@@ -455,7 +462,7 @@ export function AdminClient({
               </p>
 
               <div className="absolute bottom-4 left-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity">
-                <ArrowRight className="w-5 h-5 rotate-180" />
+                <ArrowRight className="w-5 h-5" />
               </div>
             </Card>
 
@@ -478,30 +485,7 @@ export function AdminClient({
               </p>
 
               <div className="absolute bottom-4 left-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity">
-                <ArrowRight className="w-5 h-5 rotate-180" />
-              </div>
-            </Card>
-
-            {/* Settings Card */}
-            <Card
-              hover
-              glow
-              className="relative min-h-[200px] group cursor-pointer bg-gradient-to-br from-amber-500/10 to-orange-600/10 border-amber-500/30 hover:border-amber-500"
-              onClick={() => setActiveView('settings')}
-            >
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
-                <Users className="w-7 h-7 text-white" />
-              </div>
-
-              <h3 className="text-lg font-semibold text-foreground mb-2">
-                إدارة المستخدمين
-              </h3>
-              <p className="text-sm text-muted">
-                إضافة وحذف وتعديل الصلاحيات
-              </p>
-
-              <div className="absolute bottom-4 left-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity">
-                <ArrowRight className="w-5 h-5 rotate-180" />
+                <ArrowRight className="w-5 h-5" />
               </div>
             </Card>
 
@@ -524,7 +508,30 @@ export function AdminClient({
               </p>
 
               <div className="absolute bottom-4 left-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity">
-                <ArrowRight className="w-5 h-5 rotate-180" />
+                <ArrowRight className="w-5 h-5" />
+              </div>
+            </Card>
+
+            {/* Settings Card */}
+            <Card
+              hover
+              glow
+              className="relative min-h-[200px] group cursor-pointer bg-gradient-to-br from-amber-500/10 to-orange-600/10 border-amber-500/30 hover:border-amber-500"
+              onClick={() => setActiveView('settings')}
+            >
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
+                <Users className="w-7 h-7 text-white" />
+              </div>
+
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                إدارة المستخدمين
+              </h3>
+              <p className="text-sm text-muted">
+                إضافة وحذف وتعديل الصلاحيات
+              </p>
+
+              <div className="absolute bottom-4 left-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity">
+                <ArrowRight className="w-5 h-5" />
               </div>
             </Card>
           </div>
