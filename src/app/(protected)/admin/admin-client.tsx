@@ -1149,7 +1149,7 @@ export function AdminClient({
                 <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
                 <input
                   type="text"
-                  placeholder="بحث بالاسم أو إسم المستخدم..."
+                  placeholder="بحث بالاسم أو المدخل..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pr-10 pl-4 py-2 bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
@@ -1175,10 +1175,10 @@ export function AdminClient({
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                 {/* Username Filter */}
                 <div className="space-y-1">
-                  <label className="text-xs text-muted">إسم المستخدم</label>
+                  <label className="text-xs text-muted">المدخل</label>
                   <input
                     type="text"
-                    placeholder="إسم المستخدم"
+                    placeholder="المدخل"
                     value={usernameFilter}
                     onChange={(e) => setUsernameFilter(e.target.value)}
                     className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
@@ -1275,8 +1275,8 @@ export function AdminClient({
                 <form onSubmit={handleAddUser} className="space-y-4">
                   <Input
                     type="text"
-                    label="إسم المستخدم"
-                    placeholder="أدخل إسم المستخدم"
+                    label="المدخل"
+                    placeholder="أدخل اسم المدخل"
                     value={newUserData.username}
                     onChange={(e) => setNewUserData(prev => ({ ...prev, username: e.target.value }))}
                     icon={<User className="w-5 h-5" />}
@@ -1333,7 +1333,7 @@ export function AdminClient({
                 <table className="w-full">
                   <thead className="bg-card-hover border-b border-card-border">
                     <tr>
-                      <th className="text-right text-sm font-medium text-muted px-4 py-3">إسم المستخدم</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3">المدخل</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">إسم المشرف</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">الدور</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">الحالة</th>
