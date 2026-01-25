@@ -42,6 +42,7 @@ interface CustomerWithProfile extends SalamCustomer {
     username: string | null;
     full_name: string | null;
     email: string;
+    supervisor_name: string | null;
   } | null;
 }
 
@@ -50,6 +51,7 @@ interface MobilyCustomerWithProfile extends MobilyCustomer {
     username: string | null;
     full_name: string | null;
     email: string;
+    supervisor_name: string | null;
   } | null;
 }
 
@@ -221,27 +223,30 @@ export function AdminClient({
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   }, []);
 
-  // Combine all customers for statistics
+  // Combine all customers for statistics with correct supervisor mapping
   const allCustomers = useMemo(() => {
     const salam = (salamCustomers || []).map(c => ({
       ...c,
       project: 'salam' as const,
-      supervisor_name: (c as CustomerWithProfile).profiles?.full_name || null,
+      // Get supervisor_name from the user's profile who created this record
+      user_supervisor: (c as CustomerWithProfile).profiles?.supervisor_name || null,
     }));
     const mobily = (mobilyCustomers || []).map(c => ({
       ...c,
       project: 'mobily' as const,
-      supervisor_name: (c as MobilyCustomerWithProfile).profiles?.full_name || null,
+      // Get supervisor_name from the user's profile who created this record
+      user_supervisor: (c as MobilyCustomerWithProfile).profiles?.supervisor_name || null,
     }));
     return [...salam, ...mobily];
   }, [salamCustomers, mobilyCustomers]);
 
-  // Calculate Supervisor Daily Summary
+  // Calculate Supervisor Daily Summary - Shows supervisors and their team's daily totals
   const supervisorSummary = useMemo(() => {
     const summaryMap = new Map<string, { dailyTotals: Map<string, number>; overallTotal: number }>();
 
     allCustomers.forEach(customer => {
-      const supervisor = customer.supervisor_name || customer.created_by_username || 'غير محدد';
+      // Use the supervisor_name from the user's profile (the supervisor of the user who created this record)
+      const supervisor = customer.user_supervisor || 'غير محدد';
       const date = getDateOnly(customer.created_at);
 
       if (!summaryMap.has(supervisor)) {
@@ -274,7 +279,7 @@ export function AdminClient({
     return result;
   }, [allCustomers, getDateOnly]);
 
-  // Calculate User Daily Summary
+  // Calculate User Daily Summary - Shows users (المدخل) and their supervisors (المشرف)
   const userSummary = useMemo(() => {
     const summaryMap = new Map<string, {
       supervisor: string;
@@ -283,8 +288,10 @@ export function AdminClient({
     }>();
 
     allCustomers.forEach(customer => {
+      // The user who created the record (المدخل)
       const username = customer.created_by_username || 'غير محدد';
-      const supervisor = customer.supervisor_name || 'غير محدد';
+      // The supervisor of that user (المشرف)
+      const supervisor = customer.user_supervisor || 'غير محدد';
       const date = getDateOnly(customer.created_at);
 
       if (!summaryMap.has(username)) {
