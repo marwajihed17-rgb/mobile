@@ -18,7 +18,8 @@ import {
   AlertCircle,
   User,
   Wifi,
-  WifiOff
+  WifiOff,
+  BarChart3
 } from 'lucide-react';
 import { Header } from '@/components/layout/header';
 import { Card } from '@/components/ui/card';
@@ -434,7 +435,7 @@ export function AdminClient({
 
         {/* Dashboard View */}
         {activeView === 'dashboard' && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 stagger-children">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 stagger-children">
             {/* Salam Project Card */}
             <Card
               hover
@@ -497,6 +498,29 @@ export function AdminClient({
               </h3>
               <p className="text-sm text-muted">
                 إضافة وحذف وتعديل الصلاحيات
+              </p>
+
+              <div className="absolute bottom-4 left-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity">
+                <ArrowRight className="w-5 h-5 rotate-180" />
+              </div>
+            </Card>
+
+            {/* Statistics Card */}
+            <Card
+              hover
+              glow
+              className="relative min-h-[200px] group cursor-pointer bg-gradient-to-br from-purple-500/10 to-indigo-600/10 border-purple-500/30 hover:border-purple-500"
+              onClick={() => router.push('/admin/statistics')}
+            >
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
+                <BarChart3 className="w-7 h-7 text-white" />
+              </div>
+
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                الإحصائيات
+              </h3>
+              <p className="text-sm text-muted">
+                ملخص المشرفين والمستخدمين اليومي
               </p>
 
               <div className="absolute bottom-4 left-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity">
