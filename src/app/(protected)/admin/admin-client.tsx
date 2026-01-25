@@ -19,7 +19,10 @@ import {
   User,
   Wifi,
   WifiOff,
-  BarChart3
+  BarChart3,
+  UserCheck,
+  Calendar,
+  Plus
 } from 'lucide-react';
 import { Header } from '@/components/layout/header';
 import { Card } from '@/components/ui/card';
@@ -63,7 +66,24 @@ interface AdminClientProps {
   };
 }
 
-type ActiveView = 'dashboard' | 'salam' | 'mobily' | 'settings';
+type ActiveView = 'dashboard' | 'salam' | 'mobily' | 'statistics' | 'settings';
+
+interface SupervisorSummary {
+  date: string;
+  supervisor: string;
+  dailyTotal: number;
+  overallTotal: number;
+}
+
+interface UserSummary {
+  date: string;
+  username: string;
+  supervisor: string;
+  dailyTotal: number;
+  overallTotal: number;
+}
+
+type StatisticsModalType = 'supervisor' | 'user' | 'needMore' | null;
 
 export function AdminClient({
   currentProfile,
@@ -95,6 +115,11 @@ export function AdminClient({
 
   // Mobily Customer Search
   const [mobilySearchQuery, setMobilySearchQuery] = useState('');
+
+  // Statistics View States
+  const [statisticsModal, setStatisticsModal] = useState<StatisticsModalType>(null);
+  const [statsSearchQuery, setStatsSearchQuery] = useState('');
+  const [statsDateFilter, setStatsDateFilter] = useState('');
 
   // Debug logging
   console.log('AdminClient received data:', {
@@ -189,6 +214,137 @@ export function AdminClient({
       field.toLowerCase().includes(query)
     );
   }), [mobilyCustomers, mobilySearchQuery]);
+
+  // Get date only (without time) for grouping
+  const getDateOnly = useCallback((dateString: string) => {
+    const date = new Date(dateString);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  }, []);
+
+  // Combine all customers for statistics
+  const allCustomers = useMemo(() => {
+    const salam = (salamCustomers || []).map(c => ({
+      ...c,
+      project: 'salam' as const,
+      supervisor_name: (c as CustomerWithProfile).profiles?.full_name || null,
+    }));
+    const mobily = (mobilyCustomers || []).map(c => ({
+      ...c,
+      project: 'mobily' as const,
+      supervisor_name: (c as MobilyCustomerWithProfile).profiles?.full_name || null,
+    }));
+    return [...salam, ...mobily];
+  }, [salamCustomers, mobilyCustomers]);
+
+  // Calculate Supervisor Daily Summary
+  const supervisorSummary = useMemo(() => {
+    const summaryMap = new Map<string, { dailyTotals: Map<string, number>; overallTotal: number }>();
+
+    allCustomers.forEach(customer => {
+      const supervisor = customer.supervisor_name || customer.created_by_username || 'غير محدد';
+      const date = getDateOnly(customer.created_at);
+
+      if (!summaryMap.has(supervisor)) {
+        summaryMap.set(supervisor, { dailyTotals: new Map(), overallTotal: 0 });
+      }
+
+      const supervisorData = summaryMap.get(supervisor)!;
+      supervisorData.dailyTotals.set(date, (supervisorData.dailyTotals.get(date) || 0) + 1);
+      supervisorData.overallTotal += 1;
+    });
+
+    const result: SupervisorSummary[] = [];
+    summaryMap.forEach((data, supervisor) => {
+      data.dailyTotals.forEach((dailyTotal, date) => {
+        result.push({
+          date,
+          supervisor,
+          dailyTotal,
+          overallTotal: data.overallTotal,
+        });
+      });
+    });
+
+    result.sort((a, b) => {
+      const dateCompare = b.date.localeCompare(a.date);
+      if (dateCompare !== 0) return dateCompare;
+      return a.supervisor.localeCompare(b.supervisor);
+    });
+
+    return result;
+  }, [allCustomers, getDateOnly]);
+
+  // Calculate User Daily Summary
+  const userSummary = useMemo(() => {
+    const summaryMap = new Map<string, {
+      supervisor: string;
+      dailyTotals: Map<string, number>;
+      overallTotal: number
+    }>();
+
+    allCustomers.forEach(customer => {
+      const username = customer.created_by_username || 'غير محدد';
+      const supervisor = customer.supervisor_name || 'غير محدد';
+      const date = getDateOnly(customer.created_at);
+
+      if (!summaryMap.has(username)) {
+        summaryMap.set(username, { supervisor, dailyTotals: new Map(), overallTotal: 0 });
+      }
+
+      const userData = summaryMap.get(username)!;
+      userData.dailyTotals.set(date, (userData.dailyTotals.get(date) || 0) + 1);
+      userData.overallTotal += 1;
+    });
+
+    const result: UserSummary[] = [];
+    summaryMap.forEach((data, username) => {
+      data.dailyTotals.forEach((dailyTotal, date) => {
+        result.push({
+          date,
+          username,
+          supervisor: data.supervisor,
+          dailyTotal,
+          overallTotal: data.overallTotal,
+        });
+      });
+    });
+
+    result.sort((a, b) => {
+      const dateCompare = b.date.localeCompare(a.date);
+      if (dateCompare !== 0) return dateCompare;
+      return a.username.localeCompare(b.username);
+    });
+
+    return result;
+  }, [allCustomers, getDateOnly]);
+
+  // Filter supervisor data
+  const filteredSupervisorSummary = useMemo(() => {
+    return supervisorSummary.filter(item => {
+      const matchesSearch = !statsSearchQuery ||
+        item.supervisor.toLowerCase().includes(statsSearchQuery.toLowerCase());
+      const matchesDate = !statsDateFilter || item.date === statsDateFilter;
+      return matchesSearch && matchesDate;
+    });
+  }, [supervisorSummary, statsSearchQuery, statsDateFilter]);
+
+  // Filter user data
+  const filteredUserSummary = useMemo(() => {
+    return userSummary.filter(item => {
+      const matchesSearch = !statsSearchQuery ||
+        item.username.toLowerCase().includes(statsSearchQuery.toLowerCase()) ||
+        item.supervisor.toLowerCase().includes(statsSearchQuery.toLowerCase());
+      const matchesDate = !statsDateFilter || item.date === statsDateFilter;
+      return matchesSearch && matchesDate;
+    });
+  }, [userSummary, statsSearchQuery, statsDateFilter]);
+
+  // Close statistics modal handler
+  const closeStatisticsModal = useCallback(() => {
+    setStatisticsModal(null);
+    setStatsSearchQuery('');
+    setStatsDateFilter('');
+  }, []);
 
   // Memoized filtered profiles
   const filteredProfiles = useMemo(() => profiles.filter(profile => {
@@ -421,8 +577,12 @@ export function AdminClient({
             مشروع موبايلي
           </button>
           <button
-            onClick={() => router.push('/admin/statistics')}
-            className="px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 bg-card text-muted hover:text-foreground"
+            onClick={() => { setActiveView('statistics'); setSearchQuery(''); }}
+            className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+              activeView === 'statistics'
+                ? 'bg-purple-500 text-white'
+                : 'bg-card text-muted hover:text-foreground'
+            }`}
           >
             <BarChart3 className="w-4 h-4" />
             الإحصائيات
@@ -494,7 +654,7 @@ export function AdminClient({
               hover
               glow
               className="relative min-h-[200px] group cursor-pointer bg-gradient-to-br from-purple-500/10 to-indigo-600/10 border-purple-500/30 hover:border-purple-500"
-              onClick={() => router.push('/admin/statistics')}
+              onClick={() => setActiveView('statistics')}
             >
               <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
                 <BarChart3 className="w-7 h-7 text-white" />
@@ -698,6 +858,285 @@ export function AdminClient({
                 </table>
               </div>
             </Card>
+          </div>
+        )}
+
+        {/* Statistics View */}
+        {activeView === 'statistics' && (
+          <div className="space-y-6">
+            {/* Header */}
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
+                <BarChart3 className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-foreground">الإحصائيات</h2>
+                <p className="text-muted">اضغط على أي جدول لعرض التفاصيل الكاملة</p>
+              </div>
+            </div>
+
+            {/* Tables Section */}
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-foreground">جداول الإحصائيات</h3>
+            </div>
+
+            {/* Table Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Supervisor Daily Summary Card */}
+              <Card
+                hover
+                glow
+                className="relative min-h-[180px] group cursor-pointer bg-gradient-to-br from-green-500/10 to-emerald-600/10 border-green-500/30 hover:border-green-500 transition-all"
+                onClick={() => setStatisticsModal('supervisor')}
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center transition-transform group-hover:scale-110">
+                    <UserCheck className="w-6 h-6 text-white" />
+                  </div>
+                  <span className="text-2xl font-bold text-foreground">{supervisorSummary.length}</span>
+                </div>
+                <h3 className="text-lg font-semibold text-foreground mb-1">ملخص المشرف اليومي</h3>
+                <p className="text-sm text-muted">اضغط للعرض</p>
+                <div className="absolute bottom-4 left-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity">
+                  <ArrowRight className="w-5 h-5" />
+                </div>
+              </Card>
+
+              {/* Users Daily Summary Card */}
+              <Card
+                hover
+                glow
+                className="relative min-h-[180px] group cursor-pointer bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-blue-500/30 hover:border-blue-500 transition-all"
+                onClick={() => setStatisticsModal('user')}
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center transition-transform group-hover:scale-110">
+                    <Users className="w-6 h-6 text-white" />
+                  </div>
+                  <span className="text-2xl font-bold text-foreground">{userSummary.length}</span>
+                </div>
+                <h3 className="text-lg font-semibold text-foreground mb-1">ملخص المستخدمين اليومي</h3>
+                <p className="text-sm text-muted">اضغط للعرض</p>
+                <div className="absolute bottom-4 left-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity">
+                  <ArrowRight className="w-5 h-5" />
+                </div>
+              </Card>
+
+              {/* Add More Table Card */}
+              <Card
+                hover
+                className="relative min-h-[180px] group cursor-pointer border-dashed border-2 bg-transparent hover:bg-card/50 transition-all flex flex-col items-center justify-center"
+                onClick={() => setStatisticsModal('needMore')}
+              >
+                <div className="w-12 h-12 rounded-full bg-card-hover flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
+                  <Plus className="w-6 h-6 text-muted group-hover:text-foreground transition-colors" />
+                </div>
+                <h3 className="text-base font-medium text-muted group-hover:text-foreground transition-colors">إضافة جدول</h3>
+              </Card>
+            </div>
+
+            {/* Info Alert */}
+            <Alert variant="info" className="mt-8">
+              <AlertCircle className="w-4 h-4" />
+              <span>يتم تحديث البيانات تلقائياً عند إضافة سجلات جديدة. اضغط على أي جدول لعرض التفاصيل والبحث والتصفية.</span>
+            </Alert>
+          </div>
+        )}
+
+        {/* Statistics Modal */}
+        {statisticsModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            onClick={closeStatisticsModal}
+          >
+            <div
+              className="w-full max-w-5xl max-h-[90vh] bg-card rounded-2xl border border-card-border shadow-2xl overflow-hidden animate-fade-in-up"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-6 border-b border-card-border">
+                <div className="flex items-center gap-3">
+                  {statisticsModal === 'supervisor' && (
+                    <>
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
+                        <UserCheck className="w-5 h-5 text-white" />
+                      </div>
+                      <h2 className="text-lg font-semibold text-foreground">ملخص المشرف اليومي</h2>
+                    </>
+                  )}
+                  {statisticsModal === 'user' && (
+                    <>
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+                        <Users className="w-5 h-5 text-white" />
+                      </div>
+                      <h2 className="text-lg font-semibold text-foreground">ملخص المستخدمين اليومي</h2>
+                    </>
+                  )}
+                  {statisticsModal === 'needMore' && (
+                    <>
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+                        <Plus className="w-5 h-5 text-white" />
+                      </div>
+                      <h2 className="text-lg font-semibold text-foreground">إضافة جدول جديد</h2>
+                    </>
+                  )}
+                </div>
+                <button
+                  onClick={closeStatisticsModal}
+                  className="p-2 text-muted hover:text-foreground hover:bg-card-hover rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+                {statisticsModal === 'needMore' ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="w-20 h-20 rounded-full bg-amber-500/10 flex items-center justify-center mb-6">
+                      <AlertCircle className="w-10 h-10 text-amber-500" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-foreground mb-2">تحتاج المزيد من البيانات</h3>
+                    <p className="text-muted max-w-md">
+                      للحصول على جداول إضافية، يرجى التواصل مع الدعم الفني أو إضافة المزيد من البيانات إلى النظام.
+                    </p>
+                    <Button
+                      variant="secondary"
+                      onClick={closeStatisticsModal}
+                      className="mt-6"
+                    >
+                      إغلاق
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    {/* Filters */}
+                    <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                      <div className="relative flex-1">
+                        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
+                        <input
+                          type="text"
+                          placeholder="بحث..."
+                          value={statsSearchQuery}
+                          onChange={(e) => setStatsSearchQuery(e.target.value)}
+                          className="w-full pr-10 pl-4 py-2 bg-background border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-5 h-5 text-muted" />
+                        <input
+                          type="date"
+                          value={statsDateFilter}
+                          onChange={(e) => setStatsDateFilter(e.target.value)}
+                          className="px-3 py-2 bg-background border border-card-border rounded-lg text-foreground focus:outline-none focus:border-primary"
+                        />
+                        {(statsSearchQuery || statsDateFilter) && (
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => {
+                              setStatsSearchQuery('');
+                              setStatsDateFilter('');
+                            }}
+                          >
+                            مسح
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Table */}
+                    <div className="overflow-x-auto rounded-lg border border-card-border">
+                      {statisticsModal === 'supervisor' && (
+                        <table className="w-full">
+                          <thead className="bg-card-hover border-b border-card-border">
+                            <tr>
+                              <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">التاريخ</th>
+                              <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">المشرف</th>
+                              <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">المجموع اليومي</th>
+                              <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">المجموع الإجمالي</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {filteredSupervisorSummary.length > 0 ? (
+                              filteredSupervisorSummary.map((row, index) => (
+                                <tr key={`${row.date}-${row.supervisor}-${index}`} className="border-b border-card-border last:border-0 hover:bg-card-hover transition-colors">
+                                  <td className="px-4 py-3 text-foreground whitespace-nowrap">{formatDate(row.date)}</td>
+                                  <td className="px-4 py-3 whitespace-nowrap">
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-green-500/20 to-emerald-600/20 text-green-600 border border-green-500/30">
+                                      {row.supervisor}
+                                    </span>
+                                  </td>
+                                  <td className="px-4 py-3 text-foreground font-medium whitespace-nowrap">{row.dailyTotal}</td>
+                                  <td className="px-4 py-3 text-muted whitespace-nowrap">{row.overallTotal}</td>
+                                </tr>
+                              ))
+                            ) : (
+                              <tr>
+                                <td colSpan={4} className="px-4 py-8 text-center text-muted">
+                                  لا توجد نتائج
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      )}
+
+                      {statisticsModal === 'user' && (
+                        <table className="w-full">
+                          <thead className="bg-card-hover border-b border-card-border">
+                            <tr>
+                              <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">التاريخ</th>
+                              <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">المدخل</th>
+                              <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">المشرف</th>
+                              <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">المجموع اليومي</th>
+                              <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">المجموع الإجمالي</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {filteredUserSummary.length > 0 ? (
+                              filteredUserSummary.map((row, index) => (
+                                <tr key={`${row.date}-${row.username}-${index}`} className="border-b border-card-border last:border-0 hover:bg-card-hover transition-colors">
+                                  <td className="px-4 py-3 text-foreground whitespace-nowrap">{formatDate(row.date)}</td>
+                                  <td className="px-4 py-3 whitespace-nowrap">
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-blue-600 border border-blue-500/30">
+                                      {row.username}
+                                    </span>
+                                  </td>
+                                  <td className="px-4 py-3 whitespace-nowrap">
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-purple-500/20 to-indigo-600/20 text-purple-600 border border-purple-500/30">
+                                      {row.supervisor}
+                                    </span>
+                                  </td>
+                                  <td className="px-4 py-3 text-foreground font-medium whitespace-nowrap">{row.dailyTotal}</td>
+                                  <td className="px-4 py-3 text-muted whitespace-nowrap">{row.overallTotal}</td>
+                                </tr>
+                              ))
+                            ) : (
+                              <tr>
+                                <td colSpan={5} className="px-4 py-8 text-center text-muted">
+                                  لا توجد نتائج
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+
+                    {/* Summary Footer */}
+                    <div className="mt-4 text-sm text-muted">
+                      <span>
+                        {statisticsModal === 'supervisor'
+                          ? `إجمالي السجلات: ${filteredSupervisorSummary.length}`
+                          : `إجمالي السجلات: ${filteredUserSummary.length}`
+                        }
+                      </span>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
