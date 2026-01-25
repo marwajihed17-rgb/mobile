@@ -58,20 +58,20 @@ export default async function AdminPage() {
     console.error('Error fetching profiles:', profilesError);
   }
 
-  // Get all salam customers with profiles data
+  // Get all salam customers with profiles data (including supervisor_name)
   const { data: salamCustomers, error: salamError } = await supabase
     .from('salam_customers')
-    .select('*, profiles(username, full_name, email)')
+    .select('*, profiles(username, full_name, email, supervisor_name)')
     .order('created_at', { ascending: false });
 
   if (salamError) {
     console.error('Error fetching salam customers:', salamError);
   }
 
-  // Get all mobily customers with profiles data
+  // Get all mobily customers with profiles data (including supervisor_name)
   const { data: mobilyCustomers, error: mobilyError } = await supabase
     .from('mobily_customers')
-    .select('*, profiles(username, full_name, email)')
+    .select('*, profiles(username, full_name, email, supervisor_name)')
     .order('created_at', { ascending: false });
 
   if (mobilyError) {
@@ -111,6 +111,7 @@ export default async function AdminPage() {
       username: string | null;
       full_name: string | null;
       email: string;
+      supervisor_name: string | null;
     } | null;
   };
 
@@ -119,6 +120,7 @@ export default async function AdminPage() {
       username: string | null;
       full_name: string | null;
       email: string;
+      supervisor_name: string | null;
     } | null;
   };
 
