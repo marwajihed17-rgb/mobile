@@ -6,10 +6,8 @@ import {
   BarChart3,
   ArrowRight,
   X,
-  Plus,
   Users,
   UserCheck,
-  Calendar,
   AlertCircle,
   Search
 } from 'lucide-react';
@@ -68,7 +66,6 @@ export function StatisticsClient({
   const router = useRouter();
   const [activeModal, setActiveModal] = useState<ModalType>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [dateFilter, setDateFilter] = useState('');
 
   const authUser = {
     id: currentProfile.id,
@@ -198,10 +195,9 @@ export function StatisticsClient({
     return supervisorSummary.filter(item => {
       const matchesSearch = !searchQuery ||
         item.supervisor.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesDate = !dateFilter || item.date === dateFilter;
-      return matchesSearch && matchesDate;
+      return matchesSearch;
     });
-  }, [supervisorSummary, searchQuery, dateFilter]);
+  }, [supervisorSummary, searchQuery]);
 
   // Filter user data
   const filteredUserSummary = useMemo(() => {
@@ -209,16 +205,14 @@ export function StatisticsClient({
       const matchesSearch = !searchQuery ||
         item.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.supervisor.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesDate = !dateFilter || item.date === dateFilter;
-      return matchesSearch && matchesDate;
+      return matchesSearch;
     });
-  }, [userSummary, searchQuery, dateFilter]);
+  }, [userSummary, searchQuery]);
 
   // Close modal handler
   const closeModal = useCallback(() => {
     setActiveModal(null);
     setSearchQuery('');
-    setDateFilter('');
   }, []);
 
   // Render table card
@@ -226,8 +220,7 @@ export function StatisticsClient({
     arabicTitle: string,
     icon: React.ReactNode,
     color: string,
-    onClick: () => void,
-    dataCount: number
+    onClick: () => void
   ) => (
     <Card
       hover
@@ -239,7 +232,6 @@ export function StatisticsClient({
         <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${color.replace('/10', '').replace('border-', 'from-').replace('/30', '')} flex items-center justify-center transition-transform group-hover:scale-110`}>
           {icon}
         </div>
-        <span className="text-2xl font-bold text-foreground">{dataCount}</span>
       </div>
 
       <h3 className="text-lg font-semibold text-foreground mb-1">{arabicTitle}</h3>
@@ -328,8 +320,8 @@ export function StatisticsClient({
             ) : (
               <>
                 {/* Filters */}
-                <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                  <div className="relative flex-1">
+                <div className="flex gap-4 mb-6">
+                  <div className="relative w-64">
                     <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
                     <input
                       type="text"
@@ -339,27 +331,15 @@ export function StatisticsClient({
                       className="w-full pr-10 pl-4 py-2 bg-background border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
                     />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-muted" />
-                    <input
-                      type="date"
-                      value={dateFilter}
-                      onChange={(e) => setDateFilter(e.target.value)}
-                      className="px-3 py-2 bg-background border border-card-border rounded-lg text-foreground focus:outline-none focus:border-primary"
-                    />
-                    {(searchQuery || dateFilter) && (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => {
-                          setSearchQuery('');
-                          setDateFilter('');
-                        }}
-                      >
-                        مسح
-                      </Button>
-                    )}
-                  </div>
+                  {searchQuery && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setSearchQuery('')}
+                    >
+                      مسح
+                    </Button>
+                  )}
                 </div>
 
                 {/* Table */}
@@ -477,16 +457,11 @@ export function StatisticsClient({
                 <BarChart3 className="w-7 h-7 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-foreground">الإحصائيات</h1>
+                <h1 className="text-2xl font-bold text-foreground">جداول الإحصائيات</h1>
                 <p className="text-muted">اضغط على أي جدول لعرض التفاصيل الكاملة</p>
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Tables Section */}
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold text-foreground mb-4">جداول الإحصائيات</h2>
         </div>
 
         {/* Table Cards Grid */}
@@ -496,8 +471,7 @@ export function StatisticsClient({
             'ملخص المشرف اليومي',
             <UserCheck className="w-6 h-6 text-white" />,
             'from-green-500/10 to-emerald-600/10 border-green-500/30 hover:border-green-500',
-            () => setActiveModal('supervisor'),
-            supervisorSummary.length
+            () => setActiveModal('supervisor')
           )}
 
           {/* Users Daily Summary Card */}
@@ -505,21 +479,8 @@ export function StatisticsClient({
             'ملخص المستخدمين اليومي',
             <Users className="w-6 h-6 text-white" />,
             'from-blue-500/10 to-cyan-500/10 border-blue-500/30 hover:border-blue-500',
-            () => setActiveModal('user'),
-            userSummary.length
+            () => setActiveModal('user')
           )}
-
-          {/* Add More Table Card */}
-          <Card
-            hover
-            className="relative min-h-[180px] group cursor-pointer border-dashed border-2 bg-transparent hover:bg-card/50 transition-all flex flex-col items-center justify-center"
-            onClick={() => setActiveModal('needMore')}
-          >
-            <div className="w-12 h-12 rounded-full bg-card-hover flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
-              <Plus className="w-6 h-6 text-muted group-hover:text-foreground transition-colors" />
-            </div>
-            <h3 className="text-base font-medium text-muted group-hover:text-foreground transition-colors">إضافة جدول</h3>
-          </Card>
         </div>
 
         {/* Info Alert */}

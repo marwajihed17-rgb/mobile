@@ -20,9 +20,7 @@ import {
   Wifi,
   WifiOff,
   BarChart3,
-  UserCheck,
-  Calendar,
-  Plus
+  UserCheck
 } from 'lucide-react';
 import { Header } from '@/components/layout/header';
 import { Card } from '@/components/ui/card';
@@ -121,7 +119,6 @@ export function AdminClient({
   // Statistics View States
   const [statisticsModal, setStatisticsModal] = useState<StatisticsModalType>(null);
   const [statsSearchQuery, setStatsSearchQuery] = useState('');
-  const [statsDateFilter, setStatsDateFilter] = useState('');
 
   // Debug logging
   console.log('AdminClient received data:', {
@@ -331,10 +328,9 @@ export function AdminClient({
     return supervisorSummary.filter(item => {
       const matchesSearch = !statsSearchQuery ||
         item.supervisor.toLowerCase().includes(statsSearchQuery.toLowerCase());
-      const matchesDate = !statsDateFilter || item.date === statsDateFilter;
-      return matchesSearch && matchesDate;
+      return matchesSearch;
     });
-  }, [supervisorSummary, statsSearchQuery, statsDateFilter]);
+  }, [supervisorSummary, statsSearchQuery]);
 
   // Filter user data
   const filteredUserSummary = useMemo(() => {
@@ -342,16 +338,14 @@ export function AdminClient({
       const matchesSearch = !statsSearchQuery ||
         item.username.toLowerCase().includes(statsSearchQuery.toLowerCase()) ||
         item.supervisor.toLowerCase().includes(statsSearchQuery.toLowerCase());
-      const matchesDate = !statsDateFilter || item.date === statsDateFilter;
-      return matchesSearch && matchesDate;
+      return matchesSearch;
     });
-  }, [userSummary, statsSearchQuery, statsDateFilter]);
+  }, [userSummary, statsSearchQuery]);
 
   // Close statistics modal handler
   const closeStatisticsModal = useCallback(() => {
     setStatisticsModal(null);
     setStatsSearchQuery('');
-    setStatsDateFilter('');
   }, []);
 
   // Memoized filtered profiles
@@ -762,7 +756,7 @@ export function AdminClient({
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap">
                             {customer.operator_name ? (
-                              <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/30">
+                              <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-amber-500/10 text-amber-500 border border-amber-500/30">
                                 {customer.operator_name}
                               </span>
                             ) : (
@@ -854,7 +848,7 @@ export function AdminClient({
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap">
                             {customer.operator_name ? (
-                              <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/30">
+                              <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-amber-500/10 text-amber-500 border border-amber-500/30">
                                 {customer.operator_name}
                               </span>
                             ) : (
@@ -899,14 +893,9 @@ export function AdminClient({
                 <BarChart3 className="w-7 h-7 text-white" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-foreground">الإحصائيات</h2>
+                <h2 className="text-xl font-bold text-foreground">جداول الإحصائيات</h2>
                 <p className="text-muted">اضغط على أي جدول لعرض التفاصيل الكاملة</p>
               </div>
-            </div>
-
-            {/* Tables Section */}
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold text-foreground">جداول الإحصائيات</h3>
             </div>
 
             {/* Table Cards Grid */}
@@ -922,7 +911,6 @@ export function AdminClient({
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center transition-transform group-hover:scale-110">
                     <UserCheck className="w-6 h-6 text-white" />
                   </div>
-                  <span className="text-2xl font-bold text-foreground">{supervisorSummary.length}</span>
                 </div>
                 <h3 className="text-lg font-semibold text-foreground mb-1">ملخص المشرف اليومي</h3>
                 <p className="text-sm text-muted">اضغط للعرض</p>
@@ -942,25 +930,12 @@ export function AdminClient({
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center transition-transform group-hover:scale-110">
                     <Users className="w-6 h-6 text-white" />
                   </div>
-                  <span className="text-2xl font-bold text-foreground">{userSummary.length}</span>
                 </div>
                 <h3 className="text-lg font-semibold text-foreground mb-1">ملخص المستخدمين اليومي</h3>
                 <p className="text-sm text-muted">اضغط للعرض</p>
                 <div className="absolute bottom-4 left-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity">
                   <ArrowRight className="w-5 h-5" />
                 </div>
-              </Card>
-
-              {/* Add More Table Card */}
-              <Card
-                hover
-                className="relative min-h-[180px] group cursor-pointer border-dashed border-2 bg-transparent hover:bg-card/50 transition-all flex flex-col items-center justify-center"
-                onClick={() => setStatisticsModal('needMore')}
-              >
-                <div className="w-12 h-12 rounded-full bg-card-hover flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
-                  <Plus className="w-6 h-6 text-muted group-hover:text-foreground transition-colors" />
-                </div>
-                <h3 className="text-base font-medium text-muted group-hover:text-foreground transition-colors">إضافة جدول</h3>
               </Card>
             </div>
 
@@ -1040,8 +1015,8 @@ export function AdminClient({
                 ) : (
                   <>
                     {/* Filters */}
-                    <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                      <div className="relative flex-1">
+                    <div className="flex gap-4 mb-6">
+                      <div className="relative w-64">
                         <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
                         <input
                           type="text"
@@ -1051,27 +1026,15 @@ export function AdminClient({
                           className="w-full pr-10 pl-4 py-2 bg-background border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-5 h-5 text-muted" />
-                        <input
-                          type="date"
-                          value={statsDateFilter}
-                          onChange={(e) => setStatsDateFilter(e.target.value)}
-                          className="px-3 py-2 bg-background border border-card-border rounded-lg text-foreground focus:outline-none focus:border-primary"
-                        />
-                        {(statsSearchQuery || statsDateFilter) && (
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => {
-                              setStatsSearchQuery('');
-                              setStatsDateFilter('');
-                            }}
-                          >
-                            مسح
-                          </Button>
-                        )}
-                      </div>
+                      {statsSearchQuery && (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => setStatsSearchQuery('')}
+                        >
+                          مسح
+                        </Button>
+                      )}
                     </div>
 
                     {/* Table */}
