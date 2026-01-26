@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { AnimatedBackground } from '@/components/layout/background';
 import { BrandFooter } from '@/components/layout/footer';
+import { ChatBubbleWrapper } from '@/components/layout/chat-bubble-wrapper';
 
 export default async function ProtectedLayout({
   children,
@@ -20,6 +21,7 @@ export default async function ProtectedLayout({
       <AnimatedBackground />
       {children}
       <BrandFooter />
+      <ChatBubbleWrapper />
     </div>
   );
 }
