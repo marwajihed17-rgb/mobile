@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, memo, useRef } from 'react';
+import { useState, useMemo, useCallback, memo, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Phone,
@@ -35,7 +35,7 @@ import { scrollToTop } from '@/utils/scroll';
 import { useRealtimeSalamCustomers, useRealtimeMobilyCustomers } from '@/hooks/useRealtimeCustomers';
 import { useRealtimeProfiles } from '@/hooks/useRealtimeProfiles';
 import { useRealtimeStats } from '@/hooks/useRealtimeStats';
-import type { Profile, UserRole, UserStatus, SalamCustomer, MobilyCustomer } from '@/types/database';
+import type { Profile, UserRole, UserStatus, ActivationStatus, SalamCustomer, MobilyCustomer, Operator } from '@/types/database';
 
 interface CustomerWithProfile extends SalamCustomer {
   profiles?: {
@@ -146,6 +146,25 @@ export function AdminClient({
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const addUserFormRef = useRef<HTMLDivElement>(null);
+
+  // Operators state
+  const [operators, setOperators] = useState<Operator[]>([]);
+
+  // Fetch operators on mount
+  useEffect(() => {
+    const fetchOperators = async () => {
+      try {
+        const response = await fetch('/api/operators');
+        const data = await response.json();
+        if (data.operators) {
+          setOperators(data.operators);
+        }
+      } catch (err) {
+        console.error('Error fetching operators:', err);
+      }
+    };
+    fetchOperators();
+  }, []);
 
   const authUser = {
     id: currentProfile.id,
@@ -461,6 +480,44 @@ export function AdminClient({
       // Real-time subscription will automatically update the profiles list
       setSuccess('تم تحديث الحالة بنجاح');
       // Scroll to top to show success message and updated status
+      scrollToTop();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'حدث خطأ');
+    }
+  }, []);
+
+  // Memoized callback for updating operator
+  const handleUpdateOperator = useCallback(async (userId: string, operatorId: string | null) => {
+    try {
+      const supabase = getSupabaseClient();
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ operator_id: operatorId } as never)
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      setSuccess('تم تحديث المشغل بنجاح');
+      scrollToTop();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'حدث خطأ');
+    }
+  }, []);
+
+  // Memoized callback for updating activation status
+  const handleUpdateActivationStatus = useCallback(async (userId: string, activationStatus: ActivationStatus | null) => {
+    try {
+      const supabase = getSupabaseClient();
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ activation_status: activationStatus } as never)
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      setSuccess('تم تحديث حالة التفعيل بنجاح');
       scrollToTop();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'حدث خطأ');
@@ -1342,6 +1399,8 @@ export function AdminClient({
                     <tr>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">المدخل</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">إسم المشرف</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3">المشغل</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3">حالة التفعيل</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">الدور</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">الحالة</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3 w-24 md:w-32">تاريخ الإنشاء</th>
@@ -1354,6 +1413,31 @@ export function AdminClient({
                         <tr key={profile.id} className="border-b border-card-border last:border-0 hover:bg-card-hover transition-colors">
                           <td className="px-4 py-3 text-foreground">{profile.username || '-'}</td>
                           <td className="px-4 py-3 text-muted">{profile.supervisor_name || '-'}</td>
+                          <td className="px-4 py-3">
+                            <select
+                              value={profile.operator_id || ''}
+                              onChange={(e) => handleUpdateOperator(profile.id, e.target.value || null)}
+                              className="px-3 py-1 bg-card border border-card-border rounded text-sm text-foreground focus:outline-none focus:border-primary min-w-[100px]"
+                            >
+                              <option value="">اختر المشغل</option>
+                              {operators.map((operator) => (
+                                <option key={operator.id} value={operator.id}>
+                                  {operator.name}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                          <td className="px-4 py-3">
+                            <select
+                              value={profile.activation_status || ''}
+                              onChange={(e) => handleUpdateActivationStatus(profile.id, (e.target.value as ActivationStatus) || null)}
+                              className="px-3 py-1 bg-card border border-card-border rounded text-sm text-foreground focus:outline-none focus:border-primary min-w-[120px]"
+                            >
+                              <option value="">اختر الحالة</option>
+                              <option value="activated">تم التفعيل</option>
+                              <option value="activating">جاري التفعيل</option>
+                            </select>
+                          </td>
                           <td className="px-4 py-3">
                             <Badge variant={profile.role === 'admin' ? 'warning' : 'default'}>
                               {profile.role === 'admin' ? 'مشرف' : 'مستخدم'}
@@ -1386,7 +1470,7 @@ export function AdminClient({
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={6} className="px-4 py-8 text-center text-muted">
+                        <td colSpan={8} className="px-4 py-8 text-center text-muted">
                           لا توجد نتائج
                         </td>
                       </tr>

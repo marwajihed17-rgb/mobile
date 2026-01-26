@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, memo } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Phone, Smartphone, List, Trash2, Edit, AlertCircle, Wifi, WifiOff } from 'lucide-react';
+import { ArrowLeft, Phone, Smartphone, List, Trash2, Edit, AlertCircle, Wifi, WifiOff, Search, ChevronDown, ChevronUp } from 'lucide-react';
 import { Header } from '@/components/layout/header';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,13 +25,59 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  // Search and expand states for customer lists
+  const [salamSearchQuery, setSalamSearchQuery] = useState('');
+  const [mobilySearchQuery, setMobilySearchQuery] = useState('');
+  const [salamExpanded, setSalamExpanded] = useState(false);
+  const [mobilyExpanded, setMobilyExpanded] = useState(false);
+
   // Real-time subscriptions for both customer tables
   const { customers: salamCustomers, isConnected: salamConnected } = useRealtimeSalamCustomers(recentSalamCustomers);
   const { customers: mobilyCustomers, isConnected: mobilyConnected } = useRealtimeMobilyCustomers(recentMobilyCustomers);
 
-  // Show only the 5 most recent customers
-  const recentSalam = useMemo(() => salamCustomers.slice(0, 5), [salamCustomers]);
-  const recentMobily = useMemo(() => mobilyCustomers.slice(0, 5), [mobilyCustomers]);
+  // Filter and limit customers based on search and expanded state
+  const filteredSalamCustomers = useMemo(() => {
+    let filtered = salamCustomers;
+    if (salamSearchQuery) {
+      const query = salamSearchQuery.toLowerCase();
+      filtered = salamCustomers.filter(customer =>
+        customer.name.toLowerCase().includes(query) ||
+        customer.identity_number.toLowerCase().includes(query) ||
+        customer.phone_number.toLowerCase().includes(query) ||
+        (customer.created_by_username && customer.created_by_username.toLowerCase().includes(query))
+      );
+    }
+    return filtered;
+  }, [salamCustomers, salamSearchQuery]);
+
+  const filteredMobilyCustomers = useMemo(() => {
+    let filtered = mobilyCustomers;
+    if (mobilySearchQuery) {
+      const query = mobilySearchQuery.toLowerCase();
+      filtered = mobilyCustomers.filter(customer =>
+        customer.name.toLowerCase().includes(query) ||
+        customer.identity_number.toLowerCase().includes(query) ||
+        customer.phone_number.toLowerCase().includes(query) ||
+        (customer.created_by_username && customer.created_by_username.toLowerCase().includes(query))
+      );
+    }
+    return filtered;
+  }, [mobilyCustomers, mobilySearchQuery]);
+
+  // Show only 5 initially, or all if expanded/searching
+  const displayedSalamCustomers = useMemo(() => {
+    if (salamSearchQuery || salamExpanded) return filteredSalamCustomers;
+    return filteredSalamCustomers.slice(0, 5);
+  }, [filteredSalamCustomers, salamSearchQuery, salamExpanded]);
+
+  const displayedMobilyCustomers = useMemo(() => {
+    if (mobilySearchQuery || mobilyExpanded) return filteredMobilyCustomers;
+    return filteredMobilyCustomers.slice(0, 5);
+  }, [filteredMobilyCustomers, mobilySearchQuery, mobilyExpanded]);
+
+  // Legacy variables for backward compatibility
+  const recentSalam = displayedSalamCustomers;
+  const recentMobily = displayedMobilyCustomers;
 
   const authUser = {
     id: profile.id,
@@ -217,23 +263,37 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
 
             {/* Recent Salam Customers */}
             <div>
-              <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                آخر 5 عملاء - مشروع سلام
-                {salamConnected && (
-                  <span className="text-xs text-green-500 flex items-center gap-1">
-                    <Wifi className="w-3 h-3" />
-                    مباشر
-                  </span>
-                )}
-              </h2>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                  آخر 5 عملاء - مشروع سلام
+                  {salamConnected && (
+                    <span className="text-xs text-green-500 flex items-center gap-1">
+                      <Wifi className="w-3 h-3" />
+                      مباشر
+                    </span>
+                  )}
+                </h2>
+                {/* Search Input */}
+                <div className="relative max-w-xs">
+                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+                  <input
+                    type="text"
+                    placeholder="بحث بالاسم أو المدخل..."
+                    value={salamSearchQuery}
+                    onChange={(e) => setSalamSearchQuery(e.target.value)}
+                    className="w-full pr-9 pl-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+                  />
+                </div>
+              </div>
               {recentSalam.length > 0 ? (
                 <div className="bg-card border border-card-border rounded-xl overflow-hidden">
-                  <div className="overflow-x-auto">
+                  <div className={`overflow-x-auto ${salamExpanded || salamSearchQuery ? 'max-h-[400px] overflow-y-auto' : ''}`}>
                     <table className="w-full">
-                      <thead className="bg-card-hover border-b border-card-border">
+                      <thead className="bg-card-hover border-b border-card-border sticky top-0 z-10">
                         <tr>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الإسم</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">المدخل</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">رقم الهوية</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الجنسية</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">رقم الجوال</th>
@@ -248,6 +308,11 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                         {recentSalam.map((customer) => (
                           <tr key={customer.id} className="border-b border-card-border last:border-0 hover:bg-card-hover transition-colors">
                             <td className="px-4 py-3 text-foreground whitespace-nowrap">{customer.name}</td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-500/10 text-green-600 border border-green-500/30">
+                                {customer.created_by_username || 'غير محدد'}
+                              </span>
+                            </td>
                             <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.identity_number}</td>
                             <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.nationality}</td>
                             <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.phone_number}</td>
@@ -272,33 +337,68 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                       </tbody>
                     </table>
                   </div>
+                  {/* Show more/less button */}
+                  {!salamSearchQuery && filteredSalamCustomers.length > 5 && (
+                    <div className="border-t border-card-border p-3 text-center">
+                      <button
+                        onClick={() => setSalamExpanded(!salamExpanded)}
+                        className="inline-flex items-center gap-2 text-sm text-primary hover:text-primary/80 font-medium transition-colors"
+                      >
+                        {salamExpanded ? (
+                          <>
+                            <ChevronUp className="w-4 h-4" />
+                            عرض أقل
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown className="w-4 h-4" />
+                            عرض الكل ({filteredSalamCustomers.length} عميل)
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <Card className="text-center py-8">
-                  <p className="text-muted">لا توجد إدخالات حتى الآن</p>
+                  <p className="text-muted">{salamSearchQuery ? 'لا توجد نتائج للبحث' : 'لا توجد إدخالات حتى الآن'}</p>
                 </Card>
               )}
             </div>
 
             {/* Recent Mobily Customers */}
             <div>
-              <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                آخر 5 عملاء - مشروع موبايلي
-                {mobilyConnected && (
-                  <span className="text-xs text-blue-500 flex items-center gap-1">
-                    <Wifi className="w-3 h-3" />
-                    مباشر
-                  </span>
-                )}
-              </h2>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                  آخر 5 عملاء - مشروع موبايلي
+                  {mobilyConnected && (
+                    <span className="text-xs text-blue-500 flex items-center gap-1">
+                      <Wifi className="w-3 h-3" />
+                      مباشر
+                    </span>
+                  )}
+                </h2>
+                {/* Search Input */}
+                <div className="relative max-w-xs">
+                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+                  <input
+                    type="text"
+                    placeholder="بحث بالاسم أو المدخل..."
+                    value={mobilySearchQuery}
+                    onChange={(e) => setMobilySearchQuery(e.target.value)}
+                    className="w-full pr-9 pl-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+                  />
+                </div>
+              </div>
               {recentMobily.length > 0 ? (
                 <div className="bg-card border border-card-border rounded-xl overflow-hidden">
-                  <div className="overflow-x-auto">
+                  <div className={`overflow-x-auto ${mobilyExpanded || mobilySearchQuery ? 'max-h-[400px] overflow-y-auto' : ''}`}>
                     <table className="w-full">
-                      <thead className="bg-card-hover border-b border-card-border">
+                      <thead className="bg-card-hover border-b border-card-border sticky top-0 z-10">
                         <tr>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الإسم</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">المدخل</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">رقم الهوية</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الجنسية</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">رقم الجوال</th>
@@ -319,6 +419,11 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                         {recentMobily.map((customer) => (
                           <tr key={customer.id} className="border-b border-card-border last:border-0 hover:bg-card-hover transition-colors">
                             <td className="px-4 py-3 text-foreground whitespace-nowrap">{customer.name}</td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-600 border border-blue-500/30">
+                                {customer.created_by_username || 'غير محدد'}
+                              </span>
+                            </td>
                             <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.identity_number}</td>
                             <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.nationality}</td>
                             <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.phone_number}</td>
@@ -349,10 +454,31 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                       </tbody>
                     </table>
                   </div>
+                  {/* Show more/less button */}
+                  {!mobilySearchQuery && filteredMobilyCustomers.length > 5 && (
+                    <div className="border-t border-card-border p-3 text-center">
+                      <button
+                        onClick={() => setMobilyExpanded(!mobilyExpanded)}
+                        className="inline-flex items-center gap-2 text-sm text-primary hover:text-primary/80 font-medium transition-colors"
+                      >
+                        {mobilyExpanded ? (
+                          <>
+                            <ChevronUp className="w-4 h-4" />
+                            عرض أقل
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown className="w-4 h-4" />
+                            عرض الكل ({filteredMobilyCustomers.length} عميل)
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <Card className="text-center py-8">
-                  <p className="text-muted">لا توجد إدخالات حتى الآن</p>
+                  <p className="text-muted">{mobilySearchQuery ? 'لا توجد نتائج للبحث' : 'لا توجد إدخالات حتى الآن'}</p>
                 </Card>
               )}
             </div>

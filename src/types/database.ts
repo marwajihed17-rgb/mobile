@@ -1,8 +1,17 @@
 // Database types for Supabase tables
 export type UserRole = 'user' | 'admin' | 'super_admin';
 export type UserStatus = 'active' | 'inactive' | 'suspended';
+export type ActivationStatus = 'activated' | 'activating'; // تم التفعيل | جاري التفعيل
 export type ProjectType = 'salam' | 'mobily';
 export type CalendarType = 'gregorian' | 'hijri';
+
+// Operator interface
+export interface Operator {
+  id: string;
+  name: string;
+  code: string;
+  is_active?: boolean;
+}
 
 export interface Profile {
   id: string;
@@ -13,6 +22,8 @@ export interface Profile {
   avatar_url: string | null;
   role: UserRole;
   status: UserStatus;
+  operator_id: string | null; // المشغل - references operators table
+  activation_status: ActivationStatus | null; // الحالة - تم التفعيل | جاري التفعيل
   created_at: string;
   updated_at: string;
 }
