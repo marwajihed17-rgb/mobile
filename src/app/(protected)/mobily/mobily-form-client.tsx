@@ -23,7 +23,6 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert } from '@/components/ui/alert';
-import { CalendarDatePicker, type CalendarType } from '@/components/ui/calendar-date-picker';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import { scrollToTop } from '@/utils/scroll';
 import type { Profile } from '@/types/database';
@@ -46,7 +45,6 @@ export function MobilyFormClient({ profile }: MobilyFormClientProps) {
     nationality: '',
     phone_number: '',
     birth_date: '',
-    birth_date_calendar_type: 'gregorian' as CalendarType,
     identity_expiry_date: '',
     package: '',
     email: '',
@@ -217,9 +215,8 @@ export function MobilyFormClient({ profile }: MobilyFormClientProps) {
           device_number: formData.device_number.trim(),
           nationality: formData.nationality.trim(),
           register_number: formData.register_number.trim(),
-          birth_date: formData.birth_date,
-          birth_date_calendar_type: formData.birth_date_calendar_type,
-          identity_expiry_date: formData.identity_expiry_date,
+          birth_date: formData.birth_date.trim(),
+          identity_expiry_date: formData.identity_expiry_date.trim(),
           package: formData.package.trim(),
           email: formData.email.trim(),
           city: formData.city.trim(),
@@ -255,7 +252,6 @@ export function MobilyFormClient({ profile }: MobilyFormClientProps) {
         nationality: '',
         phone_number: '',
         birth_date: '',
-        birth_date_calendar_type: 'gregorian',
         identity_expiry_date: '',
         package: '',
         email: '',
@@ -363,21 +359,23 @@ export function MobilyFormClient({ profile }: MobilyFormClientProps) {
                 dir="rtl"
               />
 
-              <CalendarDatePicker
+              <Input
+                type="text"
                 name="birth_date"
                 label="تاريخ الميلاد"
+                placeholder="YYYY-MM-DD"
                 value={formData.birth_date}
-                calendarType={formData.birth_date_calendar_type}
-                onChange={(value) => setFormData(prev => ({ ...prev, birth_date: value }))}
-                onCalendarTypeChange={(type) => setFormData(prev => ({ ...prev, birth_date_calendar_type: type }))}
+                onChange={handleChange}
+                icon={<Calendar className="w-5 h-5" />}
                 required
+                dir="ltr"
               />
 
               <Input
-                type="date"
+                type="text"
                 name="identity_expiry_date"
                 label="تاريخ انتهاء الهوية"
-                placeholder="أدخل تاريخ انتهاء الهوية"
+                placeholder="YYYY-MM-DD"
                 value={formData.identity_expiry_date}
                 onChange={handleChange}
                 icon={<Calendar className="w-5 h-5" />}
