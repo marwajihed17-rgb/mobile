@@ -50,6 +50,9 @@ export interface SalamCustomer {
   device_number: string;
   nationality: string;
   register_number: string;
+  operator_id: string | null; // المشغل - assigned operator
+  operator_name: string | null; // المشغل name for display
+  activation_status: ActivationStatus | null; // حالة التفعيل
   created_at: string;
   updated_at: string;
 }
@@ -74,6 +77,9 @@ export interface MobilyCustomer {
   email: string;
   city: string;
   district: string;
+  operator_id: string | null; // المشغل - assigned operator
+  operator_name: string | null; // المشغل name for display
+  activation_status: ActivationStatus | null; // حالة التفعيل
   created_at: string;
   updated_at: string;
 }

@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useMemo, useCallback, memo } from 'react';
+import { useState, useMemo, useCallback, memo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Phone, Smartphone, List, Trash2, Edit, AlertCircle, Wifi, WifiOff, Search, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Phone, Smartphone, List, Trash2, Edit, AlertCircle, Wifi, WifiOff, Search, ChevronDown, ChevronUp, Check, Loader2 } from 'lucide-react';
 import { Header } from '@/components/layout/header';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,13 @@ import { Alert } from '@/components/ui/alert';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import { scrollToTop } from '@/utils/scroll';
 import { useRealtimeSalamCustomers, useRealtimeMobilyCustomers } from '@/hooks/useRealtimeCustomers';
-import type { Profile, SalamCustomer, MobilyCustomer } from '@/types/database';
+import type { Profile, SalamCustomer, MobilyCustomer, Operator, ActivationStatus } from '@/types/database';
+
+// Type for pending customer changes
+interface CustomerPendingChanges {
+  operator_id: string | null;
+  activation_status: ActivationStatus | null;
+}
 
 interface DashboardClientProps {
   profile: Profile;
@@ -30,6 +36,29 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
   const [mobilySearchQuery, setMobilySearchQuery] = useState('');
   const [salamExpanded, setSalamExpanded] = useState(false);
   const [mobilyExpanded, setMobilyExpanded] = useState(false);
+
+  // Operators state
+  const [operators, setOperators] = useState<Operator[]>([]);
+
+  // Pending changes state - track unsaved changes per customer
+  const [pendingChanges, setPendingChanges] = useState<Record<string, CustomerPendingChanges>>({});
+  const [savingCustomerId, setSavingCustomerId] = useState<string | null>(null);
+
+  // Fetch operators on mount
+  useEffect(() => {
+    const fetchOperators = async () => {
+      try {
+        const response = await fetch('/api/operators');
+        const data = await response.json();
+        if (data.operators) {
+          setOperators(data.operators);
+        }
+      } catch (err) {
+        console.error('Error fetching operators:', err);
+      }
+    };
+    fetchOperators();
+  }, []);
 
   // Real-time subscriptions for both customer tables
   const { customers: salamCustomers, isConnected: salamConnected } = useRealtimeSalamCustomers(recentSalamCustomers);
@@ -136,6 +165,94 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
       setIsDeleting(null);
     }
   }, []);
+
+  // Handle pending change for operator
+  const handleOperatorChange = useCallback((customerId: string, operatorId: string | null, currentOperatorId: string | null) => {
+    setPendingChanges(prev => ({
+      ...prev,
+      [customerId]: {
+        ...prev[customerId],
+        operator_id: operatorId,
+        activation_status: prev[customerId]?.activation_status ?? null,
+      }
+    }));
+  }, []);
+
+  // Handle pending change for activation status
+  const handleActivationStatusChange = useCallback((customerId: string, status: ActivationStatus | null) => {
+    setPendingChanges(prev => ({
+      ...prev,
+      [customerId]: {
+        ...prev[customerId],
+        operator_id: prev[customerId]?.operator_id ?? null,
+        activation_status: status,
+      }
+    }));
+  }, []);
+
+  // Get operator name by ID
+  const getOperatorName = useCallback((operatorId: string | null): string | null => {
+    if (!operatorId) return null;
+    const operator = operators.find(op => op.id === operatorId);
+    return operator?.name || null;
+  }, [operators]);
+
+  // Submit customer changes
+  const handleSubmitCustomerChanges = useCallback(async (customerId: string, projectType: 'salam' | 'mobily') => {
+    const changes = pendingChanges[customerId];
+    if (!changes) return;
+
+    setSavingCustomerId(customerId);
+    setError('');
+
+    try {
+      const supabase = getSupabaseClient();
+      const tableName = projectType === 'salam' ? 'salam_customers' : 'mobily_customers';
+      const operatorName = getOperatorName(changes.operator_id);
+
+      const { error: updateError } = await supabase
+        .from(tableName)
+        .update({
+          operator_id: changes.operator_id,
+          operator_name: operatorName,
+          activation_status: changes.activation_status,
+        } as never)
+        .eq('id', customerId);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Clear pending changes for this customer
+      setPendingChanges(prev => {
+        const newChanges = { ...prev };
+        delete newChanges[customerId];
+        return newChanges;
+      });
+
+      setSuccess('تم حفظ التغييرات بنجاح');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      console.error('Save error:', err);
+      setError(err instanceof Error ? `خطأ: ${err.message}` : 'حدث خطأ أثناء الحفظ');
+    } finally {
+      setSavingCustomerId(null);
+    }
+  }, [pendingChanges, getOperatorName]);
+
+  // Check if customer has pending changes
+  const hasPendingChanges = useCallback((customerId: string): boolean => {
+    return !!pendingChanges[customerId];
+  }, [pendingChanges]);
+
+  // Get current value (pending or saved)
+  const getCurrentOperatorId = useCallback((customer: SalamCustomer | MobilyCustomer): string | null => {
+    return pendingChanges[customer.id]?.operator_id ?? customer.operator_id ?? null;
+  }, [pendingChanges]);
+
+  const getCurrentActivationStatus = useCallback((customer: SalamCustomer | MobilyCustomer): ActivationStatus | null => {
+    return pendingChanges[customer.id]?.activation_status ?? customer.activation_status ?? null;
+  }, [pendingChanges]);
 
   // Connection status indicator
   const isFullyConnected = salamConnected && mobilyConnected;
@@ -301,6 +418,8 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">رقم الجهاز</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">رقم السجل</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">التاريخ</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">المشغل</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">حالة التفعيل</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الإجراءات</th>
                         </tr>
                       </thead>
@@ -321,11 +440,66 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                             <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.register_number}</td>
                             <td className="px-4 py-3 text-muted text-sm whitespace-nowrap">{formatDate(customer.created_at)}</td>
                             <td className="px-4 py-3 whitespace-nowrap">
-                              <div className="flex gap-2">
+                              {customer.operator_name && !hasPendingChanges(customer.id) ? (
+                                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/30">
+                                  {customer.operator_name}
+                                </span>
+                              ) : (
+                                <select
+                                  value={getCurrentOperatorId(customer) || ''}
+                                  onChange={(e) => handleOperatorChange(customer.id, e.target.value || null, customer.operator_id)}
+                                  className="px-2 py-1 text-xs bg-card border border-card-border rounded text-foreground focus:outline-none focus:border-primary min-w-[90px]"
+                                >
+                                  <option value="">اختر المشغل</option>
+                                  {operators.map((operator) => (
+                                    <option key={operator.id} value={operator.id}>
+                                      {operator.name}
+                                    </option>
+                                  ))}
+                                </select>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              {customer.activation_status && !hasPendingChanges(customer.id) ? (
+                                <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+                                  customer.activation_status === 'activated'
+                                    ? 'bg-green-500/10 text-green-600 border border-green-500/30'
+                                    : 'bg-amber-500/10 text-amber-600 border border-amber-500/30'
+                                }`}>
+                                  {customer.activation_status === 'activated' ? 'تم التفعيل' : 'جاري التفعيل'}
+                                </span>
+                              ) : (
+                                <select
+                                  value={getCurrentActivationStatus(customer) || ''}
+                                  onChange={(e) => handleActivationStatusChange(customer.id, (e.target.value as ActivationStatus) || null)}
+                                  className="px-2 py-1 text-xs bg-card border border-card-border rounded text-foreground focus:outline-none focus:border-primary min-w-[100px]"
+                                >
+                                  <option value="">اختر الحالة</option>
+                                  <option value="activated">تم التفعيل</option>
+                                  <option value="activating">جاري التفعيل</option>
+                                </select>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <div className="flex items-center gap-1">
+                                {hasPendingChanges(customer.id) && (
+                                  <button
+                                    onClick={() => handleSubmitCustomerChanges(customer.id, 'salam')}
+                                    disabled={savingCustomerId === customer.id}
+                                    className="p-1.5 text-green-600 hover:bg-green-500/10 rounded-lg transition-colors disabled:opacity-50"
+                                    title="تأكيد"
+                                  >
+                                    {savingCustomerId === customer.id ? (
+                                      <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                      <Check className="w-4 h-4" />
+                                    )}
+                                  </button>
+                                )}
                                 <button
                                   onClick={() => handleDeleteCustomer(customer.id, customer.name, 'salam')}
                                   disabled={isDeleting === customer.id}
-                                  className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+                                  className="p-1.5 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
                                   title="حذف"
                                 >
                                   <Trash2 className="w-4 h-4" />
@@ -412,6 +586,8 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الحي</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">رقم السجل</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">التاريخ</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">المشغل</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">حالة التفعيل</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الإجراءات</th>
                         </tr>
                       </thead>
@@ -438,11 +614,66 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                             <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.register_number}</td>
                             <td className="px-4 py-3 text-muted text-sm whitespace-nowrap">{formatDate(customer.created_at)}</td>
                             <td className="px-4 py-3 whitespace-nowrap">
-                              <div className="flex gap-2">
+                              {customer.operator_name && !hasPendingChanges(customer.id) ? (
+                                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/30">
+                                  {customer.operator_name}
+                                </span>
+                              ) : (
+                                <select
+                                  value={getCurrentOperatorId(customer) || ''}
+                                  onChange={(e) => handleOperatorChange(customer.id, e.target.value || null, customer.operator_id)}
+                                  className="px-2 py-1 text-xs bg-card border border-card-border rounded text-foreground focus:outline-none focus:border-primary min-w-[90px]"
+                                >
+                                  <option value="">اختر المشغل</option>
+                                  {operators.map((operator) => (
+                                    <option key={operator.id} value={operator.id}>
+                                      {operator.name}
+                                    </option>
+                                  ))}
+                                </select>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              {customer.activation_status && !hasPendingChanges(customer.id) ? (
+                                <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+                                  customer.activation_status === 'activated'
+                                    ? 'bg-green-500/10 text-green-600 border border-green-500/30'
+                                    : 'bg-amber-500/10 text-amber-600 border border-amber-500/30'
+                                }`}>
+                                  {customer.activation_status === 'activated' ? 'تم التفعيل' : 'جاري التفعيل'}
+                                </span>
+                              ) : (
+                                <select
+                                  value={getCurrentActivationStatus(customer) || ''}
+                                  onChange={(e) => handleActivationStatusChange(customer.id, (e.target.value as ActivationStatus) || null)}
+                                  className="px-2 py-1 text-xs bg-card border border-card-border rounded text-foreground focus:outline-none focus:border-primary min-w-[100px]"
+                                >
+                                  <option value="">اختر الحالة</option>
+                                  <option value="activated">تم التفعيل</option>
+                                  <option value="activating">جاري التفعيل</option>
+                                </select>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <div className="flex items-center gap-1">
+                                {hasPendingChanges(customer.id) && (
+                                  <button
+                                    onClick={() => handleSubmitCustomerChanges(customer.id, 'mobily')}
+                                    disabled={savingCustomerId === customer.id}
+                                    className="p-1.5 text-green-600 hover:bg-green-500/10 rounded-lg transition-colors disabled:opacity-50"
+                                    title="تأكيد"
+                                  >
+                                    {savingCustomerId === customer.id ? (
+                                      <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                      <Check className="w-4 h-4" />
+                                    )}
+                                  </button>
+                                )}
                                 <button
                                   onClick={() => handleDeleteCustomer(customer.id, customer.name, 'mobily')}
                                   disabled={isDeleting === customer.id}
-                                  className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+                                  className="p-1.5 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
                                   title="حذف"
                                 >
                                   <Trash2 className="w-4 h-4" />
