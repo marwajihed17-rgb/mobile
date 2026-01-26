@@ -226,6 +226,15 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
     }));
   }, []);
 
+  // Reset pending changes for a customer (clear selections)
+  const handleResetChanges = useCallback((customerId: string) => {
+    setPendingChanges(prev => {
+      const newChanges = { ...prev };
+      delete newChanges[customerId];
+      return newChanges;
+    });
+  }, []);
+
   // Get operator name by ID
   const getOperatorName = useCallback((operatorId: string | null): string | null => {
     if (!operatorId) return null;
@@ -541,20 +550,30 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                             <td className="px-4 py-3 whitespace-nowrap">
                               <div className="flex items-center gap-2">
                                 {hasPendingChanges(customer.id) && (
-                                  <button
-                                    onClick={() => handleSubmitCustomerChanges(customer.id, 'salam')}
-                                    disabled={savingCustomerId === customer.id}
-                                    className="px-3 py-1 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-                                  >
-                                    {savingCustomerId === customer.id ? (
-                                      <>
-                                        <Loader2 className="w-3 h-3 animate-spin" />
-                                        جاري الحفظ
-                                      </>
-                                    ) : (
-                                      'حفظ'
-                                    )}
-                                  </button>
+                                  <>
+                                    <button
+                                      onClick={() => handleSubmitCustomerChanges(customer.id, 'salam')}
+                                      disabled={savingCustomerId === customer.id}
+                                      className="px-3 py-1 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                                    >
+                                      {savingCustomerId === customer.id ? (
+                                        <>
+                                          <Loader2 className="w-3 h-3 animate-spin" />
+                                          جاري الحفظ
+                                        </>
+                                      ) : (
+                                        'حفظ'
+                                      )}
+                                    </button>
+                                    <button
+                                      onClick={() => handleResetChanges(customer.id)}
+                                      disabled={savingCustomerId === customer.id}
+                                      className="p-1.5 text-muted hover:text-foreground hover:bg-card-hover rounded-lg transition-colors disabled:opacity-50"
+                                      title="إلغاء"
+                                    >
+                                      <X className="w-4 h-4" />
+                                    </button>
+                                  </>
                                 )}
                                 <button
                                   onClick={() => handleDeleteCustomer(customer.id, customer.name, 'salam')}
@@ -717,20 +736,30 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                             <td className="px-4 py-3 whitespace-nowrap">
                               <div className="flex items-center gap-2">
                                 {hasPendingChanges(customer.id) && (
-                                  <button
-                                    onClick={() => handleSubmitCustomerChanges(customer.id, 'mobily')}
-                                    disabled={savingCustomerId === customer.id}
-                                    className="px-3 py-1 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-                                  >
-                                    {savingCustomerId === customer.id ? (
-                                      <>
-                                        <Loader2 className="w-3 h-3 animate-spin" />
-                                        جاري الحفظ
-                                      </>
-                                    ) : (
-                                      'حفظ'
-                                    )}
-                                  </button>
+                                  <>
+                                    <button
+                                      onClick={() => handleSubmitCustomerChanges(customer.id, 'mobily')}
+                                      disabled={savingCustomerId === customer.id}
+                                      className="px-3 py-1 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                                    >
+                                      {savingCustomerId === customer.id ? (
+                                        <>
+                                          <Loader2 className="w-3 h-3 animate-spin" />
+                                          جاري الحفظ
+                                        </>
+                                      ) : (
+                                        'حفظ'
+                                      )}
+                                    </button>
+                                    <button
+                                      onClick={() => handleResetChanges(customer.id)}
+                                      disabled={savingCustomerId === customer.id}
+                                      className="p-1.5 text-muted hover:text-foreground hover:bg-card-hover rounded-lg transition-colors disabled:opacity-50"
+                                      title="إلغاء"
+                                    >
+                                      <X className="w-4 h-4" />
+                                    </button>
+                                  </>
                                 )}
                                 <button
                                   onClick={() => handleDeleteCustomer(customer.id, customer.name, 'mobily')}

@@ -1400,7 +1400,6 @@ export function AdminClient({
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">المدخل</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">إسم المشرف</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">المشغل</th>
-                      <th className="text-right text-sm font-medium text-muted px-4 py-3">حالة التفعيل</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">الدور</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">الحالة</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3 w-24 md:w-32">تاريخ الإنشاء</th>
@@ -1414,29 +1413,14 @@ export function AdminClient({
                           <td className="px-4 py-3 text-foreground">{profile.username || '-'}</td>
                           <td className="px-4 py-3 text-muted">{profile.supervisor_name || '-'}</td>
                           <td className="px-4 py-3">
-                            <select
-                              value={profile.operator_id || ''}
-                              onChange={(e) => handleUpdateOperator(profile.id, e.target.value || null)}
-                              className="px-3 py-1 bg-card border border-card-border rounded text-sm text-foreground focus:outline-none focus:border-primary min-w-[100px]"
-                            >
-                              <option value="">اختر المشغل</option>
-                              {operators.map((operator) => (
-                                <option key={operator.id} value={operator.id}>
-                                  {operator.name}
-                                </option>
-                              ))}
-                            </select>
-                          </td>
-                          <td className="px-4 py-3">
-                            <select
-                              value={profile.activation_status || ''}
-                              onChange={(e) => handleUpdateActivationStatus(profile.id, (e.target.value as ActivationStatus) || null)}
-                              className="px-3 py-1 bg-card border border-card-border rounded text-sm text-foreground focus:outline-none focus:border-primary min-w-[120px]"
-                            >
-                              <option value="">اختر الحالة</option>
-                              <option value="activated">تم التفعيل</option>
-                              <option value="activating">جاري التفعيل</option>
-                            </select>
+                            {/* Display operator name from database, synced from user interface */}
+                            {profile.operator_id ? (
+                              <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/30">
+                                {operators.find(op => op.id === profile.operator_id)?.name || profile.operator_id}
+                              </span>
+                            ) : (
+                              <span className="text-muted text-sm">-</span>
+                            )}
                           </td>
                           <td className="px-4 py-3">
                             <Badge variant={profile.role === 'admin' ? 'warning' : 'default'}>
@@ -1470,7 +1454,7 @@ export function AdminClient({
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={8} className="px-4 py-8 text-center text-muted">
+                        <td colSpan={7} className="px-4 py-8 text-center text-muted">
                           لا توجد نتائج
                         </td>
                       </tr>
