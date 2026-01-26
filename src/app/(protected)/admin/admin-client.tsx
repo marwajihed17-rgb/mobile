@@ -83,7 +83,7 @@ interface UserSummary {
   overallTotal: number;
 }
 
-type StatisticsModalType = 'supervisor' | 'user' | 'needMore' | null;
+type StatisticsModalType = 'supervisor' | 'user' | null;
 
 export function AdminClient({
   currentProfile,
@@ -976,14 +976,6 @@ export function AdminClient({
                       <h2 className="text-lg font-semibold text-foreground">ملخص المستخدمين اليومي</h2>
                     </>
                   )}
-                  {statisticsModal === 'needMore' && (
-                    <>
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-                        <Plus className="w-5 h-5 text-white" />
-                      </div>
-                      <h2 className="text-lg font-semibold text-foreground">إضافة جدول جديد</h2>
-                    </>
-                  )}
                 </div>
                 <button
                   onClick={closeStatisticsModal}
@@ -995,26 +987,7 @@ export function AdminClient({
 
               {/* Modal Content */}
               <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
-                {statisticsModal === 'needMore' ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="w-20 h-20 rounded-full bg-amber-500/10 flex items-center justify-center mb-6">
-                      <AlertCircle className="w-10 h-10 text-amber-500" />
-                    </div>
-                    <h3 className="text-xl font-semibold text-foreground mb-2">تحتاج المزيد من البيانات</h3>
-                    <p className="text-muted max-w-md">
-                      للحصول على جداول إضافية، يرجى التواصل مع الدعم الفني أو إضافة المزيد من البيانات إلى النظام.
-                    </p>
-                    <Button
-                      variant="secondary"
-                      onClick={closeStatisticsModal}
-                      className="mt-6"
-                    >
-                      إغلاق
-                    </Button>
-                  </div>
-                ) : (
-                  <>
-                    {/* Filters */}
+                {/* Filters */}
                     <div className="flex gap-4 mb-6">
                       <div className="relative w-64">
                         <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
@@ -1116,17 +1089,15 @@ export function AdminClient({
                       )}
                     </div>
 
-                    {/* Summary Footer */}
-                    <div className="mt-4 text-sm text-muted">
-                      <span>
-                        {statisticsModal === 'supervisor'
-                          ? `إجمالي السجلات: ${filteredSupervisorSummary.length}`
-                          : `إجمالي السجلات: ${filteredUserSummary.length}`
-                        }
-                      </span>
-                    </div>
-                  </>
-                )}
+                {/* Summary Footer */}
+                <div className="mt-4 text-sm text-muted">
+                  <span>
+                    {statisticsModal === 'supervisor'
+                      ? `إجمالي السجلات: ${filteredSupervisorSummary.length}`
+                      : `إجمالي السجلات: ${filteredUserSummary.length}`
+                    }
+                  </span>
+                </div>
               </div>
             </div>
           </div>
