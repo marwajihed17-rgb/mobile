@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, memo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Phone, Smartphone, List, Trash2, Edit, AlertCircle, Wifi, WifiOff, Search, ChevronDown, ChevronUp, Check, Loader2, X } from 'lucide-react';
+import { ArrowLeft, Phone, Smartphone, List, Trash2, Edit, AlertCircle, Wifi, WifiOff, Search, ChevronDown, ChevronUp, Check, Loader2, X, Pencil } from 'lucide-react';
 import { Header } from '@/components/layout/header';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -75,6 +75,9 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
   // Pending changes state - track unsaved changes per customer
   const [pendingChanges, setPendingChanges] = useState<Record<string, CustomerPendingChanges>>({});
   const [savingCustomerId, setSavingCustomerId] = useState<string | null>(null);
+
+  // Edit mode state - track which customers are being edited
+  const [editingCustomerId, setEditingCustomerId] = useState<string | null>(null);
 
   // Success modal state
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -287,12 +290,13 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
         }
       }
 
-      // Clear pending changes for this customer
+      // Clear pending changes and editing state for this customer
       setPendingChanges(prev => {
         const newChanges = { ...prev };
         delete newChanges[customerId];
         return newChanges;
       });
+      setEditingCustomerId(null);
 
       // Show success modal
       setSuccessModalMessage('تم حفظ بيانات العميل بنجاح');
@@ -311,6 +315,34 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
   const hasPendingChanges = useCallback((customerId: string): boolean => {
     return !!pendingChanges[customerId];
   }, [pendingChanges]);
+
+  // Check if customer is in edit mode (either has pending changes or is being edited)
+  const isEditMode = useCallback((customerId: string): boolean => {
+    return editingCustomerId === customerId || !!pendingChanges[customerId];
+  }, [editingCustomerId, pendingChanges]);
+
+  // Start editing a customer
+  const startEditing = useCallback((customerId: string, customer: SalamCustomer | MobilyCustomer) => {
+    setEditingCustomerId(customerId);
+    // Initialize pending changes with current values so user can modify them
+    setPendingChanges(prev => ({
+      ...prev,
+      [customerId]: {
+        operator_id: customer.operator_id ?? null,
+        activation_status: customer.activation_status ?? null,
+      }
+    }));
+  }, []);
+
+  // Cancel editing (reset to original values)
+  const cancelEditing = useCallback((customerId: string) => {
+    setEditingCustomerId(null);
+    setPendingChanges(prev => {
+      const newChanges = { ...prev };
+      delete newChanges[customerId];
+      return newChanges;
+    });
+  }, []);
 
   // Get current value (pending or saved)
   const getCurrentOperatorId = useCallback((customer: SalamCustomer | MobilyCustomer): string | null => {
@@ -507,10 +539,15 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                             <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.register_number}</td>
                             <td className="px-4 py-3 text-muted text-sm whitespace-nowrap">{formatDate(customer.created_at)}</td>
                             <td className="px-4 py-3 whitespace-nowrap">
-                              {customer.operator_name && !hasPendingChanges(customer.id) ? (
-                                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/30">
+                              {customer.operator_name && !isEditMode(customer.id) ? (
+                                <button
+                                  onClick={() => startEditing(customer.id, customer)}
+                                  className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20 transition-colors cursor-pointer"
+                                  title="انقر للتعديل"
+                                >
                                   {customer.operator_name}
-                                </span>
+                                  <Pencil className="w-3 h-3 opacity-60" />
+                                </button>
                               ) : (
                                 <select
                                   value={getCurrentOperatorId(customer) || ''}
@@ -527,14 +564,19 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                               )}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
-                              {customer.activation_status && !hasPendingChanges(customer.id) ? (
-                                <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                                  customer.activation_status === 'activated'
-                                    ? 'bg-green-500/10 text-green-600 border border-green-500/30'
-                                    : 'bg-amber-500/10 text-amber-600 border border-amber-500/30'
-                                }`}>
+                              {customer.activation_status && !isEditMode(customer.id) ? (
+                                <button
+                                  onClick={() => startEditing(customer.id, customer)}
+                                  className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium cursor-pointer transition-colors ${
+                                    customer.activation_status === 'activated'
+                                      ? 'bg-green-500/10 text-green-600 border border-green-500/30 hover:bg-green-500/20'
+                                      : 'bg-amber-500/10 text-amber-600 border border-amber-500/30 hover:bg-amber-500/20'
+                                  }`}
+                                  title="انقر للتعديل"
+                                >
                                   {customer.activation_status === 'activated' ? 'تم التفعيل' : 'جاري التفعيل'}
-                                </span>
+                                  <Pencil className="w-3 h-3 opacity-60" />
+                                </button>
                               ) : (
                                 <select
                                   value={getCurrentActivationStatus(customer) || ''}
@@ -549,7 +591,7 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
                               <div className="flex items-center gap-2">
-                                {hasPendingChanges(customer.id) && (
+                                {isEditMode(customer.id) && (
                                   <>
                                     <button
                                       onClick={() => handleSubmitCustomerChanges(customer.id, 'salam')}
@@ -566,7 +608,7 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                                       )}
                                     </button>
                                     <button
-                                      onClick={() => handleResetChanges(customer.id)}
+                                      onClick={() => cancelEditing(customer.id)}
                                       disabled={savingCustomerId === customer.id}
                                       className="p-1.5 text-muted hover:text-foreground hover:bg-card-hover rounded-lg transition-colors disabled:opacity-50"
                                       title="إلغاء"
@@ -693,10 +735,15 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                             <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.register_number}</td>
                             <td className="px-4 py-3 text-muted text-sm whitespace-nowrap">{formatDate(customer.created_at)}</td>
                             <td className="px-4 py-3 whitespace-nowrap">
-                              {customer.operator_name && !hasPendingChanges(customer.id) ? (
-                                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/30">
+                              {customer.operator_name && !isEditMode(customer.id) ? (
+                                <button
+                                  onClick={() => startEditing(customer.id, customer)}
+                                  className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20 transition-colors cursor-pointer"
+                                  title="انقر للتعديل"
+                                >
                                   {customer.operator_name}
-                                </span>
+                                  <Pencil className="w-3 h-3 opacity-60" />
+                                </button>
                               ) : (
                                 <select
                                   value={getCurrentOperatorId(customer) || ''}
@@ -713,14 +760,19 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                               )}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
-                              {customer.activation_status && !hasPendingChanges(customer.id) ? (
-                                <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                                  customer.activation_status === 'activated'
-                                    ? 'bg-green-500/10 text-green-600 border border-green-500/30'
-                                    : 'bg-amber-500/10 text-amber-600 border border-amber-500/30'
-                                }`}>
+                              {customer.activation_status && !isEditMode(customer.id) ? (
+                                <button
+                                  onClick={() => startEditing(customer.id, customer)}
+                                  className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium cursor-pointer transition-colors ${
+                                    customer.activation_status === 'activated'
+                                      ? 'bg-green-500/10 text-green-600 border border-green-500/30 hover:bg-green-500/20'
+                                      : 'bg-amber-500/10 text-amber-600 border border-amber-500/30 hover:bg-amber-500/20'
+                                  }`}
+                                  title="انقر للتعديل"
+                                >
                                   {customer.activation_status === 'activated' ? 'تم التفعيل' : 'جاري التفعيل'}
-                                </span>
+                                  <Pencil className="w-3 h-3 opacity-60" />
+                                </button>
                               ) : (
                                 <select
                                   value={getCurrentActivationStatus(customer) || ''}
@@ -735,7 +787,7 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
                               <div className="flex items-center gap-2">
-                                {hasPendingChanges(customer.id) && (
+                                {isEditMode(customer.id) && (
                                   <>
                                     <button
                                       onClick={() => handleSubmitCustomerChanges(customer.id, 'mobily')}
@@ -752,7 +804,7 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                                       )}
                                     </button>
                                     <button
-                                      onClick={() => handleResetChanges(customer.id)}
+                                      onClick={() => cancelEditing(customer.id)}
                                       disabled={savingCustomerId === customer.id}
                                       className="p-1.5 text-muted hover:text-foreground hover:bg-card-hover rounded-lg transition-colors disabled:opacity-50"
                                       title="إلغاء"

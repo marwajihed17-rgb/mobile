@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, memo, useRef, useEffect } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Phone,
@@ -35,7 +35,7 @@ import { scrollToTop } from '@/utils/scroll';
 import { useRealtimeSalamCustomers, useRealtimeMobilyCustomers } from '@/hooks/useRealtimeCustomers';
 import { useRealtimeProfiles } from '@/hooks/useRealtimeProfiles';
 import { useRealtimeStats } from '@/hooks/useRealtimeStats';
-import type { Profile, UserRole, UserStatus, ActivationStatus, SalamCustomer, MobilyCustomer, Operator } from '@/types/database';
+import type { Profile, UserRole, UserStatus, SalamCustomer, MobilyCustomer } from '@/types/database';
 
 interface CustomerWithProfile extends SalamCustomer {
   profiles?: {
@@ -147,24 +147,6 @@ export function AdminClient({
   const [success, setSuccess] = useState('');
   const addUserFormRef = useRef<HTMLDivElement>(null);
 
-  // Operators state
-  const [operators, setOperators] = useState<Operator[]>([]);
-
-  // Fetch operators on mount
-  useEffect(() => {
-    const fetchOperators = async () => {
-      try {
-        const response = await fetch('/api/operators');
-        const data = await response.json();
-        if (data.operators) {
-          setOperators(data.operators);
-        }
-      } catch (err) {
-        console.error('Error fetching operators:', err);
-      }
-    };
-    fetchOperators();
-  }, []);
 
   const authUser = {
     id: currentProfile.id,
@@ -486,43 +468,6 @@ export function AdminClient({
     }
   }, []);
 
-  // Memoized callback for updating operator
-  const handleUpdateOperator = useCallback(async (userId: string, operatorId: string | null) => {
-    try {
-      const supabase = getSupabaseClient();
-
-      const { error } = await supabase
-        .from('profiles')
-        .update({ operator_id: operatorId } as never)
-        .eq('id', userId);
-
-      if (error) throw error;
-
-      setSuccess('تم تحديث المشغل بنجاح');
-      scrollToTop();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'حدث خطأ');
-    }
-  }, []);
-
-  // Memoized callback for updating activation status
-  const handleUpdateActivationStatus = useCallback(async (userId: string, activationStatus: ActivationStatus | null) => {
-    try {
-      const supabase = getSupabaseClient();
-
-      const { error } = await supabase
-        .from('profiles')
-        .update({ activation_status: activationStatus } as never)
-        .eq('id', userId);
-
-      if (error) throw error;
-
-      setSuccess('تم تحديث حالة التفعيل بنجاح');
-      scrollToTop();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'حدث خطأ');
-    }
-  }, []);
 
   // Connection status
   const isFullyConnected = profilesConnected && salamConnected && mobilyConnected;
@@ -795,6 +740,7 @@ export function AdminClient({
                     <tr>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الإسم</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">المدخل</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">المشغل</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">رقم الهوية</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الجوال</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الشريحة</th>
@@ -814,6 +760,15 @@ export function AdminClient({
                               {customer.created_by_username || customer.profiles?.username || customer.profiles?.full_name || 'غير محدد'}
                             </span>
                           </td>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            {customer.operator_name ? (
+                              <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/30">
+                                {customer.operator_name}
+                              </span>
+                            ) : (
+                              <span className="text-muted text-sm">-</span>
+                            )}
+                          </td>
                           <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.identity_number}</td>
                           <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.phone_number}</td>
                           <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.sim_number}</td>
@@ -825,7 +780,7 @@ export function AdminClient({
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={9} className="px-4 py-8 text-center text-muted">
+                        <td colSpan={10} className="px-4 py-8 text-center text-muted">
                           لا توجد نتائج
                         </td>
                       </tr>
@@ -871,6 +826,7 @@ export function AdminClient({
                     <tr>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الإسم</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">المدخل</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">المشغل</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">رقم الهوية</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الجنسية</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الجوال</th>
@@ -896,6 +852,15 @@ export function AdminClient({
                               {customer.created_by_username || customer.profiles?.username || customer.profiles?.full_name || 'غير محدد'}
                             </span>
                           </td>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            {customer.operator_name ? (
+                              <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/30">
+                                {customer.operator_name}
+                              </span>
+                            ) : (
+                              <span className="text-muted text-sm">-</span>
+                            )}
+                          </td>
                           <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.identity_number}</td>
                           <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.nationality}</td>
                           <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.phone_number}</td>
@@ -913,7 +878,7 @@ export function AdminClient({
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={15} className="px-4 py-8 text-center text-muted">
+                        <td colSpan={16} className="px-4 py-8 text-center text-muted">
                           لا توجد نتائج
                         </td>
                       </tr>
@@ -1399,7 +1364,6 @@ export function AdminClient({
                     <tr>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">المدخل</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">إسم المشرف</th>
-                      <th className="text-right text-sm font-medium text-muted px-4 py-3">المشغل</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">الدور</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">الحالة</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3 w-24 md:w-32">تاريخ الإنشاء</th>
@@ -1412,16 +1376,6 @@ export function AdminClient({
                         <tr key={profile.id} className="border-b border-card-border last:border-0 hover:bg-card-hover transition-colors">
                           <td className="px-4 py-3 text-foreground">{profile.username || '-'}</td>
                           <td className="px-4 py-3 text-muted">{profile.supervisor_name || '-'}</td>
-                          <td className="px-4 py-3">
-                            {/* Display operator name from database, synced from user interface */}
-                            {profile.operator_id ? (
-                              <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/30">
-                                {operators.find(op => op.id === profile.operator_id)?.name || profile.operator_id}
-                              </span>
-                            ) : (
-                              <span className="text-muted text-sm">-</span>
-                            )}
-                          </td>
                           <td className="px-4 py-3">
                             <Badge variant={profile.role === 'admin' ? 'warning' : 'default'}>
                               {profile.role === 'admin' ? 'مشرف' : 'مستخدم'}
@@ -1454,7 +1408,7 @@ export function AdminClient({
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={7} className="px-4 py-8 text-center text-muted">
+                        <td colSpan={6} className="px-4 py-8 text-center text-muted">
                           لا توجد نتائج
                         </td>
                       </tr>
