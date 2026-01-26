@@ -83,6 +83,9 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successModalMessage, setSuccessModalMessage] = useState('');
 
+  // Saved state - track recently saved values for optimistic UI update
+  const [savedValues, setSavedValues] = useState<Record<string, { operator_id: string | null; operator_name: string | null; activation_status: ActivationStatus | null }>>({});
+
   // Fetch operators on mount
   useEffect(() => {
     const fetchOperators = async () => {
@@ -290,6 +293,16 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
         }
       }
 
+      // Save to savedValues for optimistic UI update
+      setSavedValues(prev => ({
+        ...prev,
+        [customerId]: {
+          operator_id: changes.operator_id,
+          operator_name: operatorName,
+          activation_status: changes.activation_status,
+        }
+      }));
+
       // Clear pending changes and editing state for this customer
       setPendingChanges(prev => {
         const newChanges = { ...prev };
@@ -324,15 +337,17 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
   // Start editing a customer
   const startEditing = useCallback((customerId: string, customer: SalamCustomer | MobilyCustomer) => {
     setEditingCustomerId(customerId);
-    // Initialize pending changes with current values so user can modify them
+    // Initialize pending changes with effective values (saved or database) so user can modify them
+    const effectiveOperatorId = savedValues[customerId]?.operator_id ?? customer.operator_id ?? null;
+    const effectiveActivationStatus = savedValues[customerId]?.activation_status ?? customer.activation_status ?? null;
     setPendingChanges(prev => ({
       ...prev,
       [customerId]: {
-        operator_id: customer.operator_id ?? null,
-        activation_status: customer.activation_status ?? null,
+        operator_id: effectiveOperatorId,
+        activation_status: effectiveActivationStatus,
       }
     }));
-  }, []);
+  }, [savedValues]);
 
   // Cancel editing (reset to original values)
   const cancelEditing = useCallback((customerId: string) => {
@@ -344,14 +359,26 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
     });
   }, []);
 
-  // Get current value (pending or saved)
+  // Get current value (pending, saved, or database)
   const getCurrentOperatorId = useCallback((customer: SalamCustomer | MobilyCustomer): string | null => {
-    return pendingChanges[customer.id]?.operator_id ?? customer.operator_id ?? null;
-  }, [pendingChanges]);
+    return pendingChanges[customer.id]?.operator_id ?? savedValues[customer.id]?.operator_id ?? customer.operator_id ?? null;
+  }, [pendingChanges, savedValues]);
 
   const getCurrentActivationStatus = useCallback((customer: SalamCustomer | MobilyCustomer): ActivationStatus | null => {
-    return pendingChanges[customer.id]?.activation_status ?? customer.activation_status ?? null;
-  }, [pendingChanges]);
+    return pendingChanges[customer.id]?.activation_status ?? savedValues[customer.id]?.activation_status ?? customer.activation_status ?? null;
+  }, [pendingChanges, savedValues]);
+
+  // Get effective operator_name (saved value or database value)
+  const getEffectiveOperatorName = useCallback((customer: SalamCustomer | MobilyCustomer): string | null => {
+    // First check savedValues (optimistic update), then database value
+    return savedValues[customer.id]?.operator_name ?? customer.operator_name ?? null;
+  }, [savedValues]);
+
+  // Get effective activation_status (saved value or database value)
+  const getEffectiveActivationStatus = useCallback((customer: SalamCustomer | MobilyCustomer): ActivationStatus | null => {
+    // First check savedValues (optimistic update), then database value
+    return savedValues[customer.id]?.activation_status ?? customer.activation_status ?? null;
+  }, [savedValues]);
 
   // Connection status indicator
   const isFullyConnected = salamConnected && mobilyConnected;
@@ -539,13 +566,13 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                             <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.register_number}</td>
                             <td className="px-4 py-3 text-muted text-sm whitespace-nowrap">{formatDate(customer.created_at)}</td>
                             <td className="px-4 py-3 whitespace-nowrap">
-                              {customer.operator_name && !isEditMode(customer.id) ? (
+                              {getEffectiveOperatorName(customer) && !isEditMode(customer.id) ? (
                                 <button
                                   onClick={() => startEditing(customer.id, customer)}
                                   className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20 transition-colors cursor-pointer"
                                   title="انقر للتعديل"
                                 >
-                                  {customer.operator_name}
+                                  {getEffectiveOperatorName(customer)}
                                   <Pencil className="w-3 h-3 opacity-60" />
                                 </button>
                               ) : (
@@ -564,17 +591,17 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                               )}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
-                              {customer.activation_status && !isEditMode(customer.id) ? (
+                              {getEffectiveActivationStatus(customer) && !isEditMode(customer.id) ? (
                                 <button
                                   onClick={() => startEditing(customer.id, customer)}
                                   className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium cursor-pointer transition-colors ${
-                                    customer.activation_status === 'activated'
+                                    getEffectiveActivationStatus(customer) === 'activated'
                                       ? 'bg-green-500/10 text-green-600 border border-green-500/30 hover:bg-green-500/20'
                                       : 'bg-amber-500/10 text-amber-600 border border-amber-500/30 hover:bg-amber-500/20'
                                   }`}
                                   title="انقر للتعديل"
                                 >
-                                  {customer.activation_status === 'activated' ? 'تم التفعيل' : 'جاري التفعيل'}
+                                  {getEffectiveActivationStatus(customer) === 'activated' ? 'تم التفعيل' : 'جاري التفعيل'}
                                   <Pencil className="w-3 h-3 opacity-60" />
                                 </button>
                               ) : (
@@ -735,13 +762,13 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                             <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.register_number}</td>
                             <td className="px-4 py-3 text-muted text-sm whitespace-nowrap">{formatDate(customer.created_at)}</td>
                             <td className="px-4 py-3 whitespace-nowrap">
-                              {customer.operator_name && !isEditMode(customer.id) ? (
+                              {getEffectiveOperatorName(customer) && !isEditMode(customer.id) ? (
                                 <button
                                   onClick={() => startEditing(customer.id, customer)}
                                   className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20 transition-colors cursor-pointer"
                                   title="انقر للتعديل"
                                 >
-                                  {customer.operator_name}
+                                  {getEffectiveOperatorName(customer)}
                                   <Pencil className="w-3 h-3 opacity-60" />
                                 </button>
                               ) : (
@@ -760,17 +787,17 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                               )}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
-                              {customer.activation_status && !isEditMode(customer.id) ? (
+                              {getEffectiveActivationStatus(customer) && !isEditMode(customer.id) ? (
                                 <button
                                   onClick={() => startEditing(customer.id, customer)}
                                   className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium cursor-pointer transition-colors ${
-                                    customer.activation_status === 'activated'
+                                    getEffectiveActivationStatus(customer) === 'activated'
                                       ? 'bg-green-500/10 text-green-600 border border-green-500/30 hover:bg-green-500/20'
                                       : 'bg-amber-500/10 text-amber-600 border border-amber-500/30 hover:bg-amber-500/20'
                                   }`}
                                   title="انقر للتعديل"
                                 >
-                                  {customer.activation_status === 'activated' ? 'تم التفعيل' : 'جاري التفعيل'}
+                                  {getEffectiveActivationStatus(customer) === 'activated' ? 'تم التفعيل' : 'جاري التفعيل'}
                                   <Pencil className="w-3 h-3 opacity-60" />
                                 </button>
                               ) : (
