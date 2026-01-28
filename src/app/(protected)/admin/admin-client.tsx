@@ -1302,7 +1302,6 @@ export function AdminClient({
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">المدخل</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">إسم المشرف</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">الدور</th>
-                      <th className="text-right text-sm font-medium text-muted px-4 py-3">الحالة</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3 w-24 md:w-32">تاريخ الإنشاء</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3">الإجراءات</th>
                     </tr>
@@ -1314,20 +1313,9 @@ export function AdminClient({
                           <td className="px-4 py-3 text-foreground">{profile.username || '-'}</td>
                           <td className="px-4 py-3 text-muted">{profile.supervisor_name || '-'}</td>
                           <td className="px-4 py-3">
-                            <Badge variant={profile.role === 'admin' ? 'warning' : profile.role === 'operator' ? 'primary' : 'default'}>
+                            <Badge variant={profile.role === 'admin' ? 'warning' : profile.role === 'operator' ? 'success' : 'default'}>
                               {profile.role === 'admin' ? 'مشرف' : profile.role === 'operator' ? 'المشغل' : 'مستخدم'}
                             </Badge>
-                          </td>
-                          <td className="px-4 py-3">
-                            <select
-                              value={profile.status}
-                              onChange={(e) => handleUpdateStatus(profile.id, e.target.value as UserStatus)}
-                              className="px-3 py-1 bg-card border border-card-border rounded text-sm text-foreground focus:outline-none focus:border-primary"
-                              disabled={profile.id === currentProfile.id}
-                            >
-                              <option value="active">مفعل</option>
-                              <option value="inactive">غير مفعل</option>
-                            </select>
                           </td>
                           <td className="px-4 py-3 text-muted text-sm w-24 md:w-32">{formatDate(profile.created_at)}</td>
                           <td className="px-4 py-3">
@@ -1345,7 +1333,7 @@ export function AdminClient({
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={6} className="px-4 py-8 text-center text-muted">
+                        <td colSpan={5} className="px-4 py-8 text-center text-muted">
                           لا توجد نتائج
                         </td>
                       </tr>
