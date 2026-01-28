@@ -24,26 +24,33 @@ export default async function DashboardPage() {
     redirect('/login');
   }
 
-  // Redirect admin to admin dashboard
-  if (profile.role === 'admin' || profile.role === 'super_admin') {
-    redirect('/admin');
-  }
+  // Note: All users (including admins and operators) can access this dashboard
+  // to view and use the المشغل dropdown
 
   // Get recent customers from Salam project (last 5 for current user)
-  const { data: salamCustomers } = await supabase
+  // For admins, show all recent customers
+  const isAdmin = profile.role === 'admin' || profile.role === 'super_admin';
+
+  let salamQuery = supabase
     .from('salam_customers')
     .select('*')
-    .eq('user_id', user.id)
     .order('created_at', { ascending: false })
     .limit(5);
 
-  // Get recent customers from Mobily project (last 5 for current user)
-  const { data: mobilyCustomers } = await supabase
+  let mobilyQuery = supabase
     .from('mobily_customers')
     .select('*')
-    .eq('user_id', user.id)
     .order('created_at', { ascending: false })
     .limit(5);
+
+  // Non-admin users only see their own entries
+  if (!isAdmin) {
+    salamQuery = salamQuery.eq('user_id', user.id);
+    mobilyQuery = mobilyQuery.eq('user_id', user.id);
+  }
+
+  const { data: salamCustomers } = await salamQuery;
+  const { data: mobilyCustomers } = await mobilyQuery;
 
   return (
     <DashboardClient
