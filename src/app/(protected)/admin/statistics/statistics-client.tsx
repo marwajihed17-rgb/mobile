@@ -78,15 +78,19 @@ export function StatisticsClient({
     isSuperAdmin: currentProfile.role === 'super_admin',
   };
 
-  // Combine all customers for statistics
+  // Combine all customers for statistics with correct supervisor mapping
   const allCustomers = useMemo(() => {
     const salam = salamCustomers.map(c => ({
       ...c,
       project: 'salam' as const,
+      // Get supervisor_name from the user's profile who created this record
+      user_supervisor: (c as CustomerWithProfile).profiles?.supervisor_name || null,
     }));
     const mobily = mobilyCustomers.map(c => ({
       ...c,
       project: 'mobily' as const,
+      // Get supervisor_name from the user's profile who created this record
+      user_supervisor: (c as MobilyCustomerWithProfile).profiles?.supervisor_name || null,
     }));
     return [...salam, ...mobily];
   }, [salamCustomers, mobilyCustomers]);
@@ -106,12 +110,13 @@ export function StatisticsClient({
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   }, []);
 
-  // Calculate Supervisor Daily Summary
+  // Calculate Supervisor Daily Summary - Shows supervisors and their team's daily totals
   const supervisorSummary = useMemo(() => {
     const summaryMap = new Map<string, { dailyTotals: Map<string, number>; overallTotal: number }>();
 
     allCustomers.forEach(customer => {
-      const supervisor = customer.profiles?.supervisor_name || customer.created_by_username || 'غير محدد';
+      // Use the supervisor_name from the user's profile (the supervisor of the user who created this record)
+      const supervisor = customer.user_supervisor || 'غير محدد';
       const date = getDateOnly(customer.created_at);
 
       if (!summaryMap.has(supervisor)) {
@@ -145,7 +150,7 @@ export function StatisticsClient({
     return result;
   }, [allCustomers, getDateOnly]);
 
-  // Calculate User Daily Summary
+  // Calculate User Daily Summary - Shows users (المدخل) and their supervisors (المشرف)
   const userSummary = useMemo(() => {
     const summaryMap = new Map<string, {
       supervisor: string;
@@ -154,8 +159,10 @@ export function StatisticsClient({
     }>();
 
     allCustomers.forEach(customer => {
-      const username = customer.created_by_username || customer.profiles?.username || 'غير محدد';
-      const supervisor = customer.profiles?.supervisor_name || 'غير محدد';
+      // The user who created the record (المدخل)
+      const username = customer.created_by_username || 'غير محدد';
+      // The supervisor of that user (المشرف)
+      const supervisor = customer.user_supervisor || 'غير محدد';
       const date = getDateOnly(customer.created_at);
 
       if (!summaryMap.has(username)) {
