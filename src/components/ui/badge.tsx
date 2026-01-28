@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 
 interface BadgeProps {
   children: React.ReactNode;
-  variant?: 'default' | 'primary' | 'success' | 'error' | 'warning' | 'muted';
+  variant?: 'default' | 'primary' | 'success' | 'error' | 'warning' | 'muted' | 'info';
   className?: string;
 }
 
@@ -20,6 +20,7 @@ export function Badge({
     error: 'bg-error/10 text-error',
     warning: 'bg-warning/10 text-warning',
     muted: 'bg-muted/10 text-muted',
+    info: 'bg-blue-500/10 text-blue-500',
   };
 
   return (
