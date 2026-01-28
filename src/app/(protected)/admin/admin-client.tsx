@@ -107,7 +107,6 @@ export function AdminClient({
   const [usernameFilter, setUsernameFilter] = useState('');
   const [supervisorFilter, setSupervisorFilter] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
   const [creationDateFilter, setCreationDateFilter] = useState('');
 
   // Salam Customer Search
@@ -362,9 +361,6 @@ export function AdminClient({
     // Role filter
     const matchesRole = !roleFilter || profile.role === roleFilter;
 
-    // Status filter
-    const matchesStatus = !statusFilter || profile.status === statusFilter;
-
     // Creation date filter
     const matchesCreationDate = !creationDateFilter ||
       profile.created_at.startsWith(creationDateFilter);
@@ -375,8 +371,8 @@ export function AdminClient({
       (profile.username?.toLowerCase() || '').includes(searchQuery.toLowerCase());
 
     return matchesUsername && matchesSupervisor && matchesRole &&
-           matchesStatus && matchesCreationDate && matchesSearch;
-  }), [profiles, usernameFilter, supervisorFilter, roleFilter, statusFilter, creationDateFilter, searchQuery]);
+           matchesCreationDate && matchesSearch;
+  }), [profiles, usernameFilter, supervisorFilter, roleFilter, creationDateFilter, searchQuery]);
 
   // Memoized callback for adding users
   const handleAddUser = useCallback(async (e: React.FormEvent) => {
@@ -1136,7 +1132,7 @@ export function AdminClient({
             {/* Advanced Filters */}
             <Card className="p-4">
               <h3 className="text-sm font-semibold text-foreground mb-4">تصفية متقدمة</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Username Filter */}
                 <div className="space-y-1">
                   <label className="text-xs text-muted">المدخل</label>
@@ -1176,21 +1172,6 @@ export function AdminClient({
                   </select>
                 </div>
 
-                {/* Status Filter */}
-                <div className="space-y-1">
-                  <label className="text-xs text-muted">الحالة</label>
-                  <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground focus:outline-none focus:border-primary"
-                  >
-                    <option value="">الكل</option>
-                    <option value="active">مفعل</option>
-                    <option value="inactive">غير مفعل</option>
-                    <option value="suspended">معلق</option>
-                  </select>
-                </div>
-
                 {/* Creation Date Filter */}
                 <div className="space-y-1">
                   <label className="text-xs text-muted">تاريخ الإنشاء</label>
@@ -1204,7 +1185,7 @@ export function AdminClient({
               </div>
 
               {/* Clear Filters Button */}
-              {(usernameFilter || supervisorFilter || roleFilter || statusFilter || creationDateFilter) && (
+              {(usernameFilter || supervisorFilter || roleFilter || creationDateFilter) && (
                 <div className="mt-4">
                   <Button
                     variant="secondary"
@@ -1212,7 +1193,6 @@ export function AdminClient({
                       setUsernameFilter('');
                       setSupervisorFilter('');
                       setRoleFilter('');
-                      setStatusFilter('');
                       setCreationDateFilter('');
                     }}
                     className="text-sm"
