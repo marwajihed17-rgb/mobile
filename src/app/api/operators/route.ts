@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     // Try to fetch operators from the operators table
     const { data: operators, error: operatorsError } = await supabase
       .from('operators')
-      .select('id, name, code')
+      .select('id, name, is_active')
       .eq('is_active', true)
       .order('name', { ascending: true });
 
@@ -25,10 +25,10 @@ export async function GET(request: NextRequest) {
       console.log('Operators table not found, returning defaults:', operatorsError.message);
       return NextResponse.json({
         operators: [
-          { id: '1', name: 'سلام', code: 'salam' },
-          { id: '2', name: 'موبايلي', code: 'mobily' },
-          { id: '3', name: 'زين', code: 'zain' },
-          { id: '4', name: 'stc', code: 'stc' },
+          { id: 'salam', name: 'سلام' },
+          { id: 'mobily', name: 'موبايلي' },
+          { id: 'zain', name: 'زين' },
+          { id: 'stc', name: 'stc' },
         ]
       });
     }

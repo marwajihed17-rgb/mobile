@@ -1,5 +1,5 @@
 // Database types for Supabase tables
-export type UserRole = 'user' | 'admin' | 'super_admin';
+export type UserRole = 'user' | 'admin' | 'super_admin' | 'operator';
 export type UserStatus = 'active' | 'inactive' | 'suspended';
 export type ActivationStatus = 'activated' | 'activating'; // تم التفعيل | جاري التفعيل
 export type ProjectType = 'salam' | 'mobily';
@@ -9,7 +9,7 @@ export type CalendarType = 'gregorian' | 'hijri';
 export interface Operator {
   id: string;
   name: string;
-  code: string;
+  code?: string;
   is_active?: boolean;
 }
 
