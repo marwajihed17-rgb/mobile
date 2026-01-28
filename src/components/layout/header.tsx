@@ -18,7 +18,7 @@ function getRoleDisplayName(role: AuthUser['role']): string {
     case 'super_admin':
       return 'مدير';
     case 'operator':
-      return 'مشغل';
+      return 'المشغل';
     default:
       return 'مستخدم';
   }
