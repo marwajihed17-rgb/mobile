@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, memo, useEffect } from 'react';
+import { useState, useMemo, useCallback, memo } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Phone, Smartphone, List, Trash2, Edit, AlertCircle, Wifi, WifiOff, Search, ChevronDown, ChevronUp, Check, Loader2, X, Pencil } from 'lucide-react';
 import { Header } from '@/components/layout/header';
@@ -10,7 +10,8 @@ import { Alert } from '@/components/ui/alert';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import { scrollToTop } from '@/utils/scroll';
 import { useRealtimeSalamCustomers, useRealtimeMobilyCustomers } from '@/hooks/useRealtimeCustomers';
-import type { Profile, SalamCustomer, MobilyCustomer, Operator, ActivationStatus } from '@/types/database';
+import { useRealtimeOperators } from '@/hooks/useRealtimeOperators';
+import type { Profile, SalamCustomer, MobilyCustomer, ActivationStatus } from '@/types/database';
 
 // Type for pending customer changes
 interface CustomerPendingChanges {
@@ -69,8 +70,8 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
   const [salamExpanded, setSalamExpanded] = useState(false);
   const [mobilyExpanded, setMobilyExpanded] = useState(false);
 
-  // Operators state
-  const [operators, setOperators] = useState<Operator[]>([]);
+  // Real-time operators (users with role='operator') - stays synchronized with database
+  const { operators, isConnected: operatorsConnected } = useRealtimeOperators();
 
   // Pending changes state - track unsaved changes per customer
   const [pendingChanges, setPendingChanges] = useState<Record<string, CustomerPendingChanges>>({});
@@ -85,22 +86,6 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
 
   // Saved state - track recently saved values for optimistic UI update
   const [savedValues, setSavedValues] = useState<Record<string, { operator_id: string | null; operator_name: string | null; activation_status: ActivationStatus | null }>>({});
-
-  // Fetch operators on mount
-  useEffect(() => {
-    const fetchOperators = async () => {
-      try {
-        const response = await fetch('/api/operators');
-        const data = await response.json();
-        if (data.operators) {
-          setOperators(data.operators);
-        }
-      } catch (err) {
-        console.error('Error fetching operators:', err);
-      }
-    };
-    fetchOperators();
-  }, []);
 
   // Real-time subscriptions for both customer tables
   const { customers: salamCustomers, isConnected: salamConnected } = useRealtimeSalamCustomers(recentSalamCustomers);
@@ -382,7 +367,7 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
   }, [savedValues]);
 
   // Connection status indicator
-  const isFullyConnected = salamConnected && mobilyConnected;
+  const isFullyConnected = salamConnected && mobilyConnected && operatorsConnected;
 
   return (
     <div className="min-h-screen pb-16">
