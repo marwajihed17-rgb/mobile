@@ -864,6 +864,7 @@ ALTER TABLE public.daily_customer_totals ENABLE ROW LEVEL SECURITY;
 -- Drop existing policies if they exist
 DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
 DROP POLICY IF EXISTS "Admins can view all profiles" ON public.profiles;
+DROP POLICY IF EXISTS "All users can view operator profiles" ON public.profiles;
 DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
 DROP POLICY IF EXISTS "Super admins can update any profile" ON public.profiles;
 DROP POLICY IF EXISTS "System inserts profiles" ON public.profiles;
@@ -877,6 +878,11 @@ CREATE POLICY "Users can view own profile"
 CREATE POLICY "Admins can view all profiles"
     ON public.profiles FOR SELECT
     USING (public.is_admin(auth.uid()));
+
+-- All users can view operator profiles (for المشغل dropdown)
+CREATE POLICY "All users can view operator profiles"
+    ON public.profiles FOR SELECT
+    USING (role = 'operator' AND status = 'active');
 
 -- Users can update their own profile (limited fields)
 CREATE POLICY "Users can update own profile"
