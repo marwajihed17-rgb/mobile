@@ -38,6 +38,7 @@ export function ProfileClient({ profile, settings }: ProfileClientProps) {
     role: profile.role,
     isAdmin: profile.role === 'admin' || profile.role === 'super_admin',
     isSuperAdmin: profile.role === 'super_admin',
+    isOperator: profile.role === 'operator',
   };
 
   const handleSave = async () => {

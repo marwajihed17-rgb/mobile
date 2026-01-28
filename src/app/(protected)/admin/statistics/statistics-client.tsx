@@ -76,6 +76,7 @@ export function StatisticsClient({
     role: currentProfile.role,
     isAdmin: true,
     isSuperAdmin: currentProfile.role === 'super_admin',
+    isOperator: currentProfile.role === 'operator',
   };
 
   // Combine all customers for statistics with correct supervisor mapping

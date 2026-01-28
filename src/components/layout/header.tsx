@@ -5,9 +5,38 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { LogOut, ArrowLeft } from 'lucide-react';
 import { Avatar } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { signOut } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
+
+// Helper function to get role display name
+function getRoleDisplayName(role: AuthUser['role']): string {
+  switch (role) {
+    case 'admin':
+      return 'مشرف';
+    case 'super_admin':
+      return 'مدير';
+    case 'operator':
+      return 'مشغل';
+    default:
+      return 'مستخدم';
+  }
+}
+
+// Helper function to get role badge variant
+function getRoleBadgeVariant(role: AuthUser['role']): 'default' | 'primary' | 'success' | 'warning' | 'error' {
+  switch (role) {
+    case 'admin':
+      return 'warning';
+    case 'super_admin':
+      return 'error';
+    case 'operator':
+      return 'primary';
+    default:
+      return 'default';
+  }
+}
 
 interface HeaderProps {
   user: AuthUser;
@@ -59,6 +88,9 @@ export function Header({ user, showBackButton = false, backHref = '/dashboard' }
               <p className="text-sm font-medium text-foreground">
                 {user.username || user.email}
               </p>
+              <Badge variant={getRoleBadgeVariant(user.role)} className="text-xs mt-1">
+                {getRoleDisplayName(user.role)}
+              </Badge>
             </div>
 
             <Avatar
