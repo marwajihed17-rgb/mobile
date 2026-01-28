@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     // Map the profiles to operator format (id and name)
     const operators = (operatorUsers || []).map(profile => ({
       id: profile.id,
-      name: profile.username || profile.full_name || 'مشغل',
+      name: profile.username || profile.full_name || 'المشغل',
     }));
 
     return NextResponse.json({ operators });
