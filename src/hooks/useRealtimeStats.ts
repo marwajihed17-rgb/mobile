@@ -55,6 +55,9 @@ export function useRealtimeStats(initialStats: Stats) {
       }
     };
 
+    // Fetch fresh stats on mount
+    fetchStats();
+
     // Subscribe to changes in both customer tables
     const salamChannel = supabase
       .channel('salam_stats_changes')

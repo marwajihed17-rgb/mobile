@@ -98,9 +98,10 @@ export function AdminClient({
   const [dateFilter, setDateFilter] = useState('');
 
   // Real-time subscriptions for all data
+  // Admin sees all customers (isAdmin=true)
   const { profiles, isConnected: profilesConnected } = useRealtimeProfiles(initialProfiles);
-  const { customers: salamCustomers, isConnected: salamConnected } = useRealtimeSalamCustomers(initialSalamCustomers || []);
-  const { customers: mobilyCustomers, isConnected: mobilyConnected } = useRealtimeMobilyCustomers(initialMobilyCustomers || []);
+  const { customers: salamCustomers, isConnected: salamConnected } = useRealtimeSalamCustomers(initialSalamCustomers || [], currentProfile.id, true);
+  const { customers: mobilyCustomers, isConnected: mobilyConnected } = useRealtimeMobilyCustomers(initialMobilyCustomers || [], currentProfile.id, true);
   const realtimeStats = useRealtimeStats(stats);
 
   // User Management Filters
