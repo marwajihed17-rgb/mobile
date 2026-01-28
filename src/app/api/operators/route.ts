@@ -13,27 +13,28 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Try to fetch operators from the operators table
-    const { data: operators, error: operatorsError } = await supabase
-      .from('operators')
-      .select('id, name, is_active')
-      .eq('is_active', true)
-      .order('name', { ascending: true });
+    // Fetch users with role='operator' from the profiles table
+    const { data: operatorUsers, error: operatorsError } = await supabase
+      .from('profiles')
+      .select('id, username, full_name, supervisor_name')
+      .eq('role', 'operator')
+      .eq('status', 'active')
+      .order('username', { ascending: true });
 
     if (operatorsError) {
-      // If table doesn't exist, return default operators
-      console.log('Operators table not found, returning defaults:', operatorsError.message);
+      console.error('Error fetching operator users:', operatorsError.message);
       return NextResponse.json({
-        operators: [
-          { id: 'salam', name: 'سلام' },
-          { id: 'mobily', name: 'موبايلي' },
-          { id: 'zain', name: 'زين' },
-          { id: 'stc', name: 'stc' },
-        ]
+        operators: []
       });
     }
 
-    return NextResponse.json({ operators: operators || [] });
+    // Map the profiles to operator format (id and name)
+    const operators = (operatorUsers || []).map(profile => ({
+      id: profile.id,
+      name: profile.username || profile.full_name || 'مشغل',
+    }));
+
+    return NextResponse.json({ operators });
   } catch (error) {
     console.error('Error fetching operators:', error);
     return NextResponse.json(
