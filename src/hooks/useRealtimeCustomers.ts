@@ -1,29 +1,66 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import { scrollToTop } from '@/utils/scroll';
 import type { SalamCustomer, MobilyCustomer } from '@/types/database';
 
 /**
  * Real-time hook for Salam customers
- * Automatically syncs with database changes (INSERT, UPDATE, DELETE)
- * Generic to support extended types with additional properties (like profiles)
+ * Fetches fresh data on mount and automatically syncs with database changes
  */
-export function useRealtimeSalamCustomers<T extends SalamCustomer>(initialData: T[]) {
+export function useRealtimeSalamCustomers<T extends SalamCustomer>(initialData: T[], userId?: string, isAdmin?: boolean) {
   const [customers, setCustomers] = useState<T[]>(initialData);
   const [isConnected, setIsConnected] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
+  // Fetch fresh data from database
+  const fetchCustomers = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const supabase = getSupabaseClient();
+      let query = supabase
+        .from('salam_customers')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      // Filter by user if not admin
+      if (!isAdmin && userId) {
+        query = query.eq('user_id', userId);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Error fetching salam customers:', error);
+        return;
+      }
+
+      if (data) {
+        setCustomers(data as T[]);
+      }
+    } catch (err) {
+      console.error('Error fetching salam customers:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [userId, isAdmin]);
+
+  // Fetch fresh data on mount and when initialData changes
+  useEffect(() => {
+    fetchCustomers();
+  }, [fetchCustomers]);
+
+  // Subscribe to real-time changes
   useEffect(() => {
     const supabase = getSupabaseClient();
 
-    // Subscribe to real-time changes
     const channel = supabase
       .channel('salam_customers_changes')
       .on(
         'postgres_changes',
         {
-          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
+          event: '*',
           schema: 'public',
           table: 'salam_customers',
         },
@@ -31,28 +68,31 @@ export function useRealtimeSalamCustomers<T extends SalamCustomer>(initialData: 
           console.log('Salam customer change received:', payload);
 
           if (payload.eventType === 'INSERT') {
-            // Add new customer to the list (without profiles as it's raw DB data)
             const newCustomer = payload.new as T;
-            setCustomers((prev) => [newCustomer, ...prev]);
-            // Scroll to top to show the new entry
-            scrollToTop();
+            // Only add if it matches user filter (or user is admin)
+            if (isAdmin || !userId || newCustomer.user_id === userId) {
+              setCustomers((prev) => {
+                // Avoid duplicates
+                if (prev.some(c => c.id === newCustomer.id)) {
+                  return prev;
+                }
+                return [newCustomer, ...prev];
+              });
+              scrollToTop();
+            }
           } else if (payload.eventType === 'UPDATE') {
-            // Update existing customer
             const updatedCustomer = payload.new as T;
             setCustomers((prev) =>
               prev.map((customer) =>
                 customer.id === updatedCustomer.id ? updatedCustomer : customer
               )
             );
-            // Scroll to top to show the updated entry
             scrollToTop();
           } else if (payload.eventType === 'DELETE') {
-            // Remove deleted customer
             const deletedCustomer = payload.old as T;
             setCustomers((prev) =>
               prev.filter((customer) => customer.id !== deletedCustomer.id)
             );
-            // Scroll to top to show the updated list
             scrollToTop();
           }
         }
@@ -62,35 +102,71 @@ export function useRealtimeSalamCustomers<T extends SalamCustomer>(initialData: 
         setIsConnected(status === 'SUBSCRIBED');
       });
 
-    // Cleanup subscription on unmount
     return () => {
       console.log('Unsubscribing from salam_customers');
       supabase.removeChannel(channel);
     };
-  }, []); // Empty dependency array - only setup once
+  }, [userId, isAdmin]);
 
-  return { customers, isConnected };
+  return { customers, isConnected, isLoading, refetch: fetchCustomers };
 }
 
 /**
  * Real-time hook for Mobily customers
- * Automatically syncs with database changes (INSERT, UPDATE, DELETE)
- * Generic to support extended types with additional properties (like profiles)
+ * Fetches fresh data on mount and automatically syncs with database changes
  */
-export function useRealtimeMobilyCustomers<T extends MobilyCustomer>(initialData: T[]) {
+export function useRealtimeMobilyCustomers<T extends MobilyCustomer>(initialData: T[], userId?: string, isAdmin?: boolean) {
   const [customers, setCustomers] = useState<T[]>(initialData);
   const [isConnected, setIsConnected] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
+  // Fetch fresh data from database
+  const fetchCustomers = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const supabase = getSupabaseClient();
+      let query = supabase
+        .from('mobily_customers')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      // Filter by user if not admin
+      if (!isAdmin && userId) {
+        query = query.eq('user_id', userId);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Error fetching mobily customers:', error);
+        return;
+      }
+
+      if (data) {
+        setCustomers(data as T[]);
+      }
+    } catch (err) {
+      console.error('Error fetching mobily customers:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [userId, isAdmin]);
+
+  // Fetch fresh data on mount and when initialData changes
+  useEffect(() => {
+    fetchCustomers();
+  }, [fetchCustomers]);
+
+  // Subscribe to real-time changes
   useEffect(() => {
     const supabase = getSupabaseClient();
 
-    // Subscribe to real-time changes
     const channel = supabase
       .channel('mobily_customers_changes')
       .on(
         'postgres_changes',
         {
-          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
+          event: '*',
           schema: 'public',
           table: 'mobily_customers',
         },
@@ -98,28 +174,31 @@ export function useRealtimeMobilyCustomers<T extends MobilyCustomer>(initialData
           console.log('Mobily customer change received:', payload);
 
           if (payload.eventType === 'INSERT') {
-            // Add new customer to the list (without profiles as it's raw DB data)
             const newCustomer = payload.new as T;
-            setCustomers((prev) => [newCustomer, ...prev]);
-            // Scroll to top to show the new entry
-            scrollToTop();
+            // Only add if it matches user filter (or user is admin)
+            if (isAdmin || !userId || newCustomer.user_id === userId) {
+              setCustomers((prev) => {
+                // Avoid duplicates
+                if (prev.some(c => c.id === newCustomer.id)) {
+                  return prev;
+                }
+                return [newCustomer, ...prev];
+              });
+              scrollToTop();
+            }
           } else if (payload.eventType === 'UPDATE') {
-            // Update existing customer
             const updatedCustomer = payload.new as T;
             setCustomers((prev) =>
               prev.map((customer) =>
                 customer.id === updatedCustomer.id ? updatedCustomer : customer
               )
             );
-            // Scroll to top to show the updated entry
             scrollToTop();
           } else if (payload.eventType === 'DELETE') {
-            // Remove deleted customer
             const deletedCustomer = payload.old as T;
             setCustomers((prev) =>
               prev.filter((customer) => customer.id !== deletedCustomer.id)
             );
-            // Scroll to top to show the updated list
             scrollToTop();
           }
         }
@@ -129,12 +208,11 @@ export function useRealtimeMobilyCustomers<T extends MobilyCustomer>(initialData
         setIsConnected(status === 'SUBSCRIBED');
       });
 
-    // Cleanup subscription on unmount
     return () => {
       console.log('Unsubscribing from mobily_customers');
       supabase.removeChannel(channel);
     };
-  }, []); // Empty dependency array - only setup once
+  }, [userId, isAdmin]);
 
-  return { customers, isConnected };
+  return { customers, isConnected, isLoading, refetch: fetchCustomers };
 }
