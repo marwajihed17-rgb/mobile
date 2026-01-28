@@ -10,6 +10,7 @@ export interface AuthUser {
   role: UserRole;
   isAdmin: boolean;
   isSuperAdmin: boolean;
+  isOperator: boolean;
 }
 
 export interface UserWithSettings {
@@ -46,6 +47,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
     role: profile.role,
     isAdmin: profile.role === 'admin' || profile.role === 'super_admin',
     isSuperAdmin: profile.role === 'super_admin',
+    isOperator: profile.role === 'operator',
   };
 }
 

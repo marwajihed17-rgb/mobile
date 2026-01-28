@@ -64,6 +64,7 @@ export function MobilyFormClient({ profile }: MobilyFormClientProps) {
     role: profile.role,
     isAdmin: profile.role === 'admin' || profile.role === 'super_admin',
     isSuperAdmin: profile.role === 'super_admin',
+    isOperator: profile.role === 'operator',
   };
 
   // Validate identity number uniqueness

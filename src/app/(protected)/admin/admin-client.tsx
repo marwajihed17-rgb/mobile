@@ -154,6 +154,7 @@ export function AdminClient({
     role: currentProfile.role,
     isAdmin: true,
     isSuperAdmin: currentProfile.role === 'super_admin',
+    isOperator: currentProfile.role === 'operator',
   };
 
   // Memoized date formatter for better performance
@@ -1171,7 +1172,7 @@ export function AdminClient({
                     <option value="">الكل</option>
                     <option value="user">مستخدم</option>
                     <option value="admin">مشرف</option>
-                    <option value="operator">المشغل</option>
+                    <option value="operator">مشغل</option>
                   </select>
                 </div>
 
@@ -1258,7 +1259,7 @@ export function AdminClient({
                     >
                       <option value="user">مستخدم</option>
                       <option value="admin">مشرف</option>
-                      <option value="operator">المشغل</option>
+                      <option value="operator">مشغل</option>
                     </select>
                   </div>
                   <Input
@@ -1314,7 +1315,7 @@ export function AdminClient({
                           <td className="px-4 py-3 text-muted">{profile.supervisor_name || '-'}</td>
                           <td className="px-4 py-3">
                             <Badge variant={profile.role === 'admin' ? 'warning' : profile.role === 'operator' ? 'primary' : 'default'}>
-                              {profile.role === 'admin' ? 'مشرف' : profile.role === 'operator' ? 'المشغل' : 'مستخدم'}
+                              {profile.role === 'admin' ? 'مشرف' : profile.role === 'operator' ? 'مشغل' : 'مستخدم'}
                             </Badge>
                           </td>
                           <td className="px-4 py-3">

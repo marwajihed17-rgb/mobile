@@ -159,6 +159,7 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
     role: profile.role,
     isAdmin: profile.role === 'admin' || profile.role === 'super_admin',
     isSuperAdmin: profile.role === 'super_admin',
+    isOperator: profile.role === 'operator',
   };
 
   const displayName = profile.username || profile.email.split('@')[0];
