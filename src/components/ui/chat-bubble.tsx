@@ -79,6 +79,7 @@ export function ChatBubble({
     setIsLoading(true);
 
     try {
+      console.log('Sending message to:', webhookUrl);
       const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
@@ -93,11 +94,13 @@ export function ChatBubble({
         }),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to send message');
-      }
-
+      console.log('Response status:', response.status);
       const data = await response.json();
+      console.log('Response data:', data);
+
+      if (!response.ok) {
+        throw new Error(data.error || data.response || 'Failed to send message');
+      }
 
       const assistantMessage: Message = {
         id: generateId(),
@@ -109,9 +112,10 @@ export function ChatBubble({
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
       console.error('Error sending message:', error);
+      const errorText = error instanceof Error ? error.message : 'حدث خطأ غير متوقع';
       const errorMessage: Message = {
         id: generateId(),
-        content: 'عذراً، حدث خطأ في إرسال الرسالة. يرجى المحاولة مرة أخرى.',
+        content: `عذراً، ${errorText}`,
         role: 'assistant',
         timestamp: new Date(),
       };
