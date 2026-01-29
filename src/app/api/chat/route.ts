@@ -25,21 +25,44 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Forward the request to n8n webhook
+    // Forward the request to n8n webhook with timeout
     console.log('Sending message to n8n webhook:', { message, historyLength: conversationHistory.length });
 
-    const webhookResponse = await fetch(N8N_WEBHOOK_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify({
-        message,
-        conversationHistory,
-        timestamp: new Date().toISOString(),
-      }),
-    });
+    // Create an AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+    let webhookResponse;
+    try {
+      webhookResponse = await fetch(N8N_WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          message,
+          conversationHistory,
+          timestamp: new Date().toISOString(),
+        }),
+        signal: controller.signal,
+      });
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      console.error('Fetch error:', fetchError);
+      const errorMessage = fetchError instanceof Error ? fetchError.message : 'Unknown error';
+      if (errorMessage.includes('abort')) {
+        return NextResponse.json(
+          { error: 'Timeout', response: 'انتهت مهلة الاتصال. يرجى المحاولة مرة أخرى.' },
+          { status: 504 }
+        );
+      }
+      return NextResponse.json(
+        { error: 'Connection error', response: `تعذر الاتصال بالخادم: ${errorMessage}` },
+        { status: 503 }
+      );
+    }
+    clearTimeout(timeoutId);
 
     console.log('n8n webhook response status:', webhookResponse.status);
 
