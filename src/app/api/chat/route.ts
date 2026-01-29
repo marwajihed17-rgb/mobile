@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Configure your external webhook URL here
-const EXTERNAL_WEBHOOK_URL = process.env.CHAT_WEBHOOK_URL;
+// n8n webhook URL for chat integration
+const N8N_WEBHOOK_URL = 'https://n8n.srv987649.hstgr.cloud/webhook/RetaamCellular';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -25,49 +25,68 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // If external webhook is configured, forward the request
-    if (EXTERNAL_WEBHOOK_URL) {
-      try {
-        const webhookResponse = await fetch(EXTERNAL_WEBHOOK_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            message,
-            conversationHistory,
-            timestamp: new Date().toISOString(),
-          }),
-        });
+    // Forward the request to n8n webhook
+    console.log('Sending message to n8n webhook:', { message, historyLength: conversationHistory.length });
 
-        if (!webhookResponse.ok) {
-          throw new Error(`Webhook responded with status: ${webhookResponse.status}`);
-        }
+    const webhookResponse = await fetch(N8N_WEBHOOK_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({
+        message,
+        conversationHistory,
+        timestamp: new Date().toISOString(),
+      }),
+    });
 
-        const webhookData = await webhookResponse.json();
+    console.log('n8n webhook response status:', webhookResponse.status);
 
-        return NextResponse.json({
-          response: webhookData.response || webhookData.message || webhookData.reply || 'تم استلام رسالتك',
-          success: true,
-        });
-      } catch (webhookError) {
-        console.error('Error communicating with external webhook:', webhookError);
-        // Fall through to default response if webhook fails
-      }
+    // Get the response text first
+    const responseText = await webhookResponse.text();
+    console.log('n8n webhook raw response:', responseText);
+
+    if (!webhookResponse.ok) {
+      console.error('n8n webhook error:', responseText);
+      return NextResponse.json(
+        { error: 'Webhook error', response: 'عذراً، حدث خطأ في الاتصال بالخادم.' },
+        { status: 502 }
+      );
     }
 
-    // Default response when no webhook is configured or webhook fails
-    // This provides a basic echo/acknowledgment response
-    const defaultResponses = [
-      'شكراً لتواصلك معنا! سنقوم بالرد عليك قريباً.',
-      'تم استلام رسالتك بنجاح. فريقنا سيتواصل معك في أقرب وقت.',
-      'مرحباً! شكراً على رسالتك. كيف يمكننا مساعدتك أكثر؟',
-    ];
+    // Try to parse the response as JSON
+    let webhookData;
+    try {
+      webhookData = responseText ? JSON.parse(responseText) : {};
+    } catch {
+      // If not JSON, use the text directly as the response
+      console.log('Response is not JSON, using as plain text');
+      webhookData = { response: responseText || 'تم استلام رسالتك' };
+    }
 
-    const randomResponse = defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
+    // Extract the response from various possible formats n8n might return
+    let assistantResponse =
+      webhookData.response ||
+      webhookData.message ||
+      webhookData.reply ||
+      webhookData.output ||
+      webhookData.text ||
+      webhookData.content ||
+      (typeof webhookData === 'string' ? webhookData : null) ||
+      'تم استلام رسالتك';
+
+    // Handle case where n8n returns an array
+    if (Array.isArray(webhookData)) {
+      assistantResponse = webhookData[0]?.response ||
+                         webhookData[0]?.message ||
+                         webhookData[0]?.output ||
+                         webhookData[0]?.text ||
+                         JSON.stringify(webhookData);
+    }
 
     return NextResponse.json({
-      response: randomResponse,
+      response: assistantResponse,
       success: true,
     });
   } catch (error) {
