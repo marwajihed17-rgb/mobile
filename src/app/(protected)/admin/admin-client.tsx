@@ -63,6 +63,10 @@ interface AdminClientProps {
     mobilyCount: number;
     salamDailyCount: number;
     mobilyDailyCount: number;
+    salamTotalWithBaseline: number;
+    mobilyTotalWithBaseline: number;
+    salamBaseline: number;
+    mobilyBaseline: number;
   };
 }
 

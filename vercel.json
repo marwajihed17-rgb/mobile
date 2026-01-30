@@ -4,6 +4,12 @@
   "installCommand": "npm install",
   "devCommand": "npm run dev",
   "regions": ["iad1"],
+  "crons": [
+    {
+      "path": "/api/cron/daily-reset",
+      "schedule": "30 0 * * *"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",

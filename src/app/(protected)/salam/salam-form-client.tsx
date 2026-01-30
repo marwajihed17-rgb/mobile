@@ -10,6 +10,7 @@ import {
   Hash,
   Globe,
   FileText,
+  Package,
   CheckCircle,
   AlertCircle
 } from 'lucide-react';
@@ -42,6 +43,7 @@ export function SalamFormClient({ profile }: SalamFormClientProps) {
     device_number: '',
     nationality: '',
     register_number: '',
+    package: '', // الباقة
   });
 
   const authUser = {
@@ -203,6 +205,7 @@ export function SalamFormClient({ profile }: SalamFormClientProps) {
           device_number: formData.device_number.trim(),
           nationality: formData.nationality.trim(),
           register_number: formData.register_number.trim(),
+          package: formData.package.trim() || null, // الباقة (optional)
         });
 
       if (insertError) {
@@ -236,6 +239,7 @@ export function SalamFormClient({ profile }: SalamFormClientProps) {
         device_number: '',
         nationality: '',
         register_number: '',
+        package: '',
       });
 
       // Scroll to top to show success message
@@ -368,6 +372,16 @@ export function SalamFormClient({ profile }: SalamFormClientProps) {
               onChange={handleChange}
               icon={<FileText className="w-5 h-5" />}
               required
+            />
+
+            <Input
+              type="text"
+              name="package"
+              label="الباقة"
+              placeholder="أدخل الباقة (اختياري)"
+              value={formData.package}
+              onChange={handleChange}
+              icon={<Package className="w-5 h-5" />}
             />
 
             <div className="flex gap-4 pt-4">
