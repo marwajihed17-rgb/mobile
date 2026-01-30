@@ -736,6 +736,7 @@ export function AdminClient({
                     <tr>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الإسم</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">المدخل</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الباقة</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">المشغل</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">رقم الهوية</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الجوال</th>
@@ -756,6 +757,7 @@ export function AdminClient({
                               {customer.created_by_username || customer.profiles?.username || customer.profiles?.full_name || 'غير محدد'}
                             </span>
                           </td>
+                          <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.package || '-'}</td>
                           <td className="px-4 py-3 whitespace-nowrap">
                             {customer.operator_name ? (
                               <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-amber-500/10 text-amber-500 border border-amber-500/30">
@@ -776,7 +778,7 @@ export function AdminClient({
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={10} className="px-4 py-8 text-center text-muted">
+                        <td colSpan={11} className="px-4 py-8 text-center text-muted">
                           لا توجد نتائج
                         </td>
                       </tr>
@@ -823,6 +825,7 @@ export function AdminClient({
                       <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الإسم</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">المدخل</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">المشغل</th>
+                      <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">السعر</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">رقم الهوية</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الجنسية</th>
                       <th className="text-right text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الجوال</th>
@@ -857,6 +860,9 @@ export function AdminClient({
                               <span className="text-muted text-sm">-</span>
                             )}
                           </td>
+                          <td className="px-4 py-3 text-muted whitespace-nowrap">
+                            {customer.price !== null && customer.price !== undefined ? `${customer.price} ر.س` : '-'}
+                          </td>
                           <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.identity_number}</td>
                           <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.nationality}</td>
                           <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.phone_number}</td>
@@ -874,7 +880,7 @@ export function AdminClient({
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={16} className="px-4 py-8 text-center text-muted">
+                        <td colSpan={17} className="px-4 py-8 text-center text-muted">
                           لا توجد نتائج
                         </td>
                       </tr>
