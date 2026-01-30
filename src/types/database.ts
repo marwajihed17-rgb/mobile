@@ -164,7 +164,7 @@ export interface StatsDailyBaseline {
 // Customer with user details (from view)
 export interface CustomerWithUser extends Customer {
   username: string | null;
-  email_address: string | null;
+  user_email: string | null;
   user_full_name: string | null;
   user_role: UserRole | null;
   user_status: UserStatus | null;
