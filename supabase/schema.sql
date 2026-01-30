@@ -171,7 +171,7 @@ CREATE TABLE IF NOT EXISTS public.salam_customers (
     user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     created_by_username TEXT,
 
-    -- Salam-specific fields (7 fields)
+    -- Salam-specific fields (8 fields including package)
     name TEXT NOT NULL,
     identity_number TEXT NOT NULL,
     phone_number TEXT NOT NULL,
@@ -179,6 +179,12 @@ CREATE TABLE IF NOT EXISTS public.salam_customers (
     device_number TEXT NOT NULL,
     nationality TEXT NOT NULL,
     register_number TEXT NOT NULL,
+    package TEXT, -- الباقة
+
+    -- Operator fields
+    operator_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+    operator_name TEXT,
+    activation_status TEXT CHECK (activation_status IN ('activated', 'activating')),
 
     -- System fields
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -204,13 +210,19 @@ CREATE TABLE IF NOT EXISTS public.mobily_customers (
     nationality TEXT NOT NULL,
     register_number TEXT NOT NULL,
 
-    -- Mobily-specific additional fields (6 more fields)
+    -- Mobily-specific additional fields (7 more fields including price)
     birth_date TEXT NOT NULL,
     identity_expiry_date TEXT NOT NULL,
     package TEXT NOT NULL,
     email TEXT NOT NULL,
     city TEXT NOT NULL,
     district TEXT NOT NULL,
+    price DECIMAL(10, 2), -- السعر
+
+    -- Operator fields
+    operator_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+    operator_name TEXT,
+    activation_status TEXT CHECK (activation_status IN ('activated', 'activating')),
 
     -- System fields
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -287,6 +299,19 @@ CREATE TABLE IF NOT EXISTS public.daily_customer_totals (
     CONSTRAINT daily_totals_date_project_unique UNIQUE (date, project)
 );
 
+-- Stats Daily Baseline Table (stores previous day's final totals for daily reset)
+CREATE TABLE IF NOT EXISTS public.stats_daily_baseline (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    date DATE NOT NULL,
+    project project_type NOT NULL,
+    baseline_total INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+
+    -- Unique constraint: one baseline per date per project
+    CONSTRAINT stats_baseline_date_project_unique UNIQUE (date, project)
+);
+
 -- ============================================
 -- INDEXES
 -- ============================================
@@ -349,6 +374,10 @@ CREATE INDEX IF NOT EXISTS idx_projects_is_active ON public.projects(is_active);
 -- Daily totals indexes
 CREATE INDEX IF NOT EXISTS idx_daily_totals_date ON public.daily_customer_totals(date DESC);
 CREATE INDEX IF NOT EXISTS idx_daily_totals_project ON public.daily_customer_totals(project);
+
+-- Stats baseline indexes
+CREATE INDEX IF NOT EXISTS idx_stats_baseline_date ON public.stats_daily_baseline(date DESC);
+CREATE INDEX IF NOT EXISTS idx_stats_baseline_project ON public.stats_daily_baseline(project);
 
 -- Profiles additional indexes
 CREATE INDEX IF NOT EXISTS idx_profiles_created_by ON public.profiles(created_by_id);
@@ -535,6 +564,82 @@ BEGIN
         FROM public.mobily_customers
         WHERE DATE(created_at) = CURRENT_DATE
     );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to get baseline total for a project for today (used for daily reset at 00:30)
+CREATE OR REPLACE FUNCTION public.get_stats_baseline(p_project project_type)
+RETURNS INTEGER AS $$
+DECLARE
+    v_baseline INTEGER;
+BEGIN
+    -- Get the most recent baseline (yesterday's final total becomes today's starting point)
+    SELECT baseline_total
+    INTO v_baseline
+    FROM public.stats_daily_baseline
+    WHERE project = p_project
+    ORDER BY date DESC
+    LIMIT 1;
+
+    RETURN COALESCE(v_baseline, 0);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to record daily baseline at midnight + 30 minutes
+-- This stores the previous day's final total as the baseline for the new day
+CREATE OR REPLACE FUNCTION public.record_daily_baseline()
+RETURNS void AS $$
+DECLARE
+    v_yesterday DATE;
+    v_today DATE;
+    v_salam_total INTEGER;
+    v_mobily_total INTEGER;
+    v_salam_previous_baseline INTEGER;
+    v_mobily_previous_baseline INTEGER;
+BEGIN
+    v_yesterday := CURRENT_DATE - INTERVAL '1 day';
+    v_today := CURRENT_DATE;
+
+    -- Get previous baseline (to continue counting from)
+    SELECT COALESCE(baseline_total, 0) INTO v_salam_previous_baseline
+    FROM public.stats_daily_baseline
+    WHERE project = 'salam'
+    ORDER BY date DESC
+    LIMIT 1;
+
+    SELECT COALESCE(baseline_total, 0) INTO v_mobily_previous_baseline
+    FROM public.stats_daily_baseline
+    WHERE project = 'mobily'
+    ORDER BY date DESC
+    LIMIT 1;
+
+    -- Count yesterday's records
+    SELECT COUNT(*)::INTEGER INTO v_salam_total
+    FROM public.salam_customers
+    WHERE DATE(created_at) = v_yesterday;
+
+    SELECT COUNT(*)::INTEGER INTO v_mobily_total
+    FROM public.mobily_customers
+    WHERE DATE(created_at) = v_yesterday;
+
+    -- Calculate new baseline: previous baseline + yesterday's count
+    v_salam_total := COALESCE(v_salam_previous_baseline, 0) + COALESCE(v_salam_total, 0);
+    v_mobily_total := COALESCE(v_mobily_previous_baseline, 0) + COALESCE(v_mobily_total, 0);
+
+    -- Insert or update baseline for today
+    INSERT INTO public.stats_daily_baseline (date, project, baseline_total)
+    VALUES (v_today, 'salam', v_salam_total)
+    ON CONFLICT (date, project)
+    DO UPDATE SET
+        baseline_total = v_salam_total,
+        updated_at = NOW();
+
+    INSERT INTO public.stats_daily_baseline (date, project, baseline_total)
+    VALUES (v_today, 'mobily', v_mobily_total)
+    ON CONFLICT (date, project)
+    DO UPDATE SET
+        baseline_total = v_mobily_total,
+        updated_at = NOW();
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -824,6 +929,13 @@ CREATE TRIGGER update_daily_totals_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION public.update_updated_at_column();
 
+-- Trigger to auto-update updated_at on stats_daily_baseline
+DROP TRIGGER IF EXISTS update_stats_baseline_updated_at ON public.stats_daily_baseline;
+CREATE TRIGGER update_stats_baseline_updated_at
+    BEFORE UPDATE ON public.stats_daily_baseline
+    FOR EACH ROW
+    EXECUTE FUNCTION public.update_updated_at_column();
+
 -- Trigger to update daily totals when customer is added/updated/deleted
 DROP TRIGGER IF EXISTS trigger_update_daily_totals ON public.customers;
 CREATE TRIGGER trigger_update_daily_totals
@@ -856,6 +968,7 @@ ALTER TABLE public.mobily_customers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.customers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.daily_customer_totals ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.stats_daily_baseline ENABLE ROW LEVEL SECURITY;
 
 -- ============================================
 -- PROFILES POLICIES
@@ -1255,6 +1368,24 @@ CREATE POLICY "System can update daily totals"
     USING (true);
 
 -- ============================================
+-- STATS BASELINE POLICIES
+-- ============================================
+
+-- All authenticated users can view stats baseline
+CREATE POLICY "Users can view stats baseline"
+    ON public.stats_daily_baseline FOR SELECT
+    USING (auth.uid() IS NOT NULL);
+
+-- System can insert/update stats baseline (via cron/API)
+CREATE POLICY "System can insert stats baseline"
+    ON public.stats_daily_baseline FOR INSERT
+    WITH CHECK (true);
+
+CREATE POLICY "System can update stats baseline"
+    ON public.stats_daily_baseline FOR UPDATE
+    USING (true);
+
+-- ============================================
 -- STORAGE BUCKETS
 -- ============================================
 
@@ -1353,11 +1484,14 @@ GRANT SELECT ON public.customers_with_users TO authenticated;
 GRANT ALL ON public.customers TO authenticated;
 GRANT ALL ON public.projects TO authenticated;
 GRANT ALL ON public.daily_customer_totals TO authenticated;
+GRANT ALL ON public.stats_daily_baseline TO authenticated;
 
 -- Grant execute permissions on new functions
 GRANT EXECUTE ON FUNCTION public.check_customer_exists(TEXT, project_type) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_daily_customer_count(project_type) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_customer_stats_by_date_range(DATE, DATE) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_stats_baseline(project_type) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.record_daily_baseline() TO authenticated;
 
 -- Grant necessary permissions to anon users (for public data if needed)
 GRANT USAGE ON SCHEMA public TO anon;

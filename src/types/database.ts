@@ -38,7 +38,7 @@ export interface UserSettings {
   updated_at: string;
 }
 
-// Salam Customer (7 fields + system fields)
+// Salam Customer (8 fields + system fields)
 export interface SalamCustomer {
   id: string;
   user_id: string;
@@ -50,6 +50,7 @@ export interface SalamCustomer {
   device_number: string;
   nationality: string;
   register_number: string;
+  package: string | null; // الباقة
   operator_id: string | null; // المشغل - assigned operator
   operator_name: string | null; // المشغل name for display
   activation_status: ActivationStatus | null; // حالة التفعيل
@@ -57,7 +58,7 @@ export interface SalamCustomer {
   updated_at: string;
 }
 
-// Mobily Customer (13 fields + system fields)
+// Mobily Customer (14 fields + system fields)
 export interface MobilyCustomer {
   id: string;
   user_id: string;
@@ -77,6 +78,7 @@ export interface MobilyCustomer {
   email: string;
   city: string;
   district: string;
+  price: number | null; // السعر
   operator_id: string | null; // المشغل - assigned operator
   operator_name: string | null; // المشغل name for display
   activation_status: ActivationStatus | null; // حالة التفعيل
@@ -149,6 +151,16 @@ export interface DailyCustomerTotal {
   updated_at: string;
 }
 
+// Stats Daily Baseline (for daily reset at 00:30)
+export interface StatsDailyBaseline {
+  id: string;
+  date: string;
+  project: ProjectType;
+  baseline_total: number;
+  created_at: string;
+  updated_at: string;
+}
+
 // Customer with user details (from view)
 export interface CustomerWithUser extends Customer {
   username: string | null;
@@ -208,6 +220,11 @@ export interface Database {
         Row: DailyCustomerTotal;
         Insert: Omit<DailyCustomerTotal, 'id' | 'created_at' | 'updated_at'>;
         Update: Partial<Omit<DailyCustomerTotal, 'id' | 'created_at'>>;
+      };
+      stats_daily_baseline: {
+        Row: StatsDailyBaseline;
+        Insert: Omit<StatsDailyBaseline, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<StatsDailyBaseline, 'id' | 'created_at'>>;
       };
     };
     Views: {
@@ -278,6 +295,15 @@ export interface Database {
       get_customer_stats_by_date_range: {
         Args: { p_start_date: string; p_end_date?: string };
         Returns: { date: string; salam_count: number; mobily_count: number; total_count: number }[];
+      };
+      // Stats baseline functions for daily reset
+      get_stats_baseline: {
+        Args: { p_project: ProjectType };
+        Returns: number;
+      };
+      record_daily_baseline: {
+        Args: Record<string, never>;
+        Returns: void;
       };
     };
     Enums: {

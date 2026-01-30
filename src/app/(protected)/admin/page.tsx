@@ -105,6 +105,28 @@ export default async function AdminPage() {
   const salamDailyCount = salamDailyCountData || 0;
   const mobilyDailyCount = mobilyDailyCountData || 0;
 
+  // Get baseline totals for daily reset
+  const { data: salamBaselineResult } = await supabase
+    .from('stats_daily_baseline')
+    .select('baseline_total')
+    .eq('project', 'salam')
+    .order('date', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const { data: mobilyBaselineResult } = await supabase
+    .from('stats_daily_baseline')
+    .select('baseline_total')
+    .eq('project', 'mobily')
+    .order('date', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const salamBaseline = salamBaselineResult?.baseline_total || 0;
+  const mobilyBaseline = mobilyBaselineResult?.baseline_total || 0;
+  const salamTotalWithBaseline = salamBaseline + salamDailyCount;
+  const mobilyTotalWithBaseline = mobilyBaseline + mobilyDailyCount;
+
   // Type assertion for customers with joined profiles
   type CustomerWithProfile = SalamCustomer & {
     profiles?: {
@@ -135,6 +157,10 @@ export default async function AdminPage() {
         mobilyCount,
         salamDailyCount,
         mobilyDailyCount,
+        salamTotalWithBaseline,
+        mobilyTotalWithBaseline,
+        salamBaseline,
+        mobilyBaseline,
       }}
     />
   );

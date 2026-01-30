@@ -17,6 +17,7 @@ import type { Profile, SalamCustomer, MobilyCustomer, ActivationStatus } from '@
 interface CustomerPendingChanges {
   operator_id: string | null;
   activation_status: ActivationStatus | null;
+  price?: number | null; // السعر - only for Mobily
 }
 
 // Success Modal Component
@@ -85,7 +86,7 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
   const [successModalMessage, setSuccessModalMessage] = useState('');
 
   // Saved state - track recently saved values for optimistic UI update
-  const [savedValues, setSavedValues] = useState<Record<string, { operator_id: string | null; operator_name: string | null; activation_status: ActivationStatus | null }>>({});
+  const [savedValues, setSavedValues] = useState<Record<string, { operator_id: string | null; operator_name: string | null; activation_status: ActivationStatus | null; price?: number | null }>>({});
 
   // Real-time subscriptions for both customer tables
   // Pass userId and isAdmin to properly filter and fetch fresh data
@@ -220,6 +221,19 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
     }));
   }, []);
 
+  // Handle pending change for price (Mobily only)
+  const handlePriceChange = useCallback((customerId: string, price: number | null) => {
+    setPendingChanges(prev => ({
+      ...prev,
+      [customerId]: {
+        ...prev[customerId],
+        operator_id: prev[customerId]?.operator_id ?? null,
+        activation_status: prev[customerId]?.activation_status ?? null,
+        price: price,
+      }
+    }));
+  }, []);
+
   // Reset pending changes for a customer (clear selections)
   const handleResetChanges = useCallback((customerId: string) => {
     setPendingChanges(prev => {
@@ -241,8 +255,11 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
     const changes = pendingChanges[customerId];
     if (!changes) return;
 
-    // Validate that at least one field is selected
-    if (!changes.operator_id && !changes.activation_status) {
+    // Validate that at least one field is selected (price is optional for Mobily)
+    const hasOperatorOrStatus = changes.operator_id !== null || changes.activation_status !== null;
+    const hasPriceChange = projectType === 'mobily' && changes.price !== undefined;
+
+    if (!hasOperatorOrStatus && !hasPriceChange) {
       setError('الرجاء اختيار المشغل أو حالة التفعيل قبل الحفظ');
       setTimeout(() => setError(''), 3000);
       return;
@@ -257,13 +274,17 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
       const operatorName = getOperatorName(changes.operator_id);
 
       // Build update object with only non-null values
-      const updateData: Record<string, string | null> = {};
+      const updateData: Record<string, string | number | null> = {};
       if (changes.operator_id !== null) {
         updateData.operator_id = changes.operator_id;
         updateData.operator_name = operatorName;
       }
       if (changes.activation_status !== null) {
         updateData.activation_status = changes.activation_status;
+      }
+      // Add price for Mobily customers
+      if (projectType === 'mobily' && changes.price !== undefined) {
+        updateData.price = changes.price;
       }
 
       const { error: updateError } = await supabase
@@ -288,6 +309,7 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
           operator_id: changes.operator_id,
           operator_name: operatorName,
           activation_status: changes.activation_status,
+          price: changes.price,
         }
       }));
 
@@ -323,16 +345,21 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
   }, [editingCustomerId, pendingChanges]);
 
   // Start editing a customer
-  const startEditing = useCallback((customerId: string, customer: SalamCustomer | MobilyCustomer) => {
+  const startEditing = useCallback((customerId: string, customer: SalamCustomer | MobilyCustomer, projectType: 'salam' | 'mobily' = 'salam') => {
     setEditingCustomerId(customerId);
     // Initialize pending changes with effective values (saved or database) so user can modify them
     const effectiveOperatorId = savedValues[customerId]?.operator_id ?? customer.operator_id ?? null;
     const effectiveActivationStatus = savedValues[customerId]?.activation_status ?? customer.activation_status ?? null;
+    const effectivePrice = projectType === 'mobily'
+      ? (savedValues[customerId]?.price ?? (customer as MobilyCustomer).price ?? null)
+      : undefined;
+
     setPendingChanges(prev => ({
       ...prev,
       [customerId]: {
         operator_id: effectiveOperatorId,
         activation_status: effectiveActivationStatus,
+        ...(projectType === 'mobily' && { price: effectivePrice }),
       }
     }));
   }, [savedValues]);
@@ -366,6 +393,23 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
   const getEffectiveActivationStatus = useCallback((customer: SalamCustomer | MobilyCustomer): ActivationStatus | null => {
     // First check savedValues (optimistic update), then database value
     return savedValues[customer.id]?.activation_status ?? customer.activation_status ?? null;
+  }, [savedValues]);
+
+  // Get current price (pending, saved, or database) - Mobily only
+  const getCurrentPrice = useCallback((customer: MobilyCustomer): number | null => {
+    return pendingChanges[customer.id]?.price ?? savedValues[customer.id]?.price ?? customer.price ?? null;
+  }, [pendingChanges, savedValues]);
+
+  // Get effective price (saved value or database value) - Mobily only
+  const getEffectivePrice = useCallback((customer: MobilyCustomer): number | null => {
+    // First check savedValues (optimistic update), then database value
+    return savedValues[customer.id]?.price ?? customer.price ?? null;
+  }, [savedValues]);
+
+  // Check if price is saved (to determine if we should show checkmark for non-admin)
+  const isPriceSaved = useCallback((customer: MobilyCustomer): boolean => {
+    return (savedValues[customer.id]?.price !== undefined && savedValues[customer.id]?.price !== null) ||
+           (customer.price !== undefined && customer.price !== null);
   }, [savedValues]);
 
   // Connection status indicator
@@ -525,6 +569,7 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                         <tr>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الإسم</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">المدخل</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الباقة</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">رقم الهوية</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الجنسية</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">رقم الجوال</th>
@@ -546,6 +591,7 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                                 {customer.created_by_username || 'غير محدد'}
                               </span>
                             </td>
+                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.package || '-'}</td>
                             <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.identity_number}</td>
                             <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.nationality}</td>
                             <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.phone_number}</td>
@@ -723,6 +769,7 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">رقم السجل</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">التاريخ</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">المشغل</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">السعر</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">حالة التفعيل</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الإجراءات</th>
                         </tr>
@@ -752,7 +799,7 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                             <td className="px-4 py-3 whitespace-nowrap">
                               {getEffectiveOperatorName(customer) && !isEditMode(customer.id) ? (
                                 <button
-                                  onClick={() => startEditing(customer.id, customer)}
+                                  onClick={() => startEditing(customer.id, customer, 'mobily')}
                                   className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20 transition-colors cursor-pointer"
                                   title="انقر للتعديل"
                                 >
@@ -774,10 +821,53 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                                 </select>
                               )}
                             </td>
+                            {/* السعر column - hidden for non-admin after saving */}
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              {isAdmin ? (
+                                // Admin always sees the price value
+                                isEditMode(customer.id) ? (
+                                  <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    value={getCurrentPrice(customer) ?? ''}
+                                    onChange={(e) => handlePriceChange(customer.id, e.target.value ? parseFloat(e.target.value) : null)}
+                                    placeholder="السعر"
+                                    className="px-2 py-1 text-xs bg-card border border-card-border rounded text-foreground focus:outline-none focus:border-primary w-20"
+                                    dir="ltr"
+                                  />
+                                ) : (
+                                  <span className="text-muted">
+                                    {getEffectivePrice(customer) !== null ? `${getEffectivePrice(customer)} ر.س` : '-'}
+                                  </span>
+                                )
+                              ) : (
+                                // Non-admin: show input when editing, checkmark when saved, input when not saved
+                                isEditMode(customer.id) ? (
+                                  <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    value={getCurrentPrice(customer) ?? ''}
+                                    onChange={(e) => handlePriceChange(customer.id, e.target.value ? parseFloat(e.target.value) : null)}
+                                    placeholder="السعر"
+                                    className="px-2 py-1 text-xs bg-card border border-card-border rounded text-foreground focus:outline-none focus:border-primary w-20"
+                                    dir="ltr"
+                                  />
+                                ) : isPriceSaved(customer) ? (
+                                  // Show checkmark when price is saved for non-admin
+                                  <span className="inline-flex items-center justify-center w-6 h-6 bg-green-500/10 text-green-600 rounded-full">
+                                    <Check className="w-4 h-4" />
+                                  </span>
+                                ) : (
+                                  <span className="text-muted">-</span>
+                                )
+                              )}
+                            </td>
                             <td className="px-4 py-3 whitespace-nowrap">
                               {getEffectiveActivationStatus(customer) && !isEditMode(customer.id) ? (
                                 <button
-                                  onClick={() => startEditing(customer.id, customer)}
+                                  onClick={() => startEditing(customer.id, customer, 'mobily')}
                                   className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium cursor-pointer transition-colors ${
                                     getEffectiveActivationStatus(customer) === 'activated'
                                       ? 'bg-green-500/10 text-green-600 border border-green-500/30 hover:bg-green-500/20'
