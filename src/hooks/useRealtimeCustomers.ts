@@ -19,9 +19,10 @@ export function useRealtimeSalamCustomers<T extends SalamCustomer>(initialData: 
     setIsLoading(true);
     try {
       const supabase = getSupabaseClient();
+      // Include profiles join to get supervisor_name for statistics
       let query = supabase
         .from('salam_customers')
-        .select('*')
+        .select('*, profiles(username, full_name, email, supervisor_name)')
         .order('created_at', { ascending: false });
 
       // Filter by user if not admin
@@ -68,26 +69,11 @@ export function useRealtimeSalamCustomers<T extends SalamCustomer>(initialData: 
           console.log('Salam customer change received:', payload);
 
           if (payload.eventType === 'INSERT') {
-            const newCustomer = payload.new as T;
-            // Only add if it matches user filter (or user is admin)
-            if (isAdmin || !userId || newCustomer.user_id === userId) {
-              setCustomers((prev) => {
-                // Avoid duplicates
-                if (prev.some(c => c.id === newCustomer.id)) {
-                  return prev;
-                }
-                return [newCustomer, ...prev];
-              });
-              scrollToTop();
-            }
+            // Refetch to get the profile data with supervisor_name
+            fetchCustomers();
           } else if (payload.eventType === 'UPDATE') {
-            const updatedCustomer = payload.new as T;
-            setCustomers((prev) =>
-              prev.map((customer) =>
-                customer.id === updatedCustomer.id ? updatedCustomer : customer
-              )
-            );
-            scrollToTop();
+            // Refetch to get the updated data with profile
+            fetchCustomers();
           } else if (payload.eventType === 'DELETE') {
             const deletedCustomer = payload.old as T;
             setCustomers((prev) =>
@@ -106,7 +92,7 @@ export function useRealtimeSalamCustomers<T extends SalamCustomer>(initialData: 
       console.log('Unsubscribing from salam_customers');
       supabase.removeChannel(channel);
     };
-  }, [userId, isAdmin]);
+  }, [userId, isAdmin, fetchCustomers]);
 
   return { customers, isConnected, isLoading, refetch: fetchCustomers };
 }
@@ -125,9 +111,10 @@ export function useRealtimeMobilyCustomers<T extends MobilyCustomer>(initialData
     setIsLoading(true);
     try {
       const supabase = getSupabaseClient();
+      // Include profiles join to get supervisor_name for statistics
       let query = supabase
         .from('mobily_customers')
-        .select('*')
+        .select('*, profiles(username, full_name, email, supervisor_name)')
         .order('created_at', { ascending: false });
 
       // Filter by user if not admin
@@ -174,26 +161,11 @@ export function useRealtimeMobilyCustomers<T extends MobilyCustomer>(initialData
           console.log('Mobily customer change received:', payload);
 
           if (payload.eventType === 'INSERT') {
-            const newCustomer = payload.new as T;
-            // Only add if it matches user filter (or user is admin)
-            if (isAdmin || !userId || newCustomer.user_id === userId) {
-              setCustomers((prev) => {
-                // Avoid duplicates
-                if (prev.some(c => c.id === newCustomer.id)) {
-                  return prev;
-                }
-                return [newCustomer, ...prev];
-              });
-              scrollToTop();
-            }
+            // Refetch to get the profile data with supervisor_name
+            fetchCustomers();
           } else if (payload.eventType === 'UPDATE') {
-            const updatedCustomer = payload.new as T;
-            setCustomers((prev) =>
-              prev.map((customer) =>
-                customer.id === updatedCustomer.id ? updatedCustomer : customer
-              )
-            );
-            scrollToTop();
+            // Refetch to get the updated data with profile
+            fetchCustomers();
           } else if (payload.eventType === 'DELETE') {
             const deletedCustomer = payload.old as T;
             setCustomers((prev) =>
@@ -212,7 +184,7 @@ export function useRealtimeMobilyCustomers<T extends MobilyCustomer>(initialData
       console.log('Unsubscribing from mobily_customers');
       supabase.removeChannel(channel);
     };
-  }, [userId, isAdmin]);
+  }, [userId, isAdmin, fetchCustomers]);
 
   return { customers, isConnected, isLoading, refetch: fetchCustomers };
 }
