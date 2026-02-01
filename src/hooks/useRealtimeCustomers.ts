@@ -6,11 +6,41 @@ import { scrollToTop } from '@/utils/scroll';
 import type { SalamCustomer, MobilyCustomer } from '@/types/database';
 
 /**
+ * Helper function to check if a Salam customer entry is complete
+ * (has operator_id AND activation_status)
+ */
+function isSalamEntryComplete(customer: SalamCustomer): boolean {
+  return customer.operator_id !== null &&
+         customer.operator_id !== undefined &&
+         customer.activation_status !== null &&
+         customer.activation_status !== undefined;
+}
+
+/**
+ * Helper function to check if a Mobily customer entry is complete
+ * (has operator_id AND activation_status AND price)
+ */
+function isMobilyEntryComplete(customer: MobilyCustomer): boolean {
+  return customer.operator_id !== null &&
+         customer.operator_id !== undefined &&
+         customer.activation_status !== null &&
+         customer.activation_status !== undefined &&
+         customer.price !== null &&
+         customer.price !== undefined;
+}
+
+/**
  * Real-time hook for Salam customers
  * Fetches fresh data on mount and automatically syncs with database changes
+ * For non-admin users/operators: hides entries where operator_id AND activation_status are both set
  */
 export function useRealtimeSalamCustomers<T extends SalamCustomer>(initialData: T[], userId?: string, isAdmin?: boolean) {
-  const [customers, setCustomers] = useState<T[]>(initialData);
+  // Filter initial data for non-admins to hide completed entries
+  const filteredInitialData = isAdmin
+    ? initialData
+    : initialData.filter(customer => !isSalamEntryComplete(customer));
+
+  const [customers, setCustomers] = useState<T[]>(filteredInitialData);
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -38,7 +68,11 @@ export function useRealtimeSalamCustomers<T extends SalamCustomer>(initialData: 
       }
 
       if (data) {
-        setCustomers(data as T[]);
+        // For non-admin users/operators, filter out entries where operator_id AND activation_status are both set
+        const filteredData = isAdmin
+          ? data
+          : data.filter(customer => !isSalamEntryComplete(customer as SalamCustomer));
+        setCustomers(filteredData as T[]);
       }
     } catch (err) {
       console.error('Error fetching salam customers:', err);
@@ -100,9 +134,15 @@ export function useRealtimeSalamCustomers<T extends SalamCustomer>(initialData: 
 /**
  * Real-time hook for Mobily customers
  * Fetches fresh data on mount and automatically syncs with database changes
+ * For non-admin users/operators: hides entries where operator_id AND activation_status AND price are all set
  */
 export function useRealtimeMobilyCustomers<T extends MobilyCustomer>(initialData: T[], userId?: string, isAdmin?: boolean) {
-  const [customers, setCustomers] = useState<T[]>(initialData);
+  // Filter initial data for non-admins to hide completed entries
+  const filteredInitialData = isAdmin
+    ? initialData
+    : initialData.filter(customer => !isMobilyEntryComplete(customer));
+
+  const [customers, setCustomers] = useState<T[]>(filteredInitialData);
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -130,7 +170,11 @@ export function useRealtimeMobilyCustomers<T extends MobilyCustomer>(initialData
       }
 
       if (data) {
-        setCustomers(data as T[]);
+        // For non-admin users/operators, filter out entries where operator_id AND activation_status AND price are all set
+        const filteredData = isAdmin
+          ? data
+          : data.filter(customer => !isMobilyEntryComplete(customer as MobilyCustomer));
+        setCustomers(filteredData as T[]);
       }
     } catch (err) {
       console.error('Error fetching mobily customers:', err);

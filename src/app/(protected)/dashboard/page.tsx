@@ -29,6 +29,9 @@ export default async function DashboardPage() {
 
   // Get recent customers from Salam project (last 5 for current user)
   // For admins, show all recent customers
+  // For non-admins (users/operators): hide entries where all required fields are filled
+  // - Salam: hide if operator_id AND activation_status are both set
+  // - Mobily: hide if operator_id AND activation_status AND price are all set
   const isAdmin = profile.role === 'admin' || profile.role === 'super_admin';
 
   let salamQuery = supabase
@@ -43,10 +46,17 @@ export default async function DashboardPage() {
     .order('created_at', { ascending: false })
     .limit(5);
 
-  // Non-admin users only see their own entries
+  // Non-admin users only see their own entries and incomplete entries
   if (!isAdmin) {
     salamQuery = salamQuery.eq('user_id', user.id);
     mobilyQuery = mobilyQuery.eq('user_id', user.id);
+
+    // Filter out completed entries for non-admins
+    // For Salam: show only entries where operator_id OR activation_status is null
+    salamQuery = salamQuery.or('operator_id.is.null,activation_status.is.null');
+
+    // For Mobily: show only entries where operator_id OR activation_status OR price is null
+    mobilyQuery = mobilyQuery.or('operator_id.is.null,activation_status.is.null,price.is.null');
   }
 
   const { data: salamCustomers } = await salamQuery;

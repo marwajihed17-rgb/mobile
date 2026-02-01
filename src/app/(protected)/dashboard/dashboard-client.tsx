@@ -88,6 +88,9 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
   // Saved state - track recently saved values for optimistic UI update
   const [savedValues, setSavedValues] = useState<Record<string, { operator_id: string | null; operator_name: string | null; activation_status: ActivationStatus | null; price?: number | null }>>({});
 
+  // Track rows being removed (for animation)
+  const [removingRows, setRemovingRows] = useState<Set<string>>(new Set());
+
   // Real-time subscriptions for both customer tables
   // Pass userId and isAdmin to properly filter and fetch fresh data
   const isAdmin = profile.role === 'admin' || profile.role === 'super_admin';
@@ -124,15 +127,18 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
   }, [mobilyCustomers, mobilySearchQuery]);
 
   // Show only 5 initially, or all if expanded/searching
+  // Also filter out rows that are being removed (animation in progress)
   const displayedSalamCustomers = useMemo(() => {
-    if (salamSearchQuery || salamExpanded) return filteredSalamCustomers;
-    return filteredSalamCustomers.slice(0, 5);
-  }, [filteredSalamCustomers, salamSearchQuery, salamExpanded]);
+    let customers = filteredSalamCustomers.filter(c => !removingRows.has(c.id));
+    if (salamSearchQuery || salamExpanded) return customers;
+    return customers.slice(0, 5);
+  }, [filteredSalamCustomers, salamSearchQuery, salamExpanded, removingRows]);
 
   const displayedMobilyCustomers = useMemo(() => {
-    if (mobilySearchQuery || mobilyExpanded) return filteredMobilyCustomers;
-    return filteredMobilyCustomers.slice(0, 5);
-  }, [filteredMobilyCustomers, mobilySearchQuery, mobilyExpanded]);
+    let customers = filteredMobilyCustomers.filter(c => !removingRows.has(c.id));
+    if (mobilySearchQuery || mobilyExpanded) return customers;
+    return customers.slice(0, 5);
+  }, [filteredMobilyCustomers, mobilySearchQuery, mobilyExpanded, removingRows]);
 
   // Legacy variables for backward compatibility
   const recentSalam = displayedSalamCustomers;
@@ -251,7 +257,7 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
   }, [operators]);
 
   // Submit customer changes
-  const handleSubmitCustomerChanges = useCallback(async (customerId: string, projectType: 'salam' | 'mobily') => {
+  const handleSubmitCustomerChanges = useCallback(async (customerId: string, projectType: 'salam' | 'mobily', customer?: SalamCustomer | MobilyCustomer) => {
     const changes = pendingChanges[customerId];
     if (!changes) return;
 
@@ -321,9 +327,40 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
       });
       setEditingCustomerId(null);
 
-      // Show success modal
-      setSuccessModalMessage('تم حفظ بيانات العميل بنجاح');
-      setShowSuccessModal(true);
+      // Check if entry is now complete and should be hidden from non-admins
+      // For Salam: operator_id AND activation_status must both be set
+      // For Mobily: operator_id AND activation_status AND price must all be set
+      let isEntryComplete = false;
+      if (customer) {
+        if (projectType === 'salam') {
+          const finalOperatorId = changes.operator_id !== null ? changes.operator_id : customer.operator_id;
+          const finalActivationStatus = changes.activation_status !== null ? changes.activation_status : customer.activation_status;
+          isEntryComplete = finalOperatorId !== null && finalOperatorId !== undefined &&
+                          finalActivationStatus !== null && finalActivationStatus !== undefined;
+        } else {
+          const mobilyCustomer = customer as MobilyCustomer;
+          const finalOperatorId = changes.operator_id !== null ? changes.operator_id : mobilyCustomer.operator_id;
+          const finalActivationStatus = changes.activation_status !== null ? changes.activation_status : mobilyCustomer.activation_status;
+          const finalPrice = changes.price !== undefined ? changes.price : mobilyCustomer.price;
+          isEntryComplete = finalOperatorId !== null && finalOperatorId !== undefined &&
+                          finalActivationStatus !== null && finalActivationStatus !== undefined &&
+                          finalPrice !== null && finalPrice !== undefined;
+        }
+      }
+
+      // If entry is complete and user is not admin, trigger removal animation
+      if (isEntryComplete && !isAdmin) {
+        // Add to removing rows (triggers fade-out animation)
+        setRemovingRows(prev => new Set(prev).add(customerId));
+
+        // Show success modal with special message
+        setSuccessModalMessage('تم حفظ بيانات العميل بنجاح وإزالته من القائمة');
+        setShowSuccessModal(true);
+      } else {
+        // Show regular success modal
+        setSuccessModalMessage('تم حفظ بيانات العميل بنجاح');
+        setShowSuccessModal(true);
+      }
     } catch (err) {
       console.error('Save error:', err);
       const errorMessage = err instanceof Error ? err.message : 'حدث خطأ أثناء الحفظ';
@@ -332,7 +369,7 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
     } finally {
       setSavingCustomerId(null);
     }
-  }, [pendingChanges, getOperatorName]);
+  }, [pendingChanges, getOperatorName, isAdmin]);
 
   // Check if customer has pending changes
   const hasPendingChanges = useCallback((customerId: string): boolean => {
@@ -410,6 +447,24 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
   const isPriceSaved = useCallback((customer: MobilyCustomer): boolean => {
     return (savedValues[customer.id]?.price !== undefined && savedValues[customer.id]?.price !== null) ||
            (customer.price !== undefined && customer.price !== null);
+  }, [savedValues]);
+
+  // Check if a Salam entry is complete (has operator_id AND activation_status)
+  const isSalamEntryComplete = useCallback((customer: SalamCustomer, pendingOperatorId?: string | null, pendingActivationStatus?: ActivationStatus | null): boolean => {
+    const operatorId = pendingOperatorId !== undefined ? pendingOperatorId : (savedValues[customer.id]?.operator_id ?? customer.operator_id);
+    const activationStatus = pendingActivationStatus !== undefined ? pendingActivationStatus : (savedValues[customer.id]?.activation_status ?? customer.activation_status);
+    return operatorId !== null && operatorId !== undefined &&
+           activationStatus !== null && activationStatus !== undefined;
+  }, [savedValues]);
+
+  // Check if a Mobily entry is complete (has operator_id AND activation_status AND price)
+  const isMobilyEntryComplete = useCallback((customer: MobilyCustomer, pendingOperatorId?: string | null, pendingActivationStatus?: ActivationStatus | null, pendingPrice?: number | null): boolean => {
+    const operatorId = pendingOperatorId !== undefined ? pendingOperatorId : (savedValues[customer.id]?.operator_id ?? customer.operator_id);
+    const activationStatus = pendingActivationStatus !== undefined ? pendingActivationStatus : (savedValues[customer.id]?.activation_status ?? customer.activation_status);
+    const price = pendingPrice !== undefined ? pendingPrice : (savedValues[customer.id]?.price ?? customer.price);
+    return operatorId !== null && operatorId !== undefined &&
+           activationStatus !== null && activationStatus !== undefined &&
+           price !== null && price !== undefined;
   }, [savedValues]);
 
   // Connection status indicator
@@ -655,7 +710,7 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                                 {isEditMode(customer.id) && (
                                   <>
                                     <button
-                                      onClick={() => handleSubmitCustomerChanges(customer.id, 'salam')}
+                                      onClick={() => handleSubmitCustomerChanges(customer.id, 'salam', customer)}
                                       disabled={savingCustomerId === customer.id}
                                       className="px-3 py-1 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                                     >
@@ -694,7 +749,7 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                     </table>
                   </div>
                   {/* Show more/less button */}
-                  {!salamSearchQuery && filteredSalamCustomers.length > 5 && (
+                  {!salamSearchQuery && filteredSalamCustomers.filter(c => !removingRows.has(c.id)).length > 5 && (
                     <div className="border-t border-card-border p-3 text-center">
                       <button
                         onClick={() => setSalamExpanded(!salamExpanded)}
@@ -895,7 +950,7 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                                 {isEditMode(customer.id) && (
                                   <>
                                     <button
-                                      onClick={() => handleSubmitCustomerChanges(customer.id, 'mobily')}
+                                      onClick={() => handleSubmitCustomerChanges(customer.id, 'mobily', customer)}
                                       disabled={savingCustomerId === customer.id}
                                       className="px-3 py-1 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                                     >
@@ -934,7 +989,7 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                     </table>
                   </div>
                   {/* Show more/less button */}
-                  {!mobilySearchQuery && filteredMobilyCustomers.length > 5 && (
+                  {!mobilySearchQuery && filteredMobilyCustomers.filter(c => !removingRows.has(c.id)).length > 5 && (
                     <div className="border-t border-card-border p-3 text-center">
                       <button
                         onClick={() => setMobilyExpanded(!mobilyExpanded)}
