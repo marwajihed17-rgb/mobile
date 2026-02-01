@@ -328,22 +328,23 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
       setEditingCustomerId(null);
 
       // Check if entry is now complete and should be hidden from non-admins
-      // For Salam: operator_id AND activation_status must both be set
-      // For Mobily: operator_id AND activation_status AND price must all be set
+      // For Salam: operator_id AND activation_status='activated' must both be set
+      // For Mobily: operator_id AND activation_status='activated' AND price must all be set
+      // Note: entries with 'activating' status are NOT complete and remain visible
       let isEntryComplete = false;
       if (customer) {
         if (projectType === 'salam') {
           const finalOperatorId = changes.operator_id !== null ? changes.operator_id : customer.operator_id;
           const finalActivationStatus = changes.activation_status !== null ? changes.activation_status : customer.activation_status;
           isEntryComplete = finalOperatorId !== null && finalOperatorId !== undefined &&
-                          finalActivationStatus !== null && finalActivationStatus !== undefined;
+                          finalActivationStatus === 'activated';
         } else {
           const mobilyCustomer = customer as MobilyCustomer;
           const finalOperatorId = changes.operator_id !== null ? changes.operator_id : mobilyCustomer.operator_id;
           const finalActivationStatus = changes.activation_status !== null ? changes.activation_status : mobilyCustomer.activation_status;
           const finalPrice = changes.price !== undefined ? changes.price : mobilyCustomer.price;
           isEntryComplete = finalOperatorId !== null && finalOperatorId !== undefined &&
-                          finalActivationStatus !== null && finalActivationStatus !== undefined &&
+                          finalActivationStatus === 'activated' &&
                           finalPrice !== null && finalPrice !== undefined;
         }
       }
@@ -449,23 +450,34 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
            (customer.price !== undefined && customer.price !== null);
   }, [savedValues]);
 
-  // Check if a Salam entry is complete (has operator_id AND activation_status)
+  // Check if a Salam entry is complete (has operator_id AND activation_status is 'activated')
+  // Note: entries with 'activating' status are NOT complete and remain visible
   const isSalamEntryComplete = useCallback((customer: SalamCustomer, pendingOperatorId?: string | null, pendingActivationStatus?: ActivationStatus | null): boolean => {
     const operatorId = pendingOperatorId !== undefined ? pendingOperatorId : (savedValues[customer.id]?.operator_id ?? customer.operator_id);
     const activationStatus = pendingActivationStatus !== undefined ? pendingActivationStatus : (savedValues[customer.id]?.activation_status ?? customer.activation_status);
     return operatorId !== null && operatorId !== undefined &&
-           activationStatus !== null && activationStatus !== undefined;
+           activationStatus === 'activated';
   }, [savedValues]);
 
-  // Check if a Mobily entry is complete (has operator_id AND activation_status AND price)
+  // Check if a Mobily entry is complete (has operator_id AND activation_status is 'activated' AND price)
+  // Note: entries with 'activating' status are NOT complete and remain visible
   const isMobilyEntryComplete = useCallback((customer: MobilyCustomer, pendingOperatorId?: string | null, pendingActivationStatus?: ActivationStatus | null, pendingPrice?: number | null): boolean => {
     const operatorId = pendingOperatorId !== undefined ? pendingOperatorId : (savedValues[customer.id]?.operator_id ?? customer.operator_id);
     const activationStatus = pendingActivationStatus !== undefined ? pendingActivationStatus : (savedValues[customer.id]?.activation_status ?? customer.activation_status);
     const price = pendingPrice !== undefined ? pendingPrice : (savedValues[customer.id]?.price ?? customer.price);
     return operatorId !== null && operatorId !== undefined &&
-           activationStatus !== null && activationStatus !== undefined &&
+           activationStatus === 'activated' &&
            price !== null && price !== undefined;
   }, [savedValues]);
+
+  // Check if save should be disabled (when activation_status is 'activating')
+  // Entry cannot be completed while in 'activating' state - must change to 'activated' first
+  const isSaveDisabledForActivating = useCallback((customerId: string, customer: SalamCustomer | MobilyCustomer): boolean => {
+    const pendingStatus = pendingChanges[customerId]?.activation_status;
+    const currentStatus = savedValues[customerId]?.activation_status ?? customer.activation_status;
+    const effectiveStatus = pendingStatus !== undefined ? pendingStatus : currentStatus;
+    return effectiveStatus === 'activating';
+  }, [pendingChanges, savedValues]);
 
   // Connection status indicator
   const isFullyConnected = salamConnected && mobilyConnected && operatorsConnected;
@@ -711,8 +723,9 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                                   <>
                                     <button
                                       onClick={() => handleSubmitCustomerChanges(customer.id, 'salam', customer)}
-                                      disabled={savingCustomerId === customer.id}
+                                      disabled={savingCustomerId === customer.id || isSaveDisabledForActivating(customer.id, customer)}
                                       className="px-3 py-1 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                                      title={isSaveDisabledForActivating(customer.id, customer) ? 'لا يمكن إتمام الإدخال أثناء حالة "جاري التفعيل". قم بتغيير الحالة إلى "تم التفعيل"' : undefined}
                                     >
                                       {savingCustomerId === customer.id ? (
                                         <>
@@ -951,8 +964,9 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                                   <>
                                     <button
                                       onClick={() => handleSubmitCustomerChanges(customer.id, 'mobily', customer)}
-                                      disabled={savingCustomerId === customer.id}
+                                      disabled={savingCustomerId === customer.id || isSaveDisabledForActivating(customer.id, customer)}
                                       className="px-3 py-1 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                                      title={isSaveDisabledForActivating(customer.id, customer) ? 'لا يمكن إتمام الإدخال أثناء حالة "جاري التفعيل". قم بتغيير الحالة إلى "تم التفعيل"' : undefined}
                                     >
                                       {savingCustomerId === customer.id ? (
                                         <>
