@@ -43,10 +43,11 @@ export default async function DashboardPage() {
     .order('created_at', { ascending: false })
     .limit(5);
 
-  // Non-admin users only see their own entries
+  // Non-admin users only see their own entries AND exclude activated entries
+  // Activated entries (تم التفعيل) should only be visible to admins
   if (!isAdmin) {
-    salamQuery = salamQuery.eq('user_id', user.id);
-    mobilyQuery = mobilyQuery.eq('user_id', user.id);
+    salamQuery = salamQuery.eq('user_id', user.id).neq('activation_status', 'activated');
+    mobilyQuery = mobilyQuery.eq('user_id', user.id).neq('activation_status', 'activated');
   }
 
   const { data: salamCustomers } = await salamQuery;

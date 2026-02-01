@@ -26,8 +26,10 @@ export function useRealtimeSalamCustomers<T extends SalamCustomer>(initialData: 
         .order('created_at', { ascending: false });
 
       // Filter by user if not admin
+      // Non-admins should not see activated entries (تم التفعيل)
+      // Activated entries are only visible in admin dashboard
       if (!isAdmin && userId) {
-        query = query.eq('user_id', userId);
+        query = query.eq('user_id', userId).neq('activation_status', 'activated');
       }
 
       const { data, error } = await query;
@@ -118,8 +120,10 @@ export function useRealtimeMobilyCustomers<T extends MobilyCustomer>(initialData
         .order('created_at', { ascending: false });
 
       // Filter by user if not admin
+      // Non-admins should not see activated entries (تم التفعيل)
+      // Activated entries are only visible in admin dashboard
       if (!isAdmin && userId) {
-        query = query.eq('user_id', userId);
+        query = query.eq('user_id', userId).neq('activation_status', 'activated');
       }
 
       const { data, error } = await query;
