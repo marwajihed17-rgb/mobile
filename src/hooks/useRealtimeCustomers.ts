@@ -7,24 +7,24 @@ import type { SalamCustomer, MobilyCustomer } from '@/types/database';
 
 /**
  * Helper function to check if a Salam customer entry is complete
- * (has operator_id AND activation_status)
+ * (has operator_id AND activation_status is 'activated')
+ * Note: entries with 'activating' status are NOT complete and remain visible
  */
 function isSalamEntryComplete(customer: SalamCustomer): boolean {
   return customer.operator_id !== null &&
          customer.operator_id !== undefined &&
-         customer.activation_status !== null &&
-         customer.activation_status !== undefined;
+         customer.activation_status === 'activated';
 }
 
 /**
  * Helper function to check if a Mobily customer entry is complete
- * (has operator_id AND activation_status AND price)
+ * (has operator_id AND activation_status is 'activated' AND price)
+ * Note: entries with 'activating' status are NOT complete and remain visible
  */
 function isMobilyEntryComplete(customer: MobilyCustomer): boolean {
   return customer.operator_id !== null &&
          customer.operator_id !== undefined &&
-         customer.activation_status !== null &&
-         customer.activation_status !== undefined &&
+         customer.activation_status === 'activated' &&
          customer.price !== null &&
          customer.price !== undefined;
 }

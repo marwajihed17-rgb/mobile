@@ -30,8 +30,9 @@ export default async function DashboardPage() {
   // Get recent customers from Salam project (last 5 for current user)
   // For admins, show all recent customers
   // For non-admins (users/operators): hide entries where all required fields are filled
-  // - Salam: hide if operator_id AND activation_status are both set
-  // - Mobily: hide if operator_id AND activation_status AND price are all set
+  // - Salam: hide if operator_id is set AND activation_status is 'activated'
+  // - Mobily: hide if operator_id is set AND activation_status is 'activated' AND price is set
+  // Note: entries with 'activating' status are NOT complete and remain visible
   const isAdmin = profile.role === 'admin' || profile.role === 'super_admin';
 
   let salamQuery = supabase
@@ -52,11 +53,11 @@ export default async function DashboardPage() {
     mobilyQuery = mobilyQuery.eq('user_id', user.id);
 
     // Filter out completed entries for non-admins
-    // For Salam: show only entries where operator_id OR activation_status is null
-    salamQuery = salamQuery.or('operator_id.is.null,activation_status.is.null');
+    // For Salam: show entries where operator_id is null OR activation_status is not 'activated'
+    salamQuery = salamQuery.or('operator_id.is.null,activation_status.is.null,activation_status.neq.activated');
 
-    // For Mobily: show only entries where operator_id OR activation_status OR price is null
-    mobilyQuery = mobilyQuery.or('operator_id.is.null,activation_status.is.null,price.is.null');
+    // For Mobily: show entries where operator_id is null OR activation_status is not 'activated' OR price is null
+    mobilyQuery = mobilyQuery.or('operator_id.is.null,activation_status.is.null,activation_status.neq.activated,price.is.null');
   }
 
   const { data: salamCustomers } = await salamQuery;
