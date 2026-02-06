@@ -27,12 +27,9 @@ export default async function DashboardPage() {
   // Note: All users (including admins and operators) can access this dashboard
   // to view and use the المشغل dropdown
 
-  // Get recent customers from Salam project (last 5 for current user)
-  // For admins, show all recent customers
-  // For non-admins (users/operators): hide entries where all required fields are filled
-  // - Salam: hide if operator_id is set AND activation_status is 'activated'
-  // - Mobily: hide if operator_id is set AND activation_status is 'activated' AND price is set
-  // Note: entries with 'activating' status are NOT complete and remain visible
+  // Workflow: user submits → جاري التفعيل (activating) → تم التفعيل (activated) → admin sees it
+  // - Admins: only see entries where activation_status is 'activated' (تم التفعيل)
+  // - Non-admins (users/operators): see their own incomplete entries (not yet activated)
   const isAdmin = profile.role === 'admin' || profile.role === 'super_admin';
 
   let salamQuery = supabase
@@ -47,8 +44,12 @@ export default async function DashboardPage() {
     .order('created_at', { ascending: false })
     .limit(5);
 
-  // Non-admin users only see their own entries and incomplete entries
-  if (!isAdmin) {
+  if (isAdmin) {
+    // Admins only see completed entries (activation_status = 'activated')
+    salamQuery = salamQuery.eq('activation_status', 'activated');
+    mobilyQuery = mobilyQuery.eq('activation_status', 'activated');
+  } else {
+    // Non-admin users only see their own entries that are not yet fully activated
     salamQuery = salamQuery.eq('user_id', user.id);
     mobilyQuery = mobilyQuery.eq('user_id', user.id);
 

@@ -32,12 +32,14 @@ function isMobilyEntryComplete(customer: MobilyCustomer): boolean {
 /**
  * Real-time hook for Salam customers
  * Fetches fresh data on mount and automatically syncs with database changes
- * For non-admin users/operators: hides entries where operator_id AND activation_status are both set
+ * Workflow: user submits → جاري التفعيل → تم التفعيل → admin sees it
+ * - Admins: only see entries with activation_status === 'activated'
+ * - Non-admins: hide completed entries (activated with operator set)
  */
 export function useRealtimeSalamCustomers<T extends SalamCustomer>(initialData: T[], userId?: string, isAdmin?: boolean) {
-  // Filter initial data for non-admins to hide completed entries
+  // Filter initial data based on role
   const filteredInitialData = isAdmin
-    ? initialData
+    ? initialData.filter(customer => customer.activation_status === 'activated')
     : initialData.filter(customer => !isSalamEntryComplete(customer));
 
   const [customers, setCustomers] = useState<T[]>(filteredInitialData);
@@ -68,9 +70,9 @@ export function useRealtimeSalamCustomers<T extends SalamCustomer>(initialData: 
       }
 
       if (data) {
-        // For non-admin users/operators, filter out entries where operator_id AND activation_status are both set
+        // Admins: only show activated entries. Non-admins: hide completed entries
         const filteredData = isAdmin
-          ? data
+          ? data.filter(customer => (customer as SalamCustomer).activation_status === 'activated')
           : data.filter(customer => !isSalamEntryComplete(customer as SalamCustomer));
         setCustomers(filteredData as T[]);
       }
@@ -134,12 +136,14 @@ export function useRealtimeSalamCustomers<T extends SalamCustomer>(initialData: 
 /**
  * Real-time hook for Mobily customers
  * Fetches fresh data on mount and automatically syncs with database changes
- * For non-admin users/operators: hides entries where operator_id AND activation_status AND price are all set
+ * Workflow: user submits → جاري التفعيل → تم التفعيل → admin sees it
+ * - Admins: only see entries with activation_status === 'activated'
+ * - Non-admins: hide completed entries (activated with operator and price set)
  */
 export function useRealtimeMobilyCustomers<T extends MobilyCustomer>(initialData: T[], userId?: string, isAdmin?: boolean) {
-  // Filter initial data for non-admins to hide completed entries
+  // Filter initial data based on role
   const filteredInitialData = isAdmin
-    ? initialData
+    ? initialData.filter(customer => customer.activation_status === 'activated')
     : initialData.filter(customer => !isMobilyEntryComplete(customer));
 
   const [customers, setCustomers] = useState<T[]>(filteredInitialData);
@@ -170,9 +174,9 @@ export function useRealtimeMobilyCustomers<T extends MobilyCustomer>(initialData
       }
 
       if (data) {
-        // For non-admin users/operators, filter out entries where operator_id AND activation_status AND price are all set
+        // Admins: only show activated entries. Non-admins: hide completed entries
         const filteredData = isAdmin
-          ? data
+          ? data.filter(customer => (customer as MobilyCustomer).activation_status === 'activated')
           : data.filter(customer => !isMobilyEntryComplete(customer as MobilyCustomer));
         setCustomers(filteredData as T[]);
       }
