@@ -286,7 +286,6 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
         updateData.operator_id = changes.operator_id;
         updateData.operator_name = operatorName;
       }
-
       // 3-stage confirmation logic:
       // If user (not operator, not admin) saves with 'activated' on an entry that's already 'activated'
       // by the operator, this is the final confirmation → set to 'confirmed'
@@ -296,7 +295,6 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
       } else if (changes.activation_status !== null) {
         updateData.activation_status = changes.activation_status;
       }
-
       // Add price for Mobily customers
       if (projectType === 'mobily' && changes.price !== undefined) {
         updateData.price = changes.price;
@@ -608,26 +606,6 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                     </span>
                   )}
                 </h2>
-                {/* Search Input + Refresh */}
-                <div className="flex items-center gap-2">
-                  <div className="relative max-w-xs">
-                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
-                    <input
-                      type="text"
-                      placeholder="بحث بالاسم أو المدخل..."
-                      value={salamSearchQuery}
-                      onChange={(e) => setSalamSearchQuery(e.target.value)}
-                      className="w-full pr-9 pl-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
-                    />
-                  </div>
-                  <button
-                    onClick={() => refetchSalam()}
-                    disabled={salamLoading}
-                    className="p-2 text-muted hover:text-primary hover:bg-primary/10 border border-card-border rounded-lg transition-colors disabled:opacity-50"
-                    title="تحديث البيانات"
-                  >
-                    <RefreshCw className={`w-4 h-4 ${salamLoading ? 'animate-spin' : ''}`} />
-                  </button>
                 {/* Search Input */}
                 <div className="relative max-w-xs">
                   <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
@@ -662,19 +640,6 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                         </tr>
                       </thead>
                       <tbody>
-                        {recentSalam.map((customer) => {
-                          const locked = isLockedByOtherOperator(customer);
-                          const operatorConfirmed = getEffectiveActivationStatus(customer) === 'activated';
-                          return (
-                          <tr key={customer.id} className={`border-b border-card-border last:border-0 hover:bg-card-hover transition-colors ${locked ? 'opacity-75' : ''}`}>
-                            <td className="px-4 py-3 whitespace-nowrap">
-                              {isOperator || locked ? (
-                                // Operators and locked rows: read-only operator name
-                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${locked ? 'bg-muted/10 text-muted border border-muted/30' : 'bg-primary/10 text-primary border border-primary/30'}`}>
-                                  {locked && <Lock className="w-3 h-3" />}
-                                  {getEffectiveOperatorName(customer) || 'غير محدد'}
-                                </span>
-                              ) : getEffectiveOperatorName(customer) && !isEditMode(customer.id) ? (
                         {recentSalam.map((customer) => (
                           <tr key={customer.id} className="border-b border-card-border last:border-0 hover:bg-card-hover transition-colors">
                             <td className="px-4 py-3 whitespace-nowrap">
@@ -703,24 +668,17 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                               )}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
-                              {locked ? (
-                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-amber-500/10 text-amber-600 border border-amber-500/30">
-                                  <Lock className="w-3 h-3" />
-                                  جاري التفعيل
-                                </span>
-                              ) : (isOperator || !isAdmin) && getEffectiveActivationStatus(customer) && !isEditMode(customer.id) ? (
                               {getEffectiveActivationStatus(customer) && !isEditMode(customer.id) ? (
                                 <button
                                   onClick={() => startEditing(customer.id, customer)}
                                   className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium cursor-pointer transition-colors ${
-                                    operatorConfirmed
+                                    getEffectiveActivationStatus(customer) === 'activated'
                                       ? 'bg-green-500/10 text-green-600 border border-green-500/30 hover:bg-green-500/20'
                                       : 'bg-amber-500/10 text-amber-600 border border-amber-500/30 hover:bg-amber-500/20'
                                   }`}
                                   title="انقر للتعديل"
                                 >
-                                  {operatorConfirmed && <Check className="w-3 h-3" />}
-                                  {operatorConfirmed ? 'تم التفعيل' : 'جاري التفعيل'}
+                                  {getEffectiveActivationStatus(customer) === 'activated' ? 'تم التفعيل' : 'جاري التفعيل'}
                                   <Pencil className="w-3 h-3 opacity-60" />
                                 </button>
                               ) : (
@@ -739,38 +697,6 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                               <div className="flex items-center gap-2">
                                 {isEditMode(customer.id) && (
                                   <>
-                                    {isEditMode(customer.id) && (
-                                      <>
-                                        <button
-                                          onClick={() => handleSubmitCustomerChanges(customer.id, 'salam', customer)}
-                                          disabled={savingCustomerId === customer.id}
-                                          className="px-3 py-1 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-                                        >
-                                          {savingCustomerId === customer.id ? (
-                                            <>
-                                              <Loader2 className="w-3 h-3 animate-spin" />
-                                              جاري الحفظ
-                                            </>
-                                          ) : (
-                                            'حفظ'
-                                          )}
-                                        </button>
-                                        <button
-                                          onClick={() => cancelEditing(customer.id)}
-                                          disabled={savingCustomerId === customer.id}
-                                          className="p-1.5 text-muted hover:text-foreground hover:bg-card-hover rounded-lg transition-colors disabled:opacity-50"
-                                          title="إلغاء"
-                                        >
-                                          <X className="w-4 h-4" />
-                                        </button>
-                                      </>
-                                    )}
-                                    {/* Checkmark before trash when operator confirmed */}
-                                    {operatorConfirmed && !isEditMode(customer.id) && (
-                                      <span className="inline-flex items-center justify-center w-6 h-6 bg-green-500/10 text-green-600 rounded-full">
-                                        <Check className="w-4 h-4" />
-                                      </span>
-                                    )}
                                     <button
                                       onClick={() => handleSubmitCustomerChanges(customer.id, 'salam', customer)}
                                       disabled={savingCustomerId === customer.id}
@@ -866,26 +792,6 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                     </span>
                   )}
                 </h2>
-                {/* Search Input + Refresh */}
-                <div className="flex items-center gap-2">
-                  <div className="relative max-w-xs">
-                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
-                    <input
-                      type="text"
-                      placeholder="بحث بالاسم أو المدخل..."
-                      value={mobilySearchQuery}
-                      onChange={(e) => setMobilySearchQuery(e.target.value)}
-                      className="w-full pr-9 pl-3 py-2 text-sm bg-card border border-card-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
-                    />
-                  </div>
-                  <button
-                    onClick={() => refetchMobily()}
-                    disabled={mobilyLoading}
-                    className="p-2 text-muted hover:text-primary hover:bg-primary/10 border border-card-border rounded-lg transition-colors disabled:opacity-50"
-                    title="تحديث البيانات"
-                  >
-                    <RefreshCw className={`w-4 h-4 ${mobilyLoading ? 'animate-spin' : ''}`} />
-                  </button>
                 {/* Search Input */}
                 <div className="relative max-w-xs">
                   <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
@@ -909,7 +815,6 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الإجراءات</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الإسم</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">المدخل</th>
-                          <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">السعر (SAR)</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">رقم الهوية</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الجنسية</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">رقم الجوال</th>
@@ -923,22 +828,10 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الحي</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">رقم السجل</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">التاريخ</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">السعر</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {recentMobily.map((customer) => {
-                          const locked = isLockedByOtherOperator(customer);
-                          const operatorConfirmed = getEffectiveActivationStatus(customer) === 'activated';
-                          return (
-                          <tr key={customer.id} className={`border-b border-card-border last:border-0 hover:bg-card-hover transition-colors ${locked ? 'opacity-75' : ''}`}>
-                            <td className="px-4 py-3 whitespace-nowrap">
-                              {isOperator || locked ? (
-                                // Operators and locked rows: read-only operator name
-                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${locked ? 'bg-muted/10 text-muted border border-muted/30' : 'bg-primary/10 text-primary border border-primary/30'}`}>
-                                  {locked && <Lock className="w-3 h-3" />}
-                                  {getEffectiveOperatorName(customer) || 'غير محدد'}
-                                </span>
-                              ) : getEffectiveOperatorName(customer) && !isEditMode(customer.id) ? (
                         {recentMobily.map((customer) => (
                           <tr key={customer.id} className="border-b border-card-border last:border-0 hover:bg-card-hover transition-colors">
                             <td className="px-4 py-3 whitespace-nowrap">
@@ -967,24 +860,17 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                               )}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
-                              {locked ? (
-                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-amber-500/10 text-amber-600 border border-amber-500/30">
-                                  <Lock className="w-3 h-3" />
-                                  جاري التفعيل
-                                </span>
-                              ) : (isOperator || !isAdmin) && getEffectiveActivationStatus(customer) && !isEditMode(customer.id) ? (
                               {getEffectiveActivationStatus(customer) && !isEditMode(customer.id) ? (
                                 <button
                                   onClick={() => startEditing(customer.id, customer, 'mobily')}
                                   className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium cursor-pointer transition-colors ${
-                                    operatorConfirmed
+                                    getEffectiveActivationStatus(customer) === 'activated'
                                       ? 'bg-green-500/10 text-green-600 border border-green-500/30 hover:bg-green-500/20'
                                       : 'bg-amber-500/10 text-amber-600 border border-amber-500/30 hover:bg-amber-500/20'
                                   }`}
                                   title="انقر للتعديل"
                                 >
-                                  {operatorConfirmed && <Check className="w-3 h-3" />}
-                                  {operatorConfirmed ? 'تم التفعيل' : 'جاري التفعيل'}
+                                  {getEffectiveActivationStatus(customer) === 'activated' ? 'تم التفعيل' : 'جاري التفعيل'}
                                   <Pencil className="w-3 h-3 opacity-60" />
                                 </button>
                               ) : (
@@ -1003,38 +889,6 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                               <div className="flex items-center gap-2">
                                 {isEditMode(customer.id) && (
                                   <>
-                                    {isEditMode(customer.id) && (
-                                      <>
-                                        <button
-                                          onClick={() => handleSubmitCustomerChanges(customer.id, 'mobily', customer)}
-                                          disabled={savingCustomerId === customer.id}
-                                          className="px-3 py-1 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-                                        >
-                                          {savingCustomerId === customer.id ? (
-                                            <>
-                                              <Loader2 className="w-3 h-3 animate-spin" />
-                                              جاري الحفظ
-                                            </>
-                                          ) : (
-                                            'حفظ'
-                                          )}
-                                        </button>
-                                        <button
-                                          onClick={() => cancelEditing(customer.id)}
-                                          disabled={savingCustomerId === customer.id}
-                                          className="p-1.5 text-muted hover:text-foreground hover:bg-card-hover rounded-lg transition-colors disabled:opacity-50"
-                                          title="إلغاء"
-                                        >
-                                          <X className="w-4 h-4" />
-                                        </button>
-                                      </>
-                                    )}
-                                    {/* Checkmark before trash when operator confirmed */}
-                                    {operatorConfirmed && !isEditMode(customer.id) && (
-                                      <span className="inline-flex items-center justify-center w-6 h-6 bg-green-500/10 text-green-600 rounded-full">
-                                        <Check className="w-4 h-4" />
-                                      </span>
-                                    )}
                                     <button
                                       onClick={() => handleSubmitCustomerChanges(customer.id, 'mobily', customer)}
                                       disabled={savingCustomerId === customer.id}
@@ -1075,49 +929,6 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                                 {customer.created_by_username || 'غير محدد'}
                               </span>
                             </td>
-                            {/* السعر column - after المدخل, using SAR */}
-                            <td className="px-4 py-3 whitespace-nowrap">
-                              {isOperator ? (
-                                // Operators: read-only price
-                                <span className="text-muted">
-                                  {getEffectivePrice(customer) !== null ? `${getEffectivePrice(customer)} SAR` : '-'}
-                                </span>
-                              ) : isAdmin ? (
-                                isEditMode(customer.id) ? (
-                                  <input
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    value={getCurrentPrice(customer) ?? ''}
-                                    onChange={(e) => handlePriceChange(customer.id, e.target.value ? parseFloat(e.target.value) : null)}
-                                    placeholder="السعر"
-                                    className="px-2 py-1 text-xs bg-card border border-card-border rounded text-foreground focus:outline-none focus:border-primary w-20"
-                                    dir="ltr"
-                                  />
-                                ) : (
-                                  <span className="text-muted">
-                                    {getEffectivePrice(customer) !== null ? `${getEffectivePrice(customer)} SAR` : '-'}
-                                  </span>
-                                )
-                              ) : (
-                                isEditMode(customer.id) ? (
-                                  <input
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    value={getCurrentPrice(customer) ?? ''}
-                                    onChange={(e) => handlePriceChange(customer.id, e.target.value ? parseFloat(e.target.value) : null)}
-                                    placeholder="السعر"
-                                    className="px-2 py-1 text-xs bg-card border border-card-border rounded text-foreground focus:outline-none focus:border-primary w-20"
-                                    dir="ltr"
-                                  />
-                                ) : isPriceSaved(customer) ? (
-                                  <span className="text-muted">{getEffectivePrice(customer)} SAR</span>
-                                ) : (
-                                  <span className="text-muted">-</span>
-                                )
-                              )}
-                            </td>
                             <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.identity_number}</td>
                             <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.nationality}</td>
                             <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.phone_number}</td>
@@ -1131,6 +942,49 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                             <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.district}</td>
                             <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.register_number}</td>
                             <td className="px-4 py-3 text-muted text-sm whitespace-nowrap">{formatDate(customer.created_at)}</td>
+                            {/* السعر column - hidden for non-admin after saving */}
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              {isAdmin ? (
+                                // Admin always sees the price value
+                                isEditMode(customer.id) ? (
+                                  <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    value={getCurrentPrice(customer) ?? ''}
+                                    onChange={(e) => handlePriceChange(customer.id, e.target.value ? parseFloat(e.target.value) : null)}
+                                    placeholder="السعر"
+                                    className="px-2 py-1 text-xs bg-card border border-card-border rounded text-foreground focus:outline-none focus:border-primary w-20"
+                                    dir="ltr"
+                                  />
+                                ) : (
+                                  <span className="text-muted">
+                                    {getEffectivePrice(customer) !== null ? `${getEffectivePrice(customer)} ر.س` : '-'}
+                                  </span>
+                                )
+                              ) : (
+                                // Non-admin: show input when editing, checkmark when saved, input when not saved
+                                isEditMode(customer.id) ? (
+                                  <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    value={getCurrentPrice(customer) ?? ''}
+                                    onChange={(e) => handlePriceChange(customer.id, e.target.value ? parseFloat(e.target.value) : null)}
+                                    placeholder="السعر"
+                                    className="px-2 py-1 text-xs bg-card border border-card-border rounded text-foreground focus:outline-none focus:border-primary w-20"
+                                    dir="ltr"
+                                  />
+                                ) : isPriceSaved(customer) ? (
+                                  // Show checkmark when price is saved for non-admin
+                                  <span className="inline-flex items-center justify-center w-6 h-6 bg-green-500/10 text-green-600 rounded-full">
+                                    <Check className="w-4 h-4" />
+                                  </span>
+                                ) : (
+                                  <span className="text-muted">-</span>
+                                )
+                              )}
+                            </td>
                           </tr>
                         ))}
                       </tbody>
