@@ -78,7 +78,7 @@ export function useRealtimeSalamCustomers<T extends SalamCustomer>(initialData: 
     } finally {
       setIsLoading(false);
     }
-  }, [userId, isAdmin]);
+  }, [userId, isAdmin, isOperator]);
 
   useEffect(() => {
     fetchCustomers();
@@ -121,7 +121,7 @@ export function useRealtimeSalamCustomers<T extends SalamCustomer>(initialData: 
       console.log('Unsubscribing from salam_customers');
       supabase.removeChannel(channel);
     };
-  }, [userId, isAdmin, fetchCustomers]);
+  }, [userId, isAdmin, isOperator, fetchCustomers]);
 
   return { customers, isConnected, isLoading, refetch: fetchCustomers };
 }
@@ -174,7 +174,7 @@ export function useRealtimeMobilyCustomers<T extends MobilyCustomer>(initialData
     } finally {
       setIsLoading(false);
     }
-  }, [userId, isAdmin]);
+  }, [userId, isAdmin, isOperator]);
 
   useEffect(() => {
     fetchCustomers();
@@ -217,7 +217,7 @@ export function useRealtimeMobilyCustomers<T extends MobilyCustomer>(initialData
       console.log('Unsubscribing from mobily_customers');
       supabase.removeChannel(channel);
     };
-  }, [userId, isAdmin, fetchCustomers]);
+  }, [userId, isAdmin, isOperator, fetchCustomers]);
 
   return { customers, isConnected, isLoading, refetch: fetchCustomers };
 }
