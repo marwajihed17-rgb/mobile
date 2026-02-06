@@ -92,10 +92,11 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
   const [removingRows, setRemovingRows] = useState<Set<string>>(new Set());
 
   // Real-time subscriptions for both customer tables
-  // Pass userId and isAdmin to properly filter and fetch fresh data
+  // Pass userId, isAdmin, and isOperator to properly filter and fetch fresh data
   const isAdmin = profile.role === 'admin' || profile.role === 'super_admin';
-  const { customers: salamCustomers, isConnected: salamConnected } = useRealtimeSalamCustomers(recentSalamCustomers, profile.id, isAdmin);
-  const { customers: mobilyCustomers, isConnected: mobilyConnected } = useRealtimeMobilyCustomers(recentMobilyCustomers, profile.id, isAdmin);
+  const isOperator = profile.role === 'operator';
+  const { customers: salamCustomers, isConnected: salamConnected } = useRealtimeSalamCustomers(recentSalamCustomers, profile.id, isAdmin, isOperator);
+  const { customers: mobilyCustomers, isConnected: mobilyConnected } = useRealtimeMobilyCustomers(recentMobilyCustomers, profile.id, isAdmin, isOperator);
 
   // Filter and limit customers based on search and expanded state
   const filteredSalamCustomers = useMemo(() => {

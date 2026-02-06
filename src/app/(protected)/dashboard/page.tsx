@@ -29,8 +29,10 @@ export default async function DashboardPage() {
 
   // Workflow: user submits → جاري التفعيل (activating) → تم التفعيل (activated) → admin sees it
   // - Admins: only see entries where activation_status is 'activated' (تم التفعيل)
-  // - Non-admins (users/operators): see their own incomplete entries (not yet activated)
+  // - Operators (المشغل): see ALL entries from all users that are not yet activated (new + جاري التفعيل)
+  // - Regular users: see their own incomplete entries (not yet activated)
   const isAdmin = profile.role === 'admin' || profile.role === 'super_admin';
+  const isOperator = profile.role === 'operator';
 
   let salamQuery = supabase
     .from('salam_customers')
@@ -48,12 +50,17 @@ export default async function DashboardPage() {
     // Admins only see completed entries (activation_status = 'activated')
     salamQuery = salamQuery.eq('activation_status', 'activated');
     mobilyQuery = mobilyQuery.eq('activation_status', 'activated');
+  } else if (isOperator) {
+    // Operators see ALL entries from all users that are not yet activated
+    // This gives them real-time visibility of all live activity
+    salamQuery = salamQuery.or('activation_status.is.null,activation_status.neq.activated');
+    mobilyQuery = mobilyQuery.or('activation_status.is.null,activation_status.neq.activated');
   } else {
-    // Non-admin users only see their own entries that are not yet fully activated
+    // Regular users only see their own entries that are not yet fully activated
     salamQuery = salamQuery.eq('user_id', user.id);
     mobilyQuery = mobilyQuery.eq('user_id', user.id);
 
-    // Filter out completed entries for non-admins
+    // Filter out completed entries for regular users
     // For Salam: show entries where operator_id is null OR activation_status is not 'activated'
     salamQuery = salamQuery.or('operator_id.is.null,activation_status.is.null,activation_status.neq.activated');
 
