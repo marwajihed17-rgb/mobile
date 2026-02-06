@@ -634,6 +634,9 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                     <table className="w-full">
                       <thead className="bg-card-hover border-b border-card-border sticky top-0 z-10">
                         <tr>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">المشغل</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">حالة التفعيل</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الإجراءات</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الإسم</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">المدخل</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الباقة</th>
@@ -644,28 +647,11 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">رقم الجهاز</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">رقم السجل</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">التاريخ</th>
-                          <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">المشغل</th>
-                          <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">حالة التفعيل</th>
-                          <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الإجراءات</th>
                         </tr>
                       </thead>
                       <tbody>
                         {recentSalam.map((customer) => (
                           <tr key={customer.id} className="border-b border-card-border last:border-0 hover:bg-card-hover transition-colors">
-                            <td className="px-4 py-3 text-foreground whitespace-nowrap">{customer.name}</td>
-                            <td className="px-4 py-3 whitespace-nowrap">
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-500/10 text-green-600 border border-green-500/30">
-                                {customer.created_by_username || 'غير محدد'}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.package || '-'}</td>
-                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.identity_number}</td>
-                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.nationality}</td>
-                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.phone_number}</td>
-                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.sim_number}</td>
-                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.device_number}</td>
-                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.register_number}</td>
-                            <td className="px-4 py-3 text-muted text-sm whitespace-nowrap">{formatDate(customer.created_at)}</td>
                             <td className="px-4 py-3 whitespace-nowrap">
                               {getEffectiveOperatorName(customer) && !isEditMode(customer.id) ? (
                                 <button
@@ -723,9 +709,8 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                                   <>
                                     <button
                                       onClick={() => handleSubmitCustomerChanges(customer.id, 'salam', customer)}
-                                      disabled={savingCustomerId === customer.id || isSaveDisabledForActivating(customer.id, customer)}
+                                      disabled={savingCustomerId === customer.id}
                                       className="px-3 py-1 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-                                      title={isSaveDisabledForActivating(customer.id, customer) ? 'لا يمكن إتمام الإدخال أثناء حالة "جاري التفعيل". قم بتغيير الحالة إلى "تم التفعيل"' : undefined}
                                     >
                                       {savingCustomerId === customer.id ? (
                                         <>
@@ -756,6 +741,20 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                                 </button>
                               </div>
                             </td>
+                            <td className="px-4 py-3 text-foreground whitespace-nowrap">{customer.name}</td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-500/10 text-green-600 border border-green-500/30">
+                                {customer.created_by_username || 'غير محدد'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.package || '-'}</td>
+                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.identity_number}</td>
+                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.nationality}</td>
+                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.phone_number}</td>
+                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.sim_number}</td>
+                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.device_number}</td>
+                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.register_number}</td>
+                            <td className="px-4 py-3 text-muted text-sm whitespace-nowrap">{formatDate(customer.created_at)}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -821,6 +820,9 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                     <table className="w-full">
                       <thead className="bg-card-hover border-b border-card-border sticky top-0 z-10">
                         <tr>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">المشغل</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">حالة التفعيل</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الإجراءات</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الإسم</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">المدخل</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">رقم الهوية</th>
@@ -836,34 +838,12 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الحي</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">رقم السجل</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">التاريخ</th>
-                          <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">المشغل</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">السعر</th>
-                          <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">حالة التفعيل</th>
-                          <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الإجراءات</th>
                         </tr>
                       </thead>
                       <tbody>
                         {recentMobily.map((customer) => (
                           <tr key={customer.id} className="border-b border-card-border last:border-0 hover:bg-card-hover transition-colors">
-                            <td className="px-4 py-3 text-foreground whitespace-nowrap">{customer.name}</td>
-                            <td className="px-4 py-3 whitespace-nowrap">
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-600 border border-blue-500/30">
-                                {customer.created_by_username || 'غير محدد'}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.identity_number}</td>
-                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.nationality}</td>
-                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.phone_number}</td>
-                            <td className="px-4 py-3 text-muted whitespace-nowrap w-24 md:w-32">{customer.birth_date}</td>
-                            <td className="px-4 py-3 text-muted whitespace-nowrap w-24 md:w-32">{customer.identity_expiry_date}</td>
-                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.package}</td>
-                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.email}</td>
-                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.sim_number}</td>
-                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.device_number}</td>
-                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.city}</td>
-                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.district}</td>
-                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.register_number}</td>
-                            <td className="px-4 py-3 text-muted text-sm whitespace-nowrap">{formatDate(customer.created_at)}</td>
                             <td className="px-4 py-3 whitespace-nowrap">
                               {getEffectiveOperatorName(customer) && !isEditMode(customer.id) ? (
                                 <button
@@ -889,6 +869,89 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                                 </select>
                               )}
                             </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              {getEffectiveActivationStatus(customer) && !isEditMode(customer.id) ? (
+                                <button
+                                  onClick={() => startEditing(customer.id, customer, 'mobily')}
+                                  className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium cursor-pointer transition-colors ${
+                                    getEffectiveActivationStatus(customer) === 'activated'
+                                      ? 'bg-green-500/10 text-green-600 border border-green-500/30 hover:bg-green-500/20'
+                                      : 'bg-amber-500/10 text-amber-600 border border-amber-500/30 hover:bg-amber-500/20'
+                                  }`}
+                                  title="انقر للتعديل"
+                                >
+                                  {getEffectiveActivationStatus(customer) === 'activated' ? 'تم التفعيل' : 'جاري التفعيل'}
+                                  <Pencil className="w-3 h-3 opacity-60" />
+                                </button>
+                              ) : (
+                                <select
+                                  value={getCurrentActivationStatus(customer) || ''}
+                                  onChange={(e) => handleActivationStatusChange(customer.id, (e.target.value as ActivationStatus) || null)}
+                                  className="px-2 py-1 text-xs bg-card border border-card-border rounded text-foreground focus:outline-none focus:border-primary min-w-[100px]"
+                                >
+                                  <option value="" disabled>اختر الحالة</option>
+                                  <option value="activated">تم التفعيل</option>
+                                  <option value="activating">جاري التفعيل</option>
+                                </select>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <div className="flex items-center gap-2">
+                                {isEditMode(customer.id) && (
+                                  <>
+                                    <button
+                                      onClick={() => handleSubmitCustomerChanges(customer.id, 'mobily', customer)}
+                                      disabled={savingCustomerId === customer.id}
+                                      className="px-3 py-1 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                                    >
+                                      {savingCustomerId === customer.id ? (
+                                        <>
+                                          <Loader2 className="w-3 h-3 animate-spin" />
+                                          جاري الحفظ
+                                        </>
+                                      ) : (
+                                        'حفظ'
+                                      )}
+                                    </button>
+                                    <button
+                                      onClick={() => cancelEditing(customer.id)}
+                                      disabled={savingCustomerId === customer.id}
+                                      className="p-1.5 text-muted hover:text-foreground hover:bg-card-hover rounded-lg transition-colors disabled:opacity-50"
+                                      title="إلغاء"
+                                    >
+                                      <X className="w-4 h-4" />
+                                    </button>
+                                  </>
+                                )}
+                                <button
+                                  onClick={() => handleDeleteCustomer(customer.id, customer.name, 'mobily')}
+                                  disabled={isDeleting === customer.id}
+                                  className="p-1.5 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+                                  title="حذف"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-foreground whitespace-nowrap">{customer.name}</td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-600 border border-blue-500/30">
+                                {customer.created_by_username || 'غير محدد'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.identity_number}</td>
+                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.nationality}</td>
+                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.phone_number}</td>
+                            <td className="px-4 py-3 text-muted whitespace-nowrap w-24 md:w-32">{customer.birth_date}</td>
+                            <td className="px-4 py-3 text-muted whitespace-nowrap w-24 md:w-32">{customer.identity_expiry_date}</td>
+                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.package}</td>
+                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.email}</td>
+                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.sim_number}</td>
+                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.device_number}</td>
+                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.city}</td>
+                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.district}</td>
+                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.register_number}</td>
+                            <td className="px-4 py-3 text-muted text-sm whitespace-nowrap">{formatDate(customer.created_at)}</td>
                             {/* السعر column - hidden for non-admin after saving */}
                             <td className="px-4 py-3 whitespace-nowrap">
                               {isAdmin ? (
@@ -931,71 +994,6 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                                   <span className="text-muted">-</span>
                                 )
                               )}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap">
-                              {getEffectiveActivationStatus(customer) && !isEditMode(customer.id) ? (
-                                <button
-                                  onClick={() => startEditing(customer.id, customer, 'mobily')}
-                                  className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium cursor-pointer transition-colors ${
-                                    getEffectiveActivationStatus(customer) === 'activated'
-                                      ? 'bg-green-500/10 text-green-600 border border-green-500/30 hover:bg-green-500/20'
-                                      : 'bg-amber-500/10 text-amber-600 border border-amber-500/30 hover:bg-amber-500/20'
-                                  }`}
-                                  title="انقر للتعديل"
-                                >
-                                  {getEffectiveActivationStatus(customer) === 'activated' ? 'تم التفعيل' : 'جاري التفعيل'}
-                                  <Pencil className="w-3 h-3 opacity-60" />
-                                </button>
-                              ) : (
-                                <select
-                                  value={getCurrentActivationStatus(customer) || ''}
-                                  onChange={(e) => handleActivationStatusChange(customer.id, (e.target.value as ActivationStatus) || null)}
-                                  className="px-2 py-1 text-xs bg-card border border-card-border rounded text-foreground focus:outline-none focus:border-primary min-w-[100px]"
-                                >
-                                  <option value="" disabled>اختر الحالة</option>
-                                  <option value="activated">تم التفعيل</option>
-                                  <option value="activating">جاري التفعيل</option>
-                                </select>
-                              )}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap">
-                              <div className="flex items-center gap-2">
-                                {isEditMode(customer.id) && (
-                                  <>
-                                    <button
-                                      onClick={() => handleSubmitCustomerChanges(customer.id, 'mobily', customer)}
-                                      disabled={savingCustomerId === customer.id || isSaveDisabledForActivating(customer.id, customer)}
-                                      className="px-3 py-1 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-                                      title={isSaveDisabledForActivating(customer.id, customer) ? 'لا يمكن إتمام الإدخال أثناء حالة "جاري التفعيل". قم بتغيير الحالة إلى "تم التفعيل"' : undefined}
-                                    >
-                                      {savingCustomerId === customer.id ? (
-                                        <>
-                                          <Loader2 className="w-3 h-3 animate-spin" />
-                                          جاري الحفظ
-                                        </>
-                                      ) : (
-                                        'حفظ'
-                                      )}
-                                    </button>
-                                    <button
-                                      onClick={() => cancelEditing(customer.id)}
-                                      disabled={savingCustomerId === customer.id}
-                                      className="p-1.5 text-muted hover:text-foreground hover:bg-card-hover rounded-lg transition-colors disabled:opacity-50"
-                                      title="إلغاء"
-                                    >
-                                      <X className="w-4 h-4" />
-                                    </button>
-                                  </>
-                                )}
-                                <button
-                                  onClick={() => handleDeleteCustomer(customer.id, customer.name, 'mobily')}
-                                  disabled={isDeleting === customer.id}
-                                  className="p-1.5 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
-                                  title="حذف"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </div>
                             </td>
                           </tr>
                         ))}
