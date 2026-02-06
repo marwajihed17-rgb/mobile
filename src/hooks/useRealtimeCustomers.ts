@@ -6,55 +6,45 @@ import { scrollToTop } from '@/utils/scroll';
 import type { SalamCustomer, MobilyCustomer } from '@/types/database';
 
 /**
- * Helper function to check if a Salam customer entry is complete
- * (has operator_id AND activation_status is 'activated')
- * Note: entries with 'activating' status are NOT complete and remain visible
+ * Helper: check if a Salam entry is fully confirmed (final stage - admin only)
  */
-function isSalamEntryComplete(customer: SalamCustomer): boolean {
-  return customer.operator_id !== null &&
-         customer.operator_id !== undefined &&
-         customer.activation_status === 'activated';
+function isSalamEntryFullyConfirmed(customer: SalamCustomer): boolean {
+  return customer.activation_status === 'confirmed';
 }
 
 /**
- * Helper function to check if a Mobily customer entry is complete
- * (has operator_id AND activation_status is 'activated' AND price)
- * Note: entries with 'activating' status are NOT complete and remain visible
+ * Helper: check if a Mobily entry is fully confirmed (final stage - admin only)
  */
-function isMobilyEntryComplete(customer: MobilyCustomer): boolean {
-  return customer.operator_id !== null &&
-         customer.operator_id !== undefined &&
-         customer.activation_status === 'activated' &&
-         customer.price !== null &&
-         customer.price !== undefined;
+function isMobilyEntryFullyConfirmed(customer: MobilyCustomer): boolean {
+  return customer.activation_status === 'confirmed';
 }
 
 /**
- * Real-time hook for Salam customers
- * Fetches fresh data on mount and automatically syncs with database changes
- * Workflow: user submits → جاري التفعيل → تم التفعيل → admin sees it
- * - Admins: only see entries with activation_status === 'activated'
- * - Operators: see ALL entries from all users where activation_status !== 'activated' (new + activating)
- * - Regular users: see only their own incomplete entries
+ * 3-stage workflow filtering:
+ * Stage 1: User submits, sets جاري التفعيل → visible to user + operator
+ * Stage 2: Operator confirms تم التفعيل → status='activated', still visible to user + operator (with checkmark)
+ * Stage 3: User final confirms → status='confirmed', removed from user + operator, only admin sees it
+ *
+ * Admin: only see 'confirmed' entries (archived/completed)
+ * Operator: see 'activating' + 'activated' entries from all users (not null, not confirmed)
+ * User: see own entries where status is NOT 'confirmed'
  */
+
 export function useRealtimeSalamCustomers<T extends SalamCustomer>(initialData: T[], userId?: string, isAdmin?: boolean, isOperator?: boolean) {
-  // Filter initial data based on role
   const filteredInitialData = isAdmin
-    ? initialData.filter(customer => customer.activation_status === 'activated')
+    ? initialData.filter(customer => customer.activation_status === 'confirmed')
     : isOperator
-      ? initialData.filter(customer => customer.activation_status !== 'activated')
-      : initialData.filter(customer => !isSalamEntryComplete(customer));
+      ? initialData.filter(customer => customer.activation_status === 'activating' || customer.activation_status === 'activated')
+      : initialData.filter(customer => !isSalamEntryFullyConfirmed(customer));
 
   const [customers, setCustomers] = useState<T[]>(filteredInitialData);
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch fresh data from database
   const fetchCustomers = useCallback(async () => {
     setIsLoading(true);
     try {
       const supabase = getSupabaseClient();
-      // Include profiles join to get supervisor_name for statistics
       let query = supabase
         .from('salam_customers')
         .select('*, profiles(username, full_name, email, supervisor_name)')
@@ -73,12 +63,14 @@ export function useRealtimeSalamCustomers<T extends SalamCustomer>(initialData: 
       }
 
       if (data) {
-        // Admins: only activated. Operators: everything except activated. Users: hide completed
         const filteredData = isAdmin
-          ? data.filter(customer => (customer as SalamCustomer).activation_status === 'activated')
+          ? data.filter(customer => (customer as SalamCustomer).activation_status === 'confirmed')
           : isOperator
-            ? data.filter(customer => (customer as SalamCustomer).activation_status !== 'activated')
-            : data.filter(customer => !isSalamEntryComplete(customer as SalamCustomer));
+            ? data.filter(customer => {
+                const status = (customer as SalamCustomer).activation_status;
+                return status === 'activating' || status === 'activated';
+              })
+            : data.filter(customer => !isSalamEntryFullyConfirmed(customer as SalamCustomer));
         setCustomers(filteredData as T[]);
       }
     } catch (err) {
@@ -88,12 +80,10 @@ export function useRealtimeSalamCustomers<T extends SalamCustomer>(initialData: 
     }
   }, [userId, isAdmin, isOperator]);
 
-  // Fetch fresh data on mount and when initialData changes
   useEffect(() => {
     fetchCustomers();
   }, [fetchCustomers]);
 
-  // Subscribe to real-time changes
   useEffect(() => {
     const supabase = getSupabaseClient();
 
@@ -110,10 +100,8 @@ export function useRealtimeSalamCustomers<T extends SalamCustomer>(initialData: 
           console.log('Salam customer change received:', payload);
 
           if (payload.eventType === 'INSERT') {
-            // Refetch to get the profile data with supervisor_name
             fetchCustomers();
           } else if (payload.eventType === 'UPDATE') {
-            // Refetch to get the updated data with profile
             fetchCustomers();
           } else if (payload.eventType === 'DELETE') {
             const deletedCustomer = payload.old as T;
@@ -138,32 +126,21 @@ export function useRealtimeSalamCustomers<T extends SalamCustomer>(initialData: 
   return { customers, isConnected, isLoading, refetch: fetchCustomers };
 }
 
-/**
- * Real-time hook for Mobily customers
- * Fetches fresh data on mount and automatically syncs with database changes
- * Workflow: user submits → جاري التفعيل → تم التفعيل → admin sees it
- * - Admins: only see entries with activation_status === 'activated'
- * - Operators: see ALL entries from all users where activation_status !== 'activated' (new + activating)
- * - Regular users: see only their own incomplete entries
- */
 export function useRealtimeMobilyCustomers<T extends MobilyCustomer>(initialData: T[], userId?: string, isAdmin?: boolean, isOperator?: boolean) {
-  // Filter initial data based on role
   const filteredInitialData = isAdmin
-    ? initialData.filter(customer => customer.activation_status === 'activated')
+    ? initialData.filter(customer => customer.activation_status === 'confirmed')
     : isOperator
-      ? initialData.filter(customer => customer.activation_status !== 'activated')
-      : initialData.filter(customer => !isMobilyEntryComplete(customer));
+      ? initialData.filter(customer => customer.activation_status === 'activating' || customer.activation_status === 'activated')
+      : initialData.filter(customer => !isMobilyEntryFullyConfirmed(customer));
 
   const [customers, setCustomers] = useState<T[]>(filteredInitialData);
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch fresh data from database
   const fetchCustomers = useCallback(async () => {
     setIsLoading(true);
     try {
       const supabase = getSupabaseClient();
-      // Include profiles join to get supervisor_name for statistics
       let query = supabase
         .from('mobily_customers')
         .select('*, profiles(username, full_name, email, supervisor_name)')
@@ -182,12 +159,14 @@ export function useRealtimeMobilyCustomers<T extends MobilyCustomer>(initialData
       }
 
       if (data) {
-        // Admins: only activated. Operators: everything except activated. Users: hide completed
         const filteredData = isAdmin
-          ? data.filter(customer => (customer as MobilyCustomer).activation_status === 'activated')
+          ? data.filter(customer => (customer as MobilyCustomer).activation_status === 'confirmed')
           : isOperator
-            ? data.filter(customer => (customer as MobilyCustomer).activation_status !== 'activated')
-            : data.filter(customer => !isMobilyEntryComplete(customer as MobilyCustomer));
+            ? data.filter(customer => {
+                const status = (customer as MobilyCustomer).activation_status;
+                return status === 'activating' || status === 'activated';
+              })
+            : data.filter(customer => !isMobilyEntryFullyConfirmed(customer as MobilyCustomer));
         setCustomers(filteredData as T[]);
       }
     } catch (err) {
@@ -197,12 +176,10 @@ export function useRealtimeMobilyCustomers<T extends MobilyCustomer>(initialData
     }
   }, [userId, isAdmin, isOperator]);
 
-  // Fetch fresh data on mount and when initialData changes
   useEffect(() => {
     fetchCustomers();
   }, [fetchCustomers]);
 
-  // Subscribe to real-time changes
   useEffect(() => {
     const supabase = getSupabaseClient();
 
@@ -219,10 +196,8 @@ export function useRealtimeMobilyCustomers<T extends MobilyCustomer>(initialData
           console.log('Mobily customer change received:', payload);
 
           if (payload.eventType === 'INSERT') {
-            // Refetch to get the profile data with supervisor_name
             fetchCustomers();
           } else if (payload.eventType === 'UPDATE') {
-            // Refetch to get the updated data with profile
             fetchCustomers();
           } else if (payload.eventType === 'DELETE') {
             const deletedCustomer = payload.old as T;

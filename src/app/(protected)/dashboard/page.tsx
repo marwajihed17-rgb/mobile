@@ -27,10 +27,14 @@ export default async function DashboardPage() {
   // Note: All users (including admins and operators) can access this dashboard
   // to view and use the المشغل dropdown
 
-  // Workflow: user submits → جاري التفعيل (activating) → تم التفعيل (activated) → admin sees it
-  // - Admins: only see entries where activation_status is 'activated' (تم التفعيل)
-  // - Operators (المشغل): see ALL entries from all users that are not yet activated (new + جاري التفعيل)
-  // - Regular users: see their own incomplete entries (not yet activated)
+  // 3-stage workflow:
+  // Stage 1: User submits → sets جاري التفعيل → visible to user + operator
+  // Stage 2: Operator confirms → sets تم التفعيل (activated) → still visible to user + operator (checkmark)
+  // Stage 3: User final confirms → status='confirmed' → removed from user + operator, only admin sees it
+  //
+  // Admin: only see 'confirmed' entries (final archived)
+  // Operator: see 'activating' + 'activated' from all users
+  // User: see own entries where status is NOT 'confirmed'
   const isAdmin = profile.role === 'admin' || profile.role === 'super_admin';
   const isOperator = profile.role === 'operator';
 
@@ -47,25 +51,21 @@ export default async function DashboardPage() {
     .limit(5);
 
   if (isAdmin) {
-    // Admins only see completed entries (activation_status = 'activated')
-    salamQuery = salamQuery.eq('activation_status', 'activated');
-    mobilyQuery = mobilyQuery.eq('activation_status', 'activated');
+    // Admins only see fully confirmed entries
+    salamQuery = salamQuery.eq('activation_status', 'confirmed');
+    mobilyQuery = mobilyQuery.eq('activation_status', 'confirmed');
   } else if (isOperator) {
-    // Operators see ALL entries from all users that are not yet activated
-    // This gives them real-time visibility of all live activity
-    salamQuery = salamQuery.or('activation_status.is.null,activation_status.neq.activated');
-    mobilyQuery = mobilyQuery.or('activation_status.is.null,activation_status.neq.activated');
+    // Operators see entries with activating or activated status from all users
+    salamQuery = salamQuery.in('activation_status', ['activating', 'activated']);
+    mobilyQuery = mobilyQuery.in('activation_status', ['activating', 'activated']);
   } else {
-    // Regular users only see their own entries that are not yet fully activated
+    // Regular users see their own entries that are not yet fully confirmed
     salamQuery = salamQuery.eq('user_id', user.id);
     mobilyQuery = mobilyQuery.eq('user_id', user.id);
 
-    // Filter out completed entries for regular users
-    // For Salam: show entries where operator_id is null OR activation_status is not 'activated'
-    salamQuery = salamQuery.or('operator_id.is.null,activation_status.is.null,activation_status.neq.activated');
-
-    // For Mobily: show entries where operator_id is null OR activation_status is not 'activated' OR price is null
-    mobilyQuery = mobilyQuery.or('operator_id.is.null,activation_status.is.null,activation_status.neq.activated,price.is.null');
+    // Filter out confirmed entries
+    salamQuery = salamQuery.or('activation_status.is.null,activation_status.neq.confirmed');
+    mobilyQuery = mobilyQuery.or('activation_status.is.null,activation_status.neq.confirmed');
   }
 
   const { data: salamCustomers } = await salamQuery;
