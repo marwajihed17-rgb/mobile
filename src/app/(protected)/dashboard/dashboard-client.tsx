@@ -95,8 +95,8 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
   // Pass userId, isAdmin, and isOperator to properly filter and fetch fresh data
   const isAdmin = profile.role === 'admin' || profile.role === 'super_admin';
   const isOperator = profile.role === 'operator';
-  const { customers: salamCustomers, isConnected: salamConnected, refetch: refetchSalam, isLoading: salamLoading } = useRealtimeSalamCustomers(recentSalamCustomers, profile.id, isAdmin, isOperator);
-  const { customers: mobilyCustomers, isConnected: mobilyConnected, refetch: refetchMobily, isLoading: mobilyLoading } = useRealtimeMobilyCustomers(recentMobilyCustomers, profile.id, isAdmin, isOperator);
+  const { customers: salamCustomers, isConnected: salamConnected, refetch: refetchSalam, isLoading: salamLoading } = useRealtimeSalamCustomers(recentSalamCustomers, profile.id, isAdmin, isOperator, isOperator ? profile.id : undefined);
+  const { customers: mobilyCustomers, isConnected: mobilyConnected, refetch: refetchMobily, isLoading: mobilyLoading } = useRealtimeMobilyCustomers(recentMobilyCustomers, profile.id, isAdmin, isOperator, isOperator ? profile.id : undefined);
 
   // Check if an entry is locked by another operator (has operator assigned + activating status)
   // When locked, other operators cannot change the assigned operator
@@ -279,7 +279,7 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
     const hasPriceChange = projectType === 'mobily' && changes.price !== undefined;
 
     if (!hasOperatorOrStatus && !hasPriceChange) {
-      setError('الرجاء اختيار المشغل أو حالة التفعيل قبل الحفظ');
+      setError(isOperator ? 'الرجاء اختيار حالة التفعيل قبل الحفظ' : 'الرجاء اختيار المشغل أو حالة التفعيل قبل الحفظ');
       setTimeout(() => setError(''), 3000);
       return;
     }
@@ -372,7 +372,7 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
     } finally {
       setSavingCustomerId(null);
     }
-  }, [pendingChanges, getOperatorName, isAdmin]);
+  }, [pendingChanges, getOperatorName, isAdmin, isOperator]);
 
   // Check if customer has pending changes
   const hasPendingChanges = useCallback((customerId: string): boolean => {
@@ -665,7 +665,12 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                           return (
                           <tr key={customer.id} className={`border-b border-card-border last:border-0 hover:bg-card-hover transition-colors ${locked ? 'opacity-75' : ''}`}>
                             <td className="px-4 py-3 whitespace-nowrap">
-                              {locked ? (
+                              {isOperator ? (
+                                // Operator sees their own name as read-only (entries are already filtered to their assignments)
+                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/30">
+                                  {getEffectiveOperatorName(customer) || profile.username}
+                                </span>
+                              ) : locked ? (
                                 <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-muted/10 text-muted border border-muted/30">
                                   <Lock className="w-3 h-3" />
                                   {getEffectiveOperatorName(customer)}
@@ -695,7 +700,33 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                               )}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
-                              {locked ? (
+                              {isOperator ? (
+                                // Operator can change activation status
+                                getEffectiveActivationStatus(customer) && !isEditMode(customer.id) ? (
+                                  <button
+                                    onClick={() => startEditing(customer.id, customer)}
+                                    className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium cursor-pointer transition-colors ${
+                                      getEffectiveActivationStatus(customer) === 'activated'
+                                        ? 'bg-green-500/10 text-green-600 border border-green-500/30 hover:bg-green-500/20'
+                                        : 'bg-amber-500/10 text-amber-600 border border-amber-500/30 hover:bg-amber-500/20'
+                                    }`}
+                                    title="انقر للتعديل"
+                                  >
+                                    {getEffectiveActivationStatus(customer) === 'activated' ? 'تم التفعيل' : 'جاري التفعيل'}
+                                    <Pencil className="w-3 h-3 opacity-60" />
+                                  </button>
+                                ) : (
+                                  <select
+                                    value={getCurrentActivationStatus(customer) || ''}
+                                    onChange={(e) => handleActivationStatusChange(customer.id, (e.target.value as ActivationStatus) || null)}
+                                    className="px-2 py-1 text-xs bg-card border border-card-border rounded text-foreground focus:outline-none focus:border-primary min-w-[100px]"
+                                  >
+                                    <option value="" disabled>اختر الحالة</option>
+                                    <option value="activated">تم التفعيل</option>
+                                    <option value="activating">جاري التفعيل</option>
+                                  </select>
+                                )
+                              ) : locked ? (
                                 <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-amber-500/10 text-amber-600 border border-amber-500/30">
                                   <Lock className="w-3 h-3" />
                                   جاري التفعيل
@@ -727,7 +758,37 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
                               <div className="flex items-center gap-2">
-                                {locked ? (
+                                {isOperator ? (
+                                  // Operator: save/cancel only, no delete
+                                  isEditMode(customer.id) ? (
+                                    <>
+                                      <button
+                                        onClick={() => handleSubmitCustomerChanges(customer.id, 'salam', customer)}
+                                        disabled={savingCustomerId === customer.id}
+                                        className="px-3 py-1 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                                      >
+                                        {savingCustomerId === customer.id ? (
+                                          <>
+                                            <Loader2 className="w-3 h-3 animate-spin" />
+                                            جاري الحفظ
+                                          </>
+                                        ) : (
+                                          'حفظ'
+                                        )}
+                                      </button>
+                                      <button
+                                        onClick={() => cancelEditing(customer.id)}
+                                        disabled={savingCustomerId === customer.id}
+                                        className="p-1.5 text-muted hover:text-foreground hover:bg-card-hover rounded-lg transition-colors disabled:opacity-50"
+                                        title="إلغاء"
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <span className="text-xs text-muted">-</span>
+                                  )
+                                ) : locked ? (
                                   <span className="text-xs text-muted flex items-center gap-1">
                                     <Lock className="w-3 h-3" />
                                     مقفل
@@ -887,7 +948,12 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                           return (
                           <tr key={customer.id} className={`border-b border-card-border last:border-0 hover:bg-card-hover transition-colors ${locked ? 'opacity-75' : ''}`}>
                             <td className="px-4 py-3 whitespace-nowrap">
-                              {locked ? (
+                              {isOperator ? (
+                                // Operator sees their own name as read-only
+                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/30">
+                                  {getEffectiveOperatorName(customer) || profile.username}
+                                </span>
+                              ) : locked ? (
                                 <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-muted/10 text-muted border border-muted/30">
                                   <Lock className="w-3 h-3" />
                                   {getEffectiveOperatorName(customer)}
@@ -917,7 +983,33 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                               )}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
-                              {locked ? (
+                              {isOperator ? (
+                                // Operator can change activation status
+                                getEffectiveActivationStatus(customer) && !isEditMode(customer.id) ? (
+                                  <button
+                                    onClick={() => startEditing(customer.id, customer, 'mobily')}
+                                    className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium cursor-pointer transition-colors ${
+                                      getEffectiveActivationStatus(customer) === 'activated'
+                                        ? 'bg-green-500/10 text-green-600 border border-green-500/30 hover:bg-green-500/20'
+                                        : 'bg-amber-500/10 text-amber-600 border border-amber-500/30 hover:bg-amber-500/20'
+                                    }`}
+                                    title="انقر للتعديل"
+                                  >
+                                    {getEffectiveActivationStatus(customer) === 'activated' ? 'تم التفعيل' : 'جاري التفعيل'}
+                                    <Pencil className="w-3 h-3 opacity-60" />
+                                  </button>
+                                ) : (
+                                  <select
+                                    value={getCurrentActivationStatus(customer) || ''}
+                                    onChange={(e) => handleActivationStatusChange(customer.id, (e.target.value as ActivationStatus) || null)}
+                                    className="px-2 py-1 text-xs bg-card border border-card-border rounded text-foreground focus:outline-none focus:border-primary min-w-[100px]"
+                                  >
+                                    <option value="" disabled>اختر الحالة</option>
+                                    <option value="activated">تم التفعيل</option>
+                                    <option value="activating">جاري التفعيل</option>
+                                  </select>
+                                )
+                              ) : locked ? (
                                 <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-amber-500/10 text-amber-600 border border-amber-500/30">
                                   <Lock className="w-3 h-3" />
                                   جاري التفعيل
@@ -949,7 +1041,37 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
                               <div className="flex items-center gap-2">
-                                {locked ? (
+                                {isOperator ? (
+                                  // Operator: save/cancel only, no delete
+                                  isEditMode(customer.id) ? (
+                                    <>
+                                      <button
+                                        onClick={() => handleSubmitCustomerChanges(customer.id, 'mobily', customer)}
+                                        disabled={savingCustomerId === customer.id}
+                                        className="px-3 py-1 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                                      >
+                                        {savingCustomerId === customer.id ? (
+                                          <>
+                                            <Loader2 className="w-3 h-3 animate-spin" />
+                                            جاري الحفظ
+                                          </>
+                                        ) : (
+                                          'حفظ'
+                                        )}
+                                      </button>
+                                      <button
+                                        onClick={() => cancelEditing(customer.id)}
+                                        disabled={savingCustomerId === customer.id}
+                                        className="p-1.5 text-muted hover:text-foreground hover:bg-card-hover rounded-lg transition-colors disabled:opacity-50"
+                                        title="إلغاء"
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <span className="text-xs text-muted">-</span>
+                                  )
+                                ) : locked ? (
                                   <span className="text-xs text-muted flex items-center gap-1">
                                     <Lock className="w-3 h-3" />
                                     مقفل

@@ -30,11 +30,14 @@ function isMobilyEntryFullyConfirmed(customer: MobilyCustomer): boolean {
  * User: see own entries where status is NOT 'confirmed'
  */
 
-export function useRealtimeSalamCustomers<T extends SalamCustomer>(initialData: T[], userId?: string, isAdmin?: boolean, isOperator?: boolean) {
+export function useRealtimeSalamCustomers<T extends SalamCustomer>(initialData: T[], userId?: string, isAdmin?: boolean, isOperator?: boolean, operatorProfileId?: string) {
   const filteredInitialData = isAdmin
     ? initialData.filter(customer => customer.activation_status === 'confirmed')
     : isOperator
-      ? initialData.filter(customer => customer.activation_status === 'activating' || customer.activation_status === 'activated')
+      ? initialData.filter(customer =>
+          (customer.activation_status === 'activating' || customer.activation_status === 'activated') &&
+          customer.operator_id === operatorProfileId
+        )
       : initialData.filter(customer => !isSalamEntryFullyConfirmed(customer));
 
   const [customers, setCustomers] = useState<T[]>(filteredInitialData);
@@ -50,8 +53,10 @@ export function useRealtimeSalamCustomers<T extends SalamCustomer>(initialData: 
         .select('*, profiles(username, full_name, email, supervisor_name)')
         .order('created_at', { ascending: false });
 
-      // Operators see all entries; regular users see only their own
-      if (!isAdmin && !isOperator && userId) {
+      // Operators see only entries assigned to them; regular users see only their own
+      if (isOperator && operatorProfileId) {
+        query = query.eq('operator_id', operatorProfileId);
+      } else if (!isAdmin && !isOperator && userId) {
         query = query.eq('user_id', userId);
       }
 
@@ -78,7 +83,7 @@ export function useRealtimeSalamCustomers<T extends SalamCustomer>(initialData: 
     } finally {
       setIsLoading(false);
     }
-  }, [userId, isAdmin, isOperator]);
+  }, [userId, isAdmin, isOperator, operatorProfileId]);
 
   useEffect(() => {
     fetchCustomers();
@@ -126,11 +131,14 @@ export function useRealtimeSalamCustomers<T extends SalamCustomer>(initialData: 
   return { customers, isConnected, isLoading, refetch: fetchCustomers };
 }
 
-export function useRealtimeMobilyCustomers<T extends MobilyCustomer>(initialData: T[], userId?: string, isAdmin?: boolean, isOperator?: boolean) {
+export function useRealtimeMobilyCustomers<T extends MobilyCustomer>(initialData: T[], userId?: string, isAdmin?: boolean, isOperator?: boolean, operatorProfileId?: string) {
   const filteredInitialData = isAdmin
     ? initialData.filter(customer => customer.activation_status === 'confirmed')
     : isOperator
-      ? initialData.filter(customer => customer.activation_status === 'activating' || customer.activation_status === 'activated')
+      ? initialData.filter(customer =>
+          (customer.activation_status === 'activating' || customer.activation_status === 'activated') &&
+          customer.operator_id === operatorProfileId
+        )
       : initialData.filter(customer => !isMobilyEntryFullyConfirmed(customer));
 
   const [customers, setCustomers] = useState<T[]>(filteredInitialData);
@@ -146,8 +154,10 @@ export function useRealtimeMobilyCustomers<T extends MobilyCustomer>(initialData
         .select('*, profiles(username, full_name, email, supervisor_name)')
         .order('created_at', { ascending: false });
 
-      // Operators see all entries; regular users see only their own
-      if (!isAdmin && !isOperator && userId) {
+      // Operators see only entries assigned to them; regular users see only their own
+      if (isOperator && operatorProfileId) {
+        query = query.eq('operator_id', operatorProfileId);
+      } else if (!isAdmin && !isOperator && userId) {
         query = query.eq('user_id', userId);
       }
 
@@ -174,7 +184,7 @@ export function useRealtimeMobilyCustomers<T extends MobilyCustomer>(initialData
     } finally {
       setIsLoading(false);
     }
-  }, [userId, isAdmin, isOperator]);
+  }, [userId, isAdmin, isOperator, operatorProfileId]);
 
   useEffect(() => {
     fetchCustomers();

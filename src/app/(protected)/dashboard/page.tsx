@@ -44,7 +44,11 @@ export default async function DashboardPage() {
     .order('created_at', { ascending: false })
     .limit(5);
 
-  if (!isAdmin && !isOperator) {
+  if (isOperator) {
+    // Operators see only entries assigned to them
+    salamQuery = salamQuery.eq('operator_id', user.id);
+    mobilyQuery = mobilyQuery.eq('operator_id', user.id);
+  } else if (!isAdmin) {
     // Regular users see only their own entries
     salamQuery = salamQuery.eq('user_id', user.id);
     mobilyQuery = mobilyQuery.eq('user_id', user.id);
