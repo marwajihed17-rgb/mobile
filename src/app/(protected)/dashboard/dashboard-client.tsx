@@ -302,10 +302,8 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
       }
 
       // Activation status logic:
-      // When operator sets تم التفعيل (activated), set to 'confirmed' so entry goes to admin only
-      if (isOperator && changes.activation_status === 'activated') {
-        updateData.activation_status = 'confirmed';
-      } else if (changes.activation_status !== null) {
+      // Save the status as selected by the operator (activating or activated)
+      if (changes.activation_status !== null) {
         updateData.activation_status = changes.activation_status;
       }
 
@@ -348,27 +346,16 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
       });
       setEditingCustomerId(null);
 
-      // Check if entry is now fully confirmed (status='confirmed') and should be removed
-      // Entry is fully confirmed when user does the final save on an already-activated entry
-      const finalStatus = updateData.activation_status;
-      const isFullyConfirmed = finalStatus === 'confirmed';
-
-      // If entry is fully confirmed, trigger removal animation (for both user and operator)
-      if (isFullyConfirmed && !isAdmin) {
-        // Add to removing rows (triggers fade-out animation)
-        setRemovingRows(prev => new Set(prev).add(customerId));
-
-        // Show success modal with special message
-        setSuccessModalMessage('تم حفظ بيانات العميل بنجاح وإزالته من القائمة');
-        setShowSuccessModal(true);
-      } else {
-        // Show regular success modal
-        setSuccessModalMessage('تم حفظ بيانات العميل بنجاح');
-        setShowSuccessModal(true);
-      }
+      // Show success modal
+      setSuccessModalMessage('تم حفظ بيانات العميل بنجاح');
+      setShowSuccessModal(true);
     } catch (err) {
       console.error('Save error:', err);
-      const errorMessage = err instanceof Error ? err.message : 'حدث خطأ أثناء الحفظ';
+      const errorMessage = err instanceof Error
+        ? err.message
+        : (typeof err === 'object' && err !== null && 'message' in err)
+          ? String((err as Record<string, unknown>).message)
+          : 'حدث خطأ أثناء الحفظ';
       setError(`خطأ: ${errorMessage}`);
       setTimeout(() => setError(''), 5000);
     } finally {
