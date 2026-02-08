@@ -288,51 +288,61 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
     setError('');
 
     try {
-      const supabase = getSupabaseClient();
-      const tableName = projectType === 'salam' ? 'salam_customers' : 'mobily_customers';
+      let savedDbStatus: string | null = null;
 
-      // Build update object with only non-null values
-      const updateData: Record<string, string | number | null> = {};
+      if (isOperator) {
+        // Operators use the server-side API route (bypasses RLS)
+        const response = await fetch('/api/operators/update-status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customerId,
+            projectType,
+            activationStatus: changes.activation_status,
+            price: projectType === 'mobily' ? changes.price : undefined,
+          }),
+        });
 
-      // Operator auto-assignment logic:
-      // When an operator saves, auto-assign themselves as the operator
-      if (isOperator && changes.activation_status !== null) {
-        updateData.operator_id = profile.id;
-        updateData.operator_name = profile.username;
-      }
+        const result = await response.json();
 
-      // Activation status logic:
-      // When operator sets تم التفعيل (activated), save as 'confirmed' so the entry
-      // is removed from user/operator dashboards and moves to admin dashboard.
-      if (isOperator && changes.activation_status === 'activated') {
-        updateData.activation_status = 'confirmed';
-      } else if (changes.activation_status !== null) {
-        updateData.activation_status = changes.activation_status;
-      }
-
-      // Add price for Mobily customers
-      if (projectType === 'mobily' && changes.price !== undefined) {
-        updateData.price = changes.price;
-      }
-
-      const { error: updateError } = await supabase
-        .from(tableName)
-        .update(updateData as never)
-        .eq('id', customerId);
-
-      if (updateError) {
-        // Check if it's a column doesn't exist error
-        if (updateError.message?.includes('column') || updateError.code === '42703') {
-          console.warn('Database columns may not exist yet:', updateError.message);
-          // Still clear pending changes and show success (data will be stored when columns exist)
-        } else {
-          throw updateError;
+        if (!response.ok) {
+          throw new Error(result.error || 'حدث خطأ أثناء الحفظ');
         }
+
+        savedDbStatus = result.savedStatus;
+      } else {
+        // Non-operators update directly via Supabase client
+        const supabase = getSupabaseClient();
+        const tableName = projectType === 'salam' ? 'salam_customers' : 'mobily_customers';
+
+        const updateData: Record<string, string | number | null> = {};
+
+        if (changes.activation_status !== null) {
+          updateData.activation_status = changes.activation_status;
+        }
+
+        if (projectType === 'mobily' && changes.price !== undefined) {
+          updateData.price = changes.price;
+        }
+
+        const { error: updateError } = await supabase
+          .from(tableName)
+          .update(updateData as never)
+          .eq('id', customerId);
+
+        if (updateError) {
+          if (updateError.message?.includes('column') || updateError.code === '42703') {
+            console.warn('Database columns may not exist yet:', updateError.message);
+          } else {
+            throw new Error(updateError.message || 'حدث خطأ أثناء الحفظ');
+          }
+        }
+
+        savedDbStatus = changes.activation_status;
       }
 
       // Save to savedValues for optimistic UI update
-      // Use the actual status sent to the database (may be 'confirmed' if operator set 'activated')
-      const savedStatus = (updateData.activation_status ?? changes.activation_status) as ActivationStatus | null;
+      const savedStatus = (savedDbStatus ?? changes.activation_status) as ActivationStatus | null;
       setSavedValues(prev => ({
         ...prev,
         [customerId]: {
@@ -352,8 +362,7 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
       setEditingCustomerId(null);
 
       // Check if entry is now fully confirmed and should be removed from user/operator views
-      const finalStatus = updateData.activation_status;
-      const isFullyConfirmed = finalStatus === 'confirmed';
+      const isFullyConfirmed = savedDbStatus === 'confirmed';
 
       if (isFullyConfirmed && !isAdmin) {
         // Add to removing rows (triggers fade-out animation)
@@ -369,11 +378,7 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
       }
     } catch (err) {
       console.error('Save error:', err);
-      const errorMessage = err instanceof Error
-        ? err.message
-        : (typeof err === 'object' && err !== null && 'message' in err)
-          ? String((err as Record<string, unknown>).message)
-          : 'حدث خطأ أثناء الحفظ';
+      const errorMessage = err instanceof Error ? err.message : 'حدث خطأ أثناء الحفظ';
       setError(`خطأ: ${errorMessage}`);
       setTimeout(() => setError(''), 5000);
     } finally {
