@@ -721,8 +721,13 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                                   </span>
                                 ) : (
                                   <select
-                                    value={getCurrentActivationStatus(customer) || ''}
-                                    onChange={(e) => handleActivationStatusChange(customer.id, (e.target.value as ActivationStatus) || null)}
+                                    value={pendingChanges[customer.id]?.activation_status ?? savedValues[customer.id]?.activation_status ?? ''}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      if (val === 'activating' || val === 'activated') {
+                                        handleActivationStatusChange(customer.id, val);
+                                      }
+                                    }}
                                     className="px-2 py-1 text-xs bg-card border border-card-border rounded text-foreground focus:outline-none focus:border-primary min-w-[100px]"
                                   >
                                     <option value="" disabled>اختر الحالة</option>
@@ -945,8 +950,13 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                                   </span>
                                 ) : (
                                   <select
-                                    value={getCurrentActivationStatus(customer) || ''}
-                                    onChange={(e) => handleActivationStatusChange(customer.id, (e.target.value as ActivationStatus) || null)}
+                                    value={pendingChanges[customer.id]?.activation_status ?? savedValues[customer.id]?.activation_status ?? ''}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      if (val === 'activating' || val === 'activated') {
+                                        handleActivationStatusChange(customer.id, val);
+                                      }
+                                    }}
                                     className="px-2 py-1 text-xs bg-card border border-card-border rounded text-foreground focus:outline-none focus:border-primary min-w-[100px]"
                                   >
                                     <option value="" disabled>اختر الحالة</option>
