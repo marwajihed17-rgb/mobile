@@ -332,7 +332,7 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
 
       // Save to savedValues for optimistic UI update
       // Use the actual status sent to the database (may be 'confirmed' if operator set 'activated')
-      const savedStatus = updateData.activation_status as string | undefined ?? changes.activation_status;
+      const savedStatus = (updateData.activation_status ?? changes.activation_status) as ActivationStatus | null;
       setSavedValues(prev => ({
         ...prev,
         [customerId]: {
