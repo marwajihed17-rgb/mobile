@@ -184,7 +184,7 @@ CREATE TABLE IF NOT EXISTS public.salam_customers (
     -- Operator fields
     operator_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
     operator_name TEXT,
-    activation_status TEXT CHECK (activation_status IN ('activated', 'activating')),
+    activation_status TEXT CHECK (activation_status IN ('activated', 'activating', 'confirmed')),
 
     -- System fields
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -222,7 +222,7 @@ CREATE TABLE IF NOT EXISTS public.mobily_customers (
     -- Operator fields
     operator_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
     operator_name TEXT,
-    activation_status TEXT CHECK (activation_status IN ('activated', 'activating')),
+    activation_status TEXT CHECK (activation_status IN ('activated', 'activating', 'confirmed')),
 
     -- System fields
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -1260,20 +1260,21 @@ CREATE POLICY "Admins can delete all salam customers"
     ON public.salam_customers FOR DELETE
     USING (public.is_admin(auth.uid()));
 
--- Operators can view salam entries assigned to them
-CREATE POLICY "Operators can view assigned salam customers"
+-- Operators can view all salam entries with activating or activated status
+CREATE POLICY "Operators can view all active salam customers"
     ON public.salam_customers FOR SELECT
     USING (
         public.is_operator(auth.uid())
-        AND operator_id = auth.uid()
+        AND activation_status IN ('activating', 'activated')
     );
 
--- Operators can update salam entries assigned to them
-CREATE POLICY "Operators can update assigned salam customers"
+-- Operators can update entries assigned to them OR unassigned entries (to claim them)
+CREATE POLICY "Operators can update claimable salam customers"
     ON public.salam_customers FOR UPDATE
     USING (
         public.is_operator(auth.uid())
-        AND operator_id = auth.uid()
+        AND (operator_id = auth.uid() OR operator_id IS NULL)
+        AND activation_status IN ('activating', 'activated')
     );
 
 -- ============================================
@@ -1316,20 +1317,21 @@ CREATE POLICY "Admins can delete all mobily customers"
     ON public.mobily_customers FOR DELETE
     USING (public.is_admin(auth.uid()));
 
--- Operators can view mobily entries assigned to them
-CREATE POLICY "Operators can view assigned mobily customers"
+-- Operators can view all mobily entries with activating or activated status
+CREATE POLICY "Operators can view all active mobily customers"
     ON public.mobily_customers FOR SELECT
     USING (
         public.is_operator(auth.uid())
-        AND operator_id = auth.uid()
+        AND activation_status IN ('activating', 'activated')
     );
 
--- Operators can update mobily entries assigned to them
-CREATE POLICY "Operators can update assigned mobily customers"
+-- Operators can update entries assigned to them OR unassigned entries (to claim them)
+CREATE POLICY "Operators can update claimable mobily customers"
     ON public.mobily_customers FOR UPDATE
     USING (
         public.is_operator(auth.uid())
-        AND operator_id = auth.uid()
+        AND (operator_id = auth.uid() OR operator_id IS NULL)
+        AND activation_status IN ('activating', 'activated')
     );
 
 -- ============================================
