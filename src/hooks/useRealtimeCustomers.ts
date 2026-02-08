@@ -35,8 +35,7 @@ export function useRealtimeSalamCustomers<T extends SalamCustomer>(initialData: 
     ? initialData.filter(customer => customer.activation_status === 'confirmed')
     : isOperator
       ? initialData.filter(customer =>
-          (customer.activation_status === 'activating' || customer.activation_status === 'activated') &&
-          customer.operator_id === operatorProfileId
+          customer.activation_status === 'activating' || customer.activation_status === 'activated'
         )
       : initialData.filter(customer => !isSalamEntryFullyConfirmed(customer));
 
@@ -53,10 +52,8 @@ export function useRealtimeSalamCustomers<T extends SalamCustomer>(initialData: 
         .select('*, profiles(username, full_name, email, supervisor_name)')
         .order('created_at', { ascending: false });
 
-      // Operators see only entries assigned to them; regular users see only their own
-      if (isOperator && operatorProfileId) {
-        query = query.eq('operator_id', operatorProfileId);
-      } else if (!isAdmin && !isOperator && userId) {
+      // Operators see all entries with activating/activated status; regular users see only their own
+      if (!isAdmin && !isOperator && userId) {
         query = query.eq('user_id', userId);
       }
 
@@ -136,8 +133,7 @@ export function useRealtimeMobilyCustomers<T extends MobilyCustomer>(initialData
     ? initialData.filter(customer => customer.activation_status === 'confirmed')
     : isOperator
       ? initialData.filter(customer =>
-          (customer.activation_status === 'activating' || customer.activation_status === 'activated') &&
-          customer.operator_id === operatorProfileId
+          customer.activation_status === 'activating' || customer.activation_status === 'activated'
         )
       : initialData.filter(customer => !isMobilyEntryFullyConfirmed(customer));
 
@@ -154,10 +150,8 @@ export function useRealtimeMobilyCustomers<T extends MobilyCustomer>(initialData
         .select('*, profiles(username, full_name, email, supervisor_name)')
         .order('created_at', { ascending: false });
 
-      // Operators see only entries assigned to them; regular users see only their own
-      if (isOperator && operatorProfileId) {
-        query = query.eq('operator_id', operatorProfileId);
-      } else if (!isAdmin && !isOperator && userId) {
+      // Operators see all entries with activating/activated status; regular users see only their own
+      if (!isAdmin && !isOperator && userId) {
         query = query.eq('user_id', userId);
       }
 

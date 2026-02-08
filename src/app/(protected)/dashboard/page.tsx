@@ -45,9 +45,8 @@ export default async function DashboardPage() {
     .limit(5);
 
   if (isOperator) {
-    // Operators see only entries assigned to them
-    salamQuery = salamQuery.eq('operator_id', user.id);
-    mobilyQuery = mobilyQuery.eq('operator_id', user.id);
+    // Operators see all entries (they will be filtered client-side by activation status)
+    // No filter needed - operators see all activating/activated entries
   } else if (!isAdmin) {
     // Regular users see only their own entries
     salamQuery = salamQuery.eq('user_id', user.id);

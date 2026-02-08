@@ -203,7 +203,7 @@ export function MobilyFormClient({ profile }: MobilyFormClientProps) {
         return;
       }
 
-      // Insert new mobily customer entry
+      // Insert new mobily customer entry with activation_status = 'activating' (جاري التفعيل)
       const { error: insertError } = await supabase
         .from('mobily_customers')
         .insert({
@@ -222,6 +222,7 @@ export function MobilyFormClient({ profile }: MobilyFormClientProps) {
           email: formData.email.trim(),
           city: formData.city.trim(),
           district: formData.district.trim(),
+          activation_status: 'activating', // جاري التفعيل - default status
         });
 
       if (insertError) {
