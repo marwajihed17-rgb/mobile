@@ -58,12 +58,18 @@ CREATE POLICY "Operators can view all active salam customers"
     );
 
 -- Operators can update entries assigned to them OR unassigned entries (operator_id IS NULL)
+-- USING = old row check, WITH CHECK = new row check (allows confirmed status after save)
 CREATE POLICY "Operators can update claimable salam customers"
     ON public.salam_customers FOR UPDATE
     USING (
         public.is_operator(auth.uid())
         AND (operator_id = auth.uid()::text OR operator_id IS NULL)
         AND activation_status IN ('activating', 'activated')
+    )
+    WITH CHECK (
+        public.is_operator(auth.uid())
+        AND operator_id = auth.uid()::text
+        AND activation_status IN ('activating', 'activated', 'confirmed')
     );
 
 -- MOBILY CUSTOMERS --
@@ -77,10 +83,16 @@ CREATE POLICY "Operators can view all active mobily customers"
     );
 
 -- Operators can update entries assigned to them OR unassigned entries (operator_id IS NULL)
+-- USING = old row check, WITH CHECK = new row check (allows confirmed status after save)
 CREATE POLICY "Operators can update claimable mobily customers"
     ON public.mobily_customers FOR UPDATE
     USING (
         public.is_operator(auth.uid())
         AND (operator_id = auth.uid()::text OR operator_id IS NULL)
         AND activation_status IN ('activating', 'activated')
+    )
+    WITH CHECK (
+        public.is_operator(auth.uid())
+        AND operator_id = auth.uid()::text
+        AND activation_status IN ('activating', 'activated', 'confirmed')
     );
