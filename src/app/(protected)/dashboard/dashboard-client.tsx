@@ -302,8 +302,11 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
       }
 
       // Activation status logic:
-      // Save the status as selected by the operator (activating or activated)
-      if (changes.activation_status !== null) {
+      // When operator sets تم التفعيل (activated), save as 'confirmed' so the entry
+      // is removed from user/operator dashboards and moves to admin dashboard.
+      if (isOperator && changes.activation_status === 'activated') {
+        updateData.activation_status = 'confirmed';
+      } else if (changes.activation_status !== null) {
         updateData.activation_status = changes.activation_status;
       }
 
@@ -328,12 +331,14 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
       }
 
       // Save to savedValues for optimistic UI update
+      // Use the actual status sent to the database (may be 'confirmed' if operator set 'activated')
+      const savedStatus = updateData.activation_status as string | undefined ?? changes.activation_status;
       setSavedValues(prev => ({
         ...prev,
         [customerId]: {
           operator_id: isOperator ? profile.id : (changes.operator_id ?? null),
           operator_name: isOperator ? profile.username : null,
-          activation_status: changes.activation_status,
+          activation_status: savedStatus,
           price: changes.price,
         }
       }));
@@ -346,9 +351,22 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
       });
       setEditingCustomerId(null);
 
-      // Show success modal
-      setSuccessModalMessage('تم حفظ بيانات العميل بنجاح');
-      setShowSuccessModal(true);
+      // Check if entry is now fully confirmed and should be removed from user/operator views
+      const finalStatus = updateData.activation_status;
+      const isFullyConfirmed = finalStatus === 'confirmed';
+
+      if (isFullyConfirmed && !isAdmin) {
+        // Add to removing rows (triggers fade-out animation)
+        setRemovingRows(prev => new Set(prev).add(customerId));
+
+        // Show success modal with removal message
+        setSuccessModalMessage('تم حفظ بيانات العميل بنجاح وإزالته من القائمة');
+        setShowSuccessModal(true);
+      } else {
+        // Show regular success modal
+        setSuccessModalMessage('تم حفظ بيانات العميل بنجاح');
+        setShowSuccessModal(true);
+      }
     } catch (err) {
       console.error('Save error:', err);
       const errorMessage = err instanceof Error
