@@ -1275,6 +1275,11 @@ CREATE POLICY "Operators can update claimable salam customers"
         public.is_operator(auth.uid())
         AND (operator_id = auth.uid()::text OR operator_id IS NULL)
         AND activation_status IN ('activating', 'activated')
+    )
+    WITH CHECK (
+        public.is_operator(auth.uid())
+        AND operator_id = auth.uid()::text
+        AND activation_status IN ('activating', 'activated', 'confirmed')
     );
 
 -- ============================================
@@ -1332,6 +1337,11 @@ CREATE POLICY "Operators can update claimable mobily customers"
         public.is_operator(auth.uid())
         AND (operator_id = auth.uid()::text OR operator_id IS NULL)
         AND activation_status IN ('activating', 'activated')
+    )
+    WITH CHECK (
+        public.is_operator(auth.uid())
+        AND operator_id = auth.uid()::text
+        AND activation_status IN ('activating', 'activated', 'confirmed')
     );
 
 -- ============================================
