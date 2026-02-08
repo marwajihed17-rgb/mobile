@@ -192,7 +192,7 @@ export function SalamFormClient({ profile }: SalamFormClientProps) {
         return;
       }
 
-      // Insert new salam customer entry
+      // Insert new salam customer entry with activation_status = 'activating' (جاري التفعيل)
       const { error: insertError } = await supabase
         .from('salam_customers')
         .insert({
@@ -206,6 +206,7 @@ export function SalamFormClient({ profile }: SalamFormClientProps) {
           nationality: formData.nationality.trim(),
           register_number: formData.register_number.trim(),
           package: formData.package.trim() || null, // الباقة (optional)
+          activation_status: 'activating', // جاري التفعيل - default status
         });
 
       if (insertError) {

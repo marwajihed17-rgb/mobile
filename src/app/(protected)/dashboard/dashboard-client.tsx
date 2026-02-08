@@ -275,11 +275,11 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
     if (!changes) return;
 
     // Validate that at least one field is selected (price is optional for Mobily)
-    const hasOperatorOrStatus = changes.operator_id !== null || changes.activation_status !== null;
+    const hasStatusChange = changes.activation_status !== null;
     const hasPriceChange = projectType === 'mobily' && changes.price !== undefined;
 
-    if (!hasOperatorOrStatus && !hasPriceChange) {
-      setError(isOperator ? 'الرجاء اختيار حالة التفعيل قبل الحفظ' : 'الرجاء اختيار المشغل أو حالة التفعيل قبل الحفظ');
+    if (!hasStatusChange && !hasPriceChange) {
+      setError(isOperator ? 'الرجاء اختيار حالة التفعيل قبل الحفظ' : 'الرجاء اختيار حالة التفعيل قبل الحفظ');
       setTimeout(() => setError(''), 3000);
       return;
     }
@@ -290,23 +290,25 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
     try {
       const supabase = getSupabaseClient();
       const tableName = projectType === 'salam' ? 'salam_customers' : 'mobily_customers';
-      const operatorName = getOperatorName(changes.operator_id);
 
       // Build update object with only non-null values
       const updateData: Record<string, string | number | null> = {};
-      if (changes.operator_id !== null) {
-        updateData.operator_id = changes.operator_id;
-        updateData.operator_name = operatorName;
+
+      // Operator auto-assignment logic:
+      // When an operator saves, auto-assign themselves as the operator
+      if (isOperator && changes.activation_status !== null) {
+        updateData.operator_id = profile.id;
+        updateData.operator_name = profile.username;
       }
-      // 3-stage confirmation logic:
-      // If user (not operator, not admin) saves with 'activated' on an entry that's already 'activated'
-      // by the operator, this is the final confirmation → set to 'confirmed'
-      const currentDbStatus = customer?.activation_status;
-      if (!isAdmin && !isOperator && changes.activation_status === 'activated' && currentDbStatus === 'activated') {
+
+      // Activation status logic:
+      // When operator sets تم التفعيل (activated), set to 'confirmed' so entry goes to admin only
+      if (isOperator && changes.activation_status === 'activated') {
         updateData.activation_status = 'confirmed';
       } else if (changes.activation_status !== null) {
         updateData.activation_status = changes.activation_status;
       }
+
       // Add price for Mobily customers
       if (projectType === 'mobily' && changes.price !== undefined) {
         updateData.price = changes.price;
@@ -331,8 +333,8 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
       setSavedValues(prev => ({
         ...prev,
         [customerId]: {
-          operator_id: changes.operator_id,
-          operator_name: operatorName,
+          operator_id: isOperator ? profile.id : (changes.operator_id ?? null),
+          operator_name: isOperator ? profile.username : null,
           activation_status: changes.activation_status,
           price: changes.price,
         }
@@ -372,7 +374,7 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
     } finally {
       setSavingCustomerId(null);
     }
-  }, [pendingChanges, getOperatorName, isAdmin, isOperator]);
+  }, [pendingChanges, isAdmin, isOperator, profile.id, profile.username]);
 
   // Check if customer has pending changes
   const hasPendingChanges = useCallback((customerId: string): boolean => {
@@ -666,43 +668,39 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                           <tr key={customer.id} className={`border-b border-card-border last:border-0 hover:bg-card-hover transition-colors ${locked ? 'opacity-75' : ''}`}>
                             <td className="px-4 py-3 whitespace-nowrap">
                               {isOperator ? (
-                                // Operator sees their own name as read-only (entries are already filtered to their assignments)
-                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/30">
-                                  {getEffectiveOperatorName(customer) || profile.username}
-                                </span>
-                              ) : locked ? (
-                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-muted/10 text-muted border border-muted/30">
-                                  <Lock className="w-3 h-3" />
-                                  {getEffectiveOperatorName(customer)}
-                                </span>
-                              ) : getEffectiveOperatorName(customer) && !isEditMode(customer.id) ? (
-                                <button
-                                  onClick={() => startEditing(customer.id, customer)}
-                                  className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20 transition-colors cursor-pointer"
-                                  title="انقر للتعديل"
-                                >
-                                  {getEffectiveOperatorName(customer)}
-                                  <Pencil className="w-3 h-3 opacity-60" />
-                                </button>
+                                // Operator: show assigned operator name or "غير مخصص"
+                                locked ? (
+                                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-muted/10 text-muted border border-muted/30">
+                                    <Lock className="w-3 h-3" />
+                                    {getEffectiveOperatorName(customer)}
+                                  </span>
+                                ) : getEffectiveOperatorName(customer) ? (
+                                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/30">
+                                    {getEffectiveOperatorName(customer)}
+                                  </span>
+                                ) : (
+                                  <span className="text-xs text-muted">غير مخصص</span>
+                                )
                               ) : (
-                                <select
-                                  value={getCurrentOperatorId(customer) || ''}
-                                  onChange={(e) => handleOperatorChange(customer.id, e.target.value || null, customer.operator_id)}
-                                  className="px-2 py-1 text-xs bg-card border border-card-border rounded text-foreground focus:outline-none focus:border-primary min-w-[90px]"
-                                >
-                                  <option value="" disabled>اختر المشغل</option>
-                                  {operators.map((operator) => (
-                                    <option key={operator.id} value={operator.id}>
-                                      {operator.name}
-                                    </option>
-                                  ))}
-                                </select>
+                                // Regular user: read-only operator display
+                                getEffectiveOperatorName(customer) ? (
+                                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/30">
+                                    {getEffectiveOperatorName(customer)}
+                                  </span>
+                                ) : (
+                                  <span className="text-xs text-muted">-</span>
+                                )
                               )}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
                               {isOperator ? (
-                                // Operator can change activation status
-                                getEffectiveActivationStatus(customer) && !isEditMode(customer.id) ? (
+                                // Operator can change activation status (only if not locked by another operator)
+                                locked ? (
+                                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-amber-500/10 text-amber-600 border border-amber-500/30">
+                                    <Lock className="w-3 h-3" />
+                                    جاري التفعيل
+                                  </span>
+                                ) : getEffectiveActivationStatus(customer) && !isEditMode(customer.id) ? (
                                   <button
                                     onClick={() => startEditing(customer.id, customer)}
                                     className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium cursor-pointer transition-colors ${
@@ -726,41 +724,31 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                                     <option value="activating">جاري التفعيل</option>
                                   </select>
                                 )
-                              ) : locked ? (
-                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-amber-500/10 text-amber-600 border border-amber-500/30">
-                                  <Lock className="w-3 h-3" />
-                                  جاري التفعيل
-                                </span>
-                              ) : getEffectiveActivationStatus(customer) && !isEditMode(customer.id) ? (
-                                <button
-                                  onClick={() => startEditing(customer.id, customer)}
-                                  className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium cursor-pointer transition-colors ${
-                                    getEffectiveActivationStatus(customer) === 'activated'
-                                      ? 'bg-green-500/10 text-green-600 border border-green-500/30 hover:bg-green-500/20'
-                                      : 'bg-amber-500/10 text-amber-600 border border-amber-500/30 hover:bg-amber-500/20'
-                                  }`}
-                                  title="انقر للتعديل"
-                                >
-                                  {getEffectiveActivationStatus(customer) === 'activated' ? 'تم التفعيل' : 'جاري التفعيل'}
-                                  <Pencil className="w-3 h-3 opacity-60" />
-                                </button>
                               ) : (
-                                <select
-                                  value={getCurrentActivationStatus(customer) || ''}
-                                  onChange={(e) => handleActivationStatusChange(customer.id, (e.target.value as ActivationStatus) || null)}
-                                  className="px-2 py-1 text-xs bg-card border border-card-border rounded text-foreground focus:outline-none focus:border-primary min-w-[100px]"
-                                >
-                                  <option value="" disabled>اختر الحالة</option>
-                                  <option value="activated">تم التفعيل</option>
-                                  <option value="activating">جاري التفعيل</option>
-                                </select>
+                                // Regular user: read-only activation status
+                                getEffectiveActivationStatus(customer) ? (
+                                  <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
+                                    getEffectiveActivationStatus(customer) === 'activated'
+                                      ? 'bg-green-500/10 text-green-600 border border-green-500/30'
+                                      : 'bg-amber-500/10 text-amber-600 border border-amber-500/30'
+                                  }`}>
+                                    {getEffectiveActivationStatus(customer) === 'activated' ? 'تم التفعيل' : 'جاري التفعيل'}
+                                  </span>
+                                ) : (
+                                  <span className="text-xs text-muted">-</span>
+                                )
                               )}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
                               <div className="flex items-center gap-2">
                                 {isOperator ? (
                                   // Operator: save/cancel only, no delete
-                                  isEditMode(customer.id) ? (
+                                  locked ? (
+                                    <span className="text-xs text-muted flex items-center gap-1">
+                                      <Lock className="w-3 h-3" />
+                                      مقفل
+                                    </span>
+                                  ) : isEditMode(customer.id) ? (
                                     <>
                                       <button
                                         onClick={() => handleSubmitCustomerChanges(customer.id, 'salam', customer)}
@@ -788,48 +776,16 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                                   ) : (
                                     <span className="text-xs text-muted">-</span>
                                   )
-                                ) : locked ? (
-                                  <span className="text-xs text-muted flex items-center gap-1">
-                                    <Lock className="w-3 h-3" />
-                                    مقفل
-                                  </span>
                                 ) : (
-                                  <>
-                                    {isEditMode(customer.id) && (
-                                      <>
-                                        <button
-                                          onClick={() => handleSubmitCustomerChanges(customer.id, 'salam', customer)}
-                                          disabled={savingCustomerId === customer.id}
-                                          className="px-3 py-1 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-                                        >
-                                          {savingCustomerId === customer.id ? (
-                                            <>
-                                              <Loader2 className="w-3 h-3 animate-spin" />
-                                              جاري الحفظ
-                                            </>
-                                          ) : (
-                                            'حفظ'
-                                          )}
-                                        </button>
-                                        <button
-                                          onClick={() => cancelEditing(customer.id)}
-                                          disabled={savingCustomerId === customer.id}
-                                          className="p-1.5 text-muted hover:text-foreground hover:bg-card-hover rounded-lg transition-colors disabled:opacity-50"
-                                          title="إلغاء"
-                                        >
-                                          <X className="w-4 h-4" />
-                                        </button>
-                                      </>
-                                    )}
-                                    <button
-                                      onClick={() => handleDeleteCustomer(customer.id, customer.name, 'salam')}
-                                      disabled={isDeleting === customer.id}
-                                      className="p-1.5 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
-                                      title="حذف"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </button>
-                                  </>
+                                  // Regular user: only delete button (no edit for operator/status)
+                                  <button
+                                    onClick={() => handleDeleteCustomer(customer.id, customer.name, 'salam')}
+                                    disabled={isDeleting === customer.id}
+                                    className="p-1.5 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+                                    title="حذف"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
                                 )}
                               </div>
                             </td>
@@ -924,6 +880,7 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">المشغل</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">حالة التفعيل</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الإجراءات</th>
+                          <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">السعر</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الإسم</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">المدخل</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">رقم الهوية</th>
@@ -939,7 +896,6 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">الحي</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">رقم السجل</th>
                           <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">التاريخ</th>
-                          <th className="text-start text-sm font-medium text-muted px-4 py-3 whitespace-nowrap">السعر</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -949,43 +905,39 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                           <tr key={customer.id} className={`border-b border-card-border last:border-0 hover:bg-card-hover transition-colors ${locked ? 'opacity-75' : ''}`}>
                             <td className="px-4 py-3 whitespace-nowrap">
                               {isOperator ? (
-                                // Operator sees their own name as read-only
-                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/30">
-                                  {getEffectiveOperatorName(customer) || profile.username}
-                                </span>
-                              ) : locked ? (
-                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-muted/10 text-muted border border-muted/30">
-                                  <Lock className="w-3 h-3" />
-                                  {getEffectiveOperatorName(customer)}
-                                </span>
-                              ) : getEffectiveOperatorName(customer) && !isEditMode(customer.id) ? (
-                                <button
-                                  onClick={() => startEditing(customer.id, customer, 'mobily')}
-                                  className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20 transition-colors cursor-pointer"
-                                  title="انقر للتعديل"
-                                >
-                                  {getEffectiveOperatorName(customer)}
-                                  <Pencil className="w-3 h-3 opacity-60" />
-                                </button>
+                                // Operator: show assigned operator name or "غير مخصص"
+                                locked ? (
+                                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-muted/10 text-muted border border-muted/30">
+                                    <Lock className="w-3 h-3" />
+                                    {getEffectiveOperatorName(customer)}
+                                  </span>
+                                ) : getEffectiveOperatorName(customer) ? (
+                                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/30">
+                                    {getEffectiveOperatorName(customer)}
+                                  </span>
+                                ) : (
+                                  <span className="text-xs text-muted">غير مخصص</span>
+                                )
                               ) : (
-                                <select
-                                  value={getCurrentOperatorId(customer) || ''}
-                                  onChange={(e) => handleOperatorChange(customer.id, e.target.value || null, customer.operator_id)}
-                                  className="px-2 py-1 text-xs bg-card border border-card-border rounded text-foreground focus:outline-none focus:border-primary min-w-[90px]"
-                                >
-                                  <option value="" disabled>اختر المشغل</option>
-                                  {operators.map((operator) => (
-                                    <option key={operator.id} value={operator.id}>
-                                      {operator.name}
-                                    </option>
-                                  ))}
-                                </select>
+                                // Regular user: read-only operator display
+                                getEffectiveOperatorName(customer) ? (
+                                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/30">
+                                    {getEffectiveOperatorName(customer)}
+                                  </span>
+                                ) : (
+                                  <span className="text-xs text-muted">-</span>
+                                )
                               )}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
                               {isOperator ? (
-                                // Operator can change activation status
-                                getEffectiveActivationStatus(customer) && !isEditMode(customer.id) ? (
+                                // Operator can change activation status (only if not locked by another operator)
+                                locked ? (
+                                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-amber-500/10 text-amber-600 border border-amber-500/30">
+                                    <Lock className="w-3 h-3" />
+                                    جاري التفعيل
+                                  </span>
+                                ) : getEffectiveActivationStatus(customer) && !isEditMode(customer.id) ? (
                                   <button
                                     onClick={() => startEditing(customer.id, customer, 'mobily')}
                                     className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium cursor-pointer transition-colors ${
@@ -1009,41 +961,31 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                                     <option value="activating">جاري التفعيل</option>
                                   </select>
                                 )
-                              ) : locked ? (
-                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-amber-500/10 text-amber-600 border border-amber-500/30">
-                                  <Lock className="w-3 h-3" />
-                                  جاري التفعيل
-                                </span>
-                              ) : getEffectiveActivationStatus(customer) && !isEditMode(customer.id) ? (
-                                <button
-                                  onClick={() => startEditing(customer.id, customer, 'mobily')}
-                                  className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium cursor-pointer transition-colors ${
-                                    getEffectiveActivationStatus(customer) === 'activated'
-                                      ? 'bg-green-500/10 text-green-600 border border-green-500/30 hover:bg-green-500/20'
-                                      : 'bg-amber-500/10 text-amber-600 border border-amber-500/30 hover:bg-amber-500/20'
-                                  }`}
-                                  title="انقر للتعديل"
-                                >
-                                  {getEffectiveActivationStatus(customer) === 'activated' ? 'تم التفعيل' : 'جاري التفعيل'}
-                                  <Pencil className="w-3 h-3 opacity-60" />
-                                </button>
                               ) : (
-                                <select
-                                  value={getCurrentActivationStatus(customer) || ''}
-                                  onChange={(e) => handleActivationStatusChange(customer.id, (e.target.value as ActivationStatus) || null)}
-                                  className="px-2 py-1 text-xs bg-card border border-card-border rounded text-foreground focus:outline-none focus:border-primary min-w-[100px]"
-                                >
-                                  <option value="" disabled>اختر الحالة</option>
-                                  <option value="activated">تم التفعيل</option>
-                                  <option value="activating">جاري التفعيل</option>
-                                </select>
+                                // Regular user: read-only activation status
+                                getEffectiveActivationStatus(customer) ? (
+                                  <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
+                                    getEffectiveActivationStatus(customer) === 'activated'
+                                      ? 'bg-green-500/10 text-green-600 border border-green-500/30'
+                                      : 'bg-amber-500/10 text-amber-600 border border-amber-500/30'
+                                  }`}>
+                                    {getEffectiveActivationStatus(customer) === 'activated' ? 'تم التفعيل' : 'جاري التفعيل'}
+                                  </span>
+                                ) : (
+                                  <span className="text-xs text-muted">-</span>
+                                )
                               )}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
                               <div className="flex items-center gap-2">
                                 {isOperator ? (
                                   // Operator: save/cancel only, no delete
-                                  isEditMode(customer.id) ? (
+                                  locked ? (
+                                    <span className="text-xs text-muted flex items-center gap-1">
+                                      <Lock className="w-3 h-3" />
+                                      مقفل
+                                    </span>
+                                  ) : isEditMode(customer.id) ? (
                                     <>
                                       <button
                                         onClick={() => handleSubmitCustomerChanges(customer.id, 'mobily', customer)}
@@ -1071,71 +1013,20 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                                   ) : (
                                     <span className="text-xs text-muted">-</span>
                                   )
-                                ) : locked ? (
-                                  <span className="text-xs text-muted flex items-center gap-1">
-                                    <Lock className="w-3 h-3" />
-                                    مقفل
-                                  </span>
                                 ) : (
-                                  <>
-                                    {isEditMode(customer.id) && (
-                                      <>
-                                        <button
-                                          onClick={() => handleSubmitCustomerChanges(customer.id, 'mobily', customer)}
-                                          disabled={savingCustomerId === customer.id}
-                                          className="px-3 py-1 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-                                        >
-                                          {savingCustomerId === customer.id ? (
-                                            <>
-                                              <Loader2 className="w-3 h-3 animate-spin" />
-                                              جاري الحفظ
-                                            </>
-                                          ) : (
-                                            'حفظ'
-                                          )}
-                                        </button>
-                                        <button
-                                          onClick={() => cancelEditing(customer.id)}
-                                          disabled={savingCustomerId === customer.id}
-                                          className="p-1.5 text-muted hover:text-foreground hover:bg-card-hover rounded-lg transition-colors disabled:opacity-50"
-                                          title="إلغاء"
-                                        >
-                                          <X className="w-4 h-4" />
-                                        </button>
-                                      </>
-                                    )}
-                                    <button
-                                      onClick={() => handleDeleteCustomer(customer.id, customer.name, 'mobily')}
-                                      disabled={isDeleting === customer.id}
-                                      className="p-1.5 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
-                                      title="حذف"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </button>
-                                  </>
+                                  // Regular user: only delete button (no edit for operator/status)
+                                  <button
+                                    onClick={() => handleDeleteCustomer(customer.id, customer.name, 'mobily')}
+                                    disabled={isDeleting === customer.id}
+                                    className="p-1.5 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+                                    title="حذف"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
                                 )}
                               </div>
                             </td>
-                            <td className="px-4 py-3 text-foreground whitespace-nowrap">{customer.name}</td>
-                            <td className="px-4 py-3 whitespace-nowrap">
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-600 border border-blue-500/30">
-                                {customer.created_by_username || 'غير محدد'}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.identity_number}</td>
-                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.nationality}</td>
-                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.phone_number}</td>
-                            <td className="px-4 py-3 text-muted whitespace-nowrap w-24 md:w-32">{customer.birth_date}</td>
-                            <td className="px-4 py-3 text-muted whitespace-nowrap w-24 md:w-32">{customer.identity_expiry_date}</td>
-                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.package}</td>
-                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.email}</td>
-                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.sim_number}</td>
-                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.device_number}</td>
-                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.city}</td>
-                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.district}</td>
-                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.register_number}</td>
-                            <td className="px-4 py-3 text-muted text-sm whitespace-nowrap">{formatDate(customer.created_at)}</td>
-                            {/* السعر column - hidden for non-admin after saving */}
+                            {/* السعر column - moved before الإسم */}
                             <td className="px-4 py-3 whitespace-nowrap">
                               {isAdmin ? (
                                 // Admin always sees the price value
@@ -1178,6 +1069,25 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                                 )
                               )}
                             </td>
+                            <td className="px-4 py-3 text-foreground whitespace-nowrap">{customer.name}</td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-600 border border-blue-500/30">
+                                {customer.created_by_username || 'غير محدد'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.identity_number}</td>
+                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.nationality}</td>
+                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.phone_number}</td>
+                            <td className="px-4 py-3 text-muted whitespace-nowrap w-24 md:w-32">{customer.birth_date}</td>
+                            <td className="px-4 py-3 text-muted whitespace-nowrap w-24 md:w-32">{customer.identity_expiry_date}</td>
+                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.package}</td>
+                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.email}</td>
+                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.sim_number}</td>
+                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.device_number}</td>
+                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.city}</td>
+                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.district}</td>
+                            <td className="px-4 py-3 text-muted whitespace-nowrap">{customer.register_number}</td>
+                            <td className="px-4 py-3 text-muted text-sm whitespace-nowrap">{formatDate(customer.created_at)}</td>
                           </tr>
                           );
                         })}
