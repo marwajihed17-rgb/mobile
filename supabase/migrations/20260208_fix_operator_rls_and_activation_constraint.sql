@@ -6,6 +6,7 @@
 -- Fix: Allow operators to see ALL entries with activation_status IN ('activating', 'activated')
 -- and update entries where they are assigned OR entries not yet assigned.
 -- Also: Add 'confirmed' to activation_status CHECK constraint for admin archive.
+-- Note: operator_id is TEXT (not UUID), so auth.uid() must be cast to TEXT.
 -- ============================================
 
 -- ============================================
@@ -27,7 +28,7 @@ ALTER TABLE public.mobily_customers
     CHECK (activation_status IN ('activated', 'activating', 'confirmed'));
 
 -- ============================================
--- 2. Drop old operator RLS policies (restricted to operator_id = auth.uid())
+-- 2. Drop old operator RLS policies
 -- ============================================
 
 DROP POLICY IF EXISTS "Operators can view assigned salam customers" ON public.salam_customers;
@@ -35,10 +36,15 @@ DROP POLICY IF EXISTS "Operators can update assigned salam customers" ON public.
 DROP POLICY IF EXISTS "Operators can view assigned mobily customers" ON public.mobily_customers;
 DROP POLICY IF EXISTS "Operators can update assigned mobily customers" ON public.mobily_customers;
 
+-- Also drop the new policies in case this migration is re-run
+DROP POLICY IF EXISTS "Operators can view all active salam customers" ON public.salam_customers;
+DROP POLICY IF EXISTS "Operators can update claimable salam customers" ON public.salam_customers;
+DROP POLICY IF EXISTS "Operators can view all active mobily customers" ON public.mobily_customers;
+DROP POLICY IF EXISTS "Operators can update claimable mobily customers" ON public.mobily_customers;
+
 -- ============================================
 -- 3. Create new operator RLS policies
--- Operators can see ALL entries with activating/activated status
--- Operators can update entries assigned to them OR unassigned entries (to claim them)
+-- operator_id is TEXT, so we cast auth.uid() to TEXT
 -- ============================================
 
 -- SALAM CUSTOMERS --
@@ -56,7 +62,7 @@ CREATE POLICY "Operators can update claimable salam customers"
     ON public.salam_customers FOR UPDATE
     USING (
         public.is_operator(auth.uid())
-        AND (operator_id = auth.uid() OR operator_id IS NULL)
+        AND (operator_id = auth.uid()::text OR operator_id IS NULL)
         AND activation_status IN ('activating', 'activated')
     );
 
@@ -75,6 +81,6 @@ CREATE POLICY "Operators can update claimable mobily customers"
     ON public.mobily_customers FOR UPDATE
     USING (
         public.is_operator(auth.uid())
-        AND (operator_id = auth.uid() OR operator_id IS NULL)
+        AND (operator_id = auth.uid()::text OR operator_id IS NULL)
         AND activation_status IN ('activating', 'activated')
     );
