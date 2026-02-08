@@ -432,11 +432,13 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
   }, [pendingChanges, savedValues]);
 
   const getCurrentActivationStatus = useCallback((customer: SalamCustomer | MobilyCustomer): ActivationStatus | null => {
-    // For operators: only return a value if the operator has explicitly selected one
-    // in this session (via pendingChanges). Never pre-fill from DB/saved values,
-    // so the dropdown always starts with "اختر الحالة" placeholder.
+    // For operators: show the value from pendingChanges (explicit selection in this session)
+    // or from savedValues (previously saved in this session). Never pre-fill from DB defaults,
+    // so the dropdown starts with "اختر الحالة" placeholder for untouched entries.
     if (isOperator) {
-      return pendingChanges[customer.id]?.activation_status ?? null;
+      return pendingChanges[customer.id]?.activation_status
+        ?? savedValues[customer.id]?.activation_status
+        ?? null;
     }
     // For non-operators: return the saved or database value
     return savedValues[customer.id]?.activation_status ?? customer.activation_status ?? null;
