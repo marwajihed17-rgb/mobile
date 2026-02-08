@@ -399,9 +399,9 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
   // Start editing a customer
   const startEditing = useCallback((customerId: string, customer: SalamCustomer | MobilyCustomer, projectType: 'salam' | 'mobily' = 'salam') => {
     setEditingCustomerId(customerId);
-    // Initialize pending changes with effective values (saved or database) so user can modify them
+    // Initialize pending changes: activation_status is null so the operator
+    // must explicitly choose from the dropdown (placeholder: "اختر الحالة")
     const effectiveOperatorId = savedValues[customerId]?.operator_id ?? customer.operator_id ?? null;
-    const effectiveActivationStatus = savedValues[customerId]?.activation_status ?? customer.activation_status ?? null;
     const effectivePrice = projectType === 'mobily'
       ? (savedValues[customerId]?.price ?? (customer as MobilyCustomer).price ?? null)
       : undefined;
@@ -410,7 +410,7 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
       ...prev,
       [customerId]: {
         operator_id: effectiveOperatorId,
-        activation_status: effectiveActivationStatus,
+        activation_status: null,
         ...(projectType === 'mobily' && { price: effectivePrice }),
       }
     }));
@@ -432,7 +432,13 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
   }, [pendingChanges, savedValues]);
 
   const getCurrentActivationStatus = useCallback((customer: SalamCustomer | MobilyCustomer): ActivationStatus | null => {
-    return pendingChanges[customer.id]?.activation_status ?? savedValues[customer.id]?.activation_status ?? customer.activation_status ?? null;
+    // If there are pending changes for this customer, use the pending value (even if null)
+    // This ensures the dropdown resets to placeholder when editing starts
+    const pending = pendingChanges[customer.id];
+    if (pending !== undefined) {
+      return pending.activation_status;
+    }
+    return savedValues[customer.id]?.activation_status ?? customer.activation_status ?? null;
   }, [pendingChanges, savedValues]);
 
   // Get effective operator_name (saved value or database value)
