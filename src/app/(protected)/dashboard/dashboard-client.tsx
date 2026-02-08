@@ -432,14 +432,15 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
   }, [pendingChanges, savedValues]);
 
   const getCurrentActivationStatus = useCallback((customer: SalamCustomer | MobilyCustomer): ActivationStatus | null => {
-    // If there are pending changes for this customer, use the pending value (even if null)
-    // This ensures the dropdown resets to placeholder when editing starts
-    const pending = pendingChanges[customer.id];
-    if (pending !== undefined) {
-      return pending.activation_status;
+    // For operators: only return a value if the operator has explicitly selected one
+    // in this session (via pendingChanges). Never pre-fill from DB/saved values,
+    // so the dropdown always starts with "اختر الحالة" placeholder.
+    if (isOperator) {
+      return pendingChanges[customer.id]?.activation_status ?? null;
     }
+    // For non-operators: return the saved or database value
     return savedValues[customer.id]?.activation_status ?? customer.activation_status ?? null;
-  }, [pendingChanges, savedValues]);
+  }, [pendingChanges, savedValues, isOperator]);
 
   // Get effective operator_name (saved value or database value)
   const getEffectiveOperatorName = useCallback((customer: SalamCustomer | MobilyCustomer): string | null => {
@@ -710,25 +711,12 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
                               {isOperator ? (
-                                // Operator can change activation status (only if not locked by another operator)
+                                // Operator: always show dropdown (no pre-selected default)
                                 locked ? (
                                   <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-amber-500/10 text-amber-600 border border-amber-500/30">
                                     <Lock className="w-3 h-3" />
                                     جاري التفعيل
                                   </span>
-                                ) : getEffectiveActivationStatus(customer) && !isEditMode(customer.id) ? (
-                                  <button
-                                    onClick={() => startEditing(customer.id, customer)}
-                                    className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium cursor-pointer transition-colors ${
-                                      getEffectiveActivationStatus(customer) === 'activated'
-                                        ? 'bg-green-500/10 text-green-600 border border-green-500/30 hover:bg-green-500/20'
-                                        : 'bg-amber-500/10 text-amber-600 border border-amber-500/30 hover:bg-amber-500/20'
-                                    }`}
-                                    title="انقر للتعديل"
-                                  >
-                                    {getEffectiveActivationStatus(customer) === 'activated' ? 'تم التفعيل' : 'جاري التفعيل'}
-                                    <Pencil className="w-3 h-3 opacity-60" />
-                                  </button>
                                 ) : (
                                   <select
                                     value={getCurrentActivationStatus(customer) || ''}
@@ -736,8 +724,8 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                                     className="px-2 py-1 text-xs bg-card border border-card-border rounded text-foreground focus:outline-none focus:border-primary min-w-[100px]"
                                   >
                                     <option value="" disabled>اختر الحالة</option>
-                                    <option value="activated">تم التفعيل</option>
                                     <option value="activating">جاري التفعيل</option>
+                                    <option value="activated">تم التفعيل</option>
                                   </select>
                                 )
                               ) : (
@@ -947,25 +935,12 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
                               {isOperator ? (
-                                // Operator can change activation status (only if not locked by another operator)
+                                // Operator: always show dropdown (no pre-selected default)
                                 locked ? (
                                   <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-amber-500/10 text-amber-600 border border-amber-500/30">
                                     <Lock className="w-3 h-3" />
                                     جاري التفعيل
                                   </span>
-                                ) : getEffectiveActivationStatus(customer) && !isEditMode(customer.id) ? (
-                                  <button
-                                    onClick={() => startEditing(customer.id, customer, 'mobily')}
-                                    className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium cursor-pointer transition-colors ${
-                                      getEffectiveActivationStatus(customer) === 'activated'
-                                        ? 'bg-green-500/10 text-green-600 border border-green-500/30 hover:bg-green-500/20'
-                                        : 'bg-amber-500/10 text-amber-600 border border-amber-500/30 hover:bg-amber-500/20'
-                                    }`}
-                                    title="انقر للتعديل"
-                                  >
-                                    {getEffectiveActivationStatus(customer) === 'activated' ? 'تم التفعيل' : 'جاري التفعيل'}
-                                    <Pencil className="w-3 h-3 opacity-60" />
-                                  </button>
                                 ) : (
                                   <select
                                     value={getCurrentActivationStatus(customer) || ''}
@@ -973,8 +948,8 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                                     className="px-2 py-1 text-xs bg-card border border-card-border rounded text-foreground focus:outline-none focus:border-primary min-w-[100px]"
                                   >
                                     <option value="" disabled>اختر الحالة</option>
-                                    <option value="activated">تم التفعيل</option>
                                     <option value="activating">جاري التفعيل</option>
+                                    <option value="activated">تم التفعيل</option>
                                   </select>
                                 )
                               ) : (
