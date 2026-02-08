@@ -432,11 +432,13 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
   }, [pendingChanges, savedValues]);
 
   const getCurrentActivationStatus = useCallback((customer: SalamCustomer | MobilyCustomer): ActivationStatus | null => {
-    // For operators: only return a value if the operator has explicitly selected one
-    // in this session (via pendingChanges). Never pre-fill from DB/saved values,
-    // so the dropdown always starts with "اختر الحالة" placeholder.
+    // For operators: show the value from pendingChanges (explicit selection in this session)
+    // or from savedValues (previously saved in this session). Never pre-fill from DB defaults,
+    // so the dropdown starts with "اختر الحالة" placeholder for untouched entries.
     if (isOperator) {
-      return pendingChanges[customer.id]?.activation_status ?? null;
+      return pendingChanges[customer.id]?.activation_status
+        ?? savedValues[customer.id]?.activation_status
+        ?? null;
     }
     // For non-operators: return the saved or database value
     return savedValues[customer.id]?.activation_status ?? customer.activation_status ?? null;
@@ -719,8 +721,13 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                                   </span>
                                 ) : (
                                   <select
-                                    value={getCurrentActivationStatus(customer) || ''}
-                                    onChange={(e) => handleActivationStatusChange(customer.id, (e.target.value as ActivationStatus) || null)}
+                                    value={pendingChanges[customer.id]?.activation_status ?? savedValues[customer.id]?.activation_status ?? ''}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      if (val === 'activating' || val === 'activated') {
+                                        handleActivationStatusChange(customer.id, val);
+                                      }
+                                    }}
                                     className="px-2 py-1 text-xs bg-card border border-card-border rounded text-foreground focus:outline-none focus:border-primary min-w-[100px]"
                                   >
                                     <option value="" disabled>اختر الحالة</option>
@@ -943,8 +950,13 @@ export function DashboardClient({ profile, recentSalamCustomers, recentMobilyCus
                                   </span>
                                 ) : (
                                   <select
-                                    value={getCurrentActivationStatus(customer) || ''}
-                                    onChange={(e) => handleActivationStatusChange(customer.id, (e.target.value as ActivationStatus) || null)}
+                                    value={pendingChanges[customer.id]?.activation_status ?? savedValues[customer.id]?.activation_status ?? ''}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      if (val === 'activating' || val === 'activated') {
+                                        handleActivationStatusChange(customer.id, val);
+                                      }
+                                    }}
                                     className="px-2 py-1 text-xs bg-card border border-card-border rounded text-foreground focus:outline-none focus:border-primary min-w-[100px]"
                                   >
                                     <option value="" disabled>اختر الحالة</option>
