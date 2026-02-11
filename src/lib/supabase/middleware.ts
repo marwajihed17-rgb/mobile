@@ -94,8 +94,22 @@ export async function updateSession(request: NextRequest) {
 
   // Redirect authenticated users away from auth pages
   if (isAuthRoute && user) {
+    // Check user role to determine redirect destination
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
     const url = request.nextUrl.clone();
-    url.pathname = '/dashboard';
+
+    // Redirect admins to admin dashboard, regular users to user dashboard
+    if (profile && (profile.role === 'admin' || profile.role === 'super_admin')) {
+      url.pathname = '/admin';
+    } else {
+      url.pathname = '/dashboard';
+    }
+
     return NextResponse.redirect(url);
   }
 
