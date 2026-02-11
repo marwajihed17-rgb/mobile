@@ -18,7 +18,15 @@ CREATE EXTENSION IF NOT EXISTS "pg_cron";
 DO $$ BEGIN
     CREATE TYPE user_role AS ENUM ('user', 'admin', 'super_admin', 'operator');
 EXCEPTION
-    WHEN duplicate_object THEN null;
+    WHEN duplicate_object THEN
+        -- Enum exists, add missing values if needed
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_enum
+            WHERE enumtypid = 'user_role'::regtype
+            AND enumlabel = 'operator'
+        ) THEN
+            ALTER TYPE user_role ADD VALUE 'operator';
+        END IF;
 END $$;
 
 -- User status enum
@@ -32,7 +40,15 @@ END $$;
 DO $$ BEGIN
     CREATE TYPE activation_status AS ENUM ('activated', 'activating', 'confirmed');
 EXCEPTION
-    WHEN duplicate_object THEN null;
+    WHEN duplicate_object THEN
+        -- Enum exists, add missing values if needed
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_enum
+            WHERE enumtypid = 'activation_status'::regtype
+            AND enumlabel = 'confirmed'
+        ) THEN
+            ALTER TYPE activation_status ADD VALUE 'confirmed';
+        END IF;
 END $$;
 
 -- Project type enum
